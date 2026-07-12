@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1783416411694,
+      "tag": "0000_loose_loa",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783425600000,
+      "tag": "0001_app_users",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783500000000,
+      "tag": "0002_korea_timezone",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783828800000,
+      "tag": "0003_bay_templates_and_bays",
+      "breakpoints": true
+    }
+  ]
+}
