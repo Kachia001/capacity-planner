@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "browsermcp": {
+      "command": "npx.cmd",
+      "args": [
+        "@browsermcp/mcp@latest"
+      ]
+    }
+  }
+}
