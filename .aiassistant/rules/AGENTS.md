@@ -1,3 +1,7 @@
+---
+적용: 항상
+---
+
 # Component conventions
 
 - In Vue SFCs, assign component inputs with `const props = defineProps<...>()` and reference them as `props.<name>` in both script and template. This makes prop-owned data explicit at every usage site.
