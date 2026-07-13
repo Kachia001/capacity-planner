@@ -20,6 +20,8 @@ export type TemplateItemDraft = {
   partNo: string
   itemName: string
   bolt: string
+  isHighAltitude: boolean
+  safetyNote: string
 }
 
 export type TemplateGroupDraft = {
