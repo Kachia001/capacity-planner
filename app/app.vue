@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Footer from '@/components/layout/Footer.vue'
+import GlobalAlert from '@/components/global/GlobalAlert.vue'
 import Header from '@/components/layout/Header.vue'
 </script>
 
@@ -11,5 +12,8 @@ import Header from '@/components/layout/Header.vue'
       <NuxtPage />
     </main>
     <Footer />
+    <ClientOnly>
+      <GlobalAlert />
+    </ClientOnly>
   </div>
 </template>
