@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { bays, workItems } from '../db/schema'
+import { bayTemplateRows, bayTemplates } from '../db/schema'
 
 const nullableText = z.string().trim().max(1000)
 const itemSchema = z.object({
@@ -20,15 +20,10 @@ const groupSchema = z.object({
   workName: z.string().trim().max(300),
   items: z.array(itemSchema).min(1),
 })
-const createBaySchema = z
+const createTemplateSchema = z
   .object({
-    bay: z.object({
-      code: z
-        .string()
-        .trim()
-        .regex(/^[A-Za-z0-9_-]{2,40}$/),
-      description: z.string().trim().max(300),
-    }),
+    name: z.string().trim().min(2).max(100),
+    description: z.string().trim().max(300),
     groups: z.array(groupSchema).min(1),
   })
   .superRefine(({ groups }, ctx) => {
@@ -71,25 +66,25 @@ const createBaySchema = z
 
 export default defineEventHandler(async event => {
   await requireAppUser(event, ['admin'])
-  const body = createBaySchema.parse(await readBody(event))
+  const body = createTemplateSchema.parse(await readBody(event))
   const db = useDb()
 
-  try {
-    return await db.transaction(async tx => {
-      const [bay] = await tx
-        .insert(bays)
-        .values({
-          code: body.bay.code,
-          description: body.bay.description || null,
-        })
-        .returning()
+  return await db.transaction(async tx => {
+    const [template] = await tx
+      .insert(bayTemplates)
+      .values({
+        name: body.name,
+        description: body.description || null,
+      })
+      .returning()
 
-      const rows = body.groups.flatMap(group => group.items.map(item => ({ group, item })))
-      await tx.insert(workItems).values(
+    const rows = body.groups.flatMap(group => group.items.map(item => ({ group, item })))
+    const savedRows = await tx
+      .insert(bayTemplateRows)
+      .values(
         rows.map(({ group, item }, index) => ({
-          bayId: bay!.id,
+          templateId: template!.id,
           sortOrder: index + 1,
-          sourceRow: item.legacySourceRow,
           workNo: group.workNo,
           workName: group.workName || null,
           workDetail: item.workDetail || null,
@@ -101,13 +96,14 @@ export default defineEventHandler(async event => {
           safetyNote: item.safetyNote || null,
         })),
       )
+      .returning()
 
-      return { id: bay!.id, code: bay!.code, workItemCount: rows.length }
-    })
-  } catch (error) {
-    if (typeof error === 'object' && error && 'code' in error && error.code === '23505') {
-      throw createError({ statusCode: 409, statusMessage: '이미 존재하는 BAY 코드입니다.' })
+    return {
+      id: template!.id,
+      name: template!.name,
+      description: template!.description ?? '',
+      updatedAt: template!.updatedAt,
+      rows: savedRows,
     }
-    throw error
-  }
+  })
 })
