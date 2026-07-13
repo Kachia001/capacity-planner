@@ -1,6 +1,27 @@
-import { boolean, date, index, integer, pgEnum, pgTable, serial, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  date,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core'
 
 export const appRole = pgEnum('app_role', ['admin', 'manager', 'worker'])
+export const workStatus = pgEnum('work_status', ['not_started', 'in_progress', 'completed'])
+export const workItemEventAction = pgEnum('work_item_event_action', [
+  'start',
+  'complete',
+  'cancel_start',
+  'void',
+])
+export const issueStatus = pgEnum('issue_status', ['open', 'resolved'])
+export const issueSeverity = pgEnum('issue_severity', ['low', 'medium', 'high', 'critical'])
 
 export const appUsers = pgTable('app_users', {
   authUserId: uuid('auth_user_id').primaryKey(),
@@ -37,12 +58,17 @@ export const bayTemplateRows = pgTable(
     partNo: text('part_no'),
     itemName: text('item_name'),
     bolt: text('bolt'),
+    isHighAltitude: boolean('is_high_altitude').notNull().default(false),
+    safetyNote: text('safety_note'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   table => ({
     templateIndex: index('bay_template_rows_template_id_idx').on(table.templateId),
-    templateOrderUnique: uniqueIndex('bay_template_rows_template_order_idx').on(table.templateId, table.sortOrder),
+    templateOrderUnique: uniqueIndex('bay_template_rows_template_order_idx').on(
+      table.templateId,
+      table.sortOrder,
+    ),
   }),
 )
 
@@ -72,6 +98,30 @@ export const workItems = pgTable(
     itemName: text('item_name'),
     bolt: text('bolt'),
     hasIssue: boolean('has_issue').notNull().default(false),
+    issueStatus: issueStatus('issue_status'),
+    issueSeverity: issueSeverity('issue_severity'),
+    issueCreatedAt: timestamp('issue_created_at', { withTimezone: true }),
+    issueResolvedAt: timestamp('issue_resolved_at', { withTimezone: true }),
+    issueResolvedBy: uuid('issue_resolved_by').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
+    status: workStatus('status').notNull().default('not_started'),
+    startedBy: uuid('started_by').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
+    startedAt: timestamp('started_at', { withTimezone: true }),
+    completedBy: uuid('completed_by').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    isHighAltitude: boolean('is_high_altitude').notNull().default(false),
+    safetyNote: text('safety_note'),
+    version: integer('version').notNull().default(0),
+    voidedBy: uuid('voided_by').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
+    voidedAt: timestamp('voided_at', { withTimezone: true }),
+    voidReason: text('void_reason'),
     worker: text('worker'),
     workDate: date('work_date'),
     isCompleted: boolean('is_completed').notNull().default(false),
@@ -81,13 +131,53 @@ export const workItems = pgTable(
   },
   table => ({
     bayIndex: index('work_items_bay_id_idx').on(table.bayId),
+    bayStatusIndex: index('work_items_bay_status_idx').on(table.bayId, table.status),
+    bayHighAltitudeIndex: index('work_items_bay_high_altitude_idx').on(
+      table.bayId,
+      table.isHighAltitude,
+    ),
+    startedByStatusIndex: index('work_items_started_by_status_idx').on(
+      table.startedBy,
+      table.status,
+    ),
     bayOrderUnique: uniqueIndex('work_items_bay_order_idx').on(table.bayId, table.sortOrder),
-    baySourceRowUnique: uniqueIndex('work_items_bay_source_row_idx').on(table.bayId, table.sourceRow),
+    baySourceRowUnique: uniqueIndex('work_items_bay_source_row_idx').on(
+      table.bayId,
+      table.sourceRow,
+    ),
+  }),
+)
+
+export const workItemStatusEvents = pgTable(
+  'work_item_status_events',
+  {
+    id: serial('id').primaryKey(),
+    workItemId: integer('work_item_id')
+      .notNull()
+      .references(() => workItems.id, { onDelete: 'restrict' }),
+    fromStatus: workStatus('from_status').notNull(),
+    toStatus: workStatus('to_status').notNull(),
+    action: workItemEventAction('action').notNull(),
+    actorUserId: uuid('actor_user_id').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
+    actorRoleSnapshot: appRole('actor_role_snapshot').notNull(),
+    reason: text('reason'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => ({
+    workItemCreatedIndex: index('work_item_status_events_item_created_idx').on(
+      table.workItemId,
+      table.createdAt,
+    ),
+    createdIndex: index('work_item_status_events_created_idx').on(table.createdAt),
   }),
 )
 
 export type WorkItem = typeof workItems.$inferSelect
 export type NewWorkItem = typeof workItems.$inferInsert
+export type WorkItemStatusEvent = typeof workItemStatusEvents.$inferSelect
+export type NewWorkItemStatusEvent = typeof workItemStatusEvents.$inferInsert
 export type AppUser = typeof appUsers.$inferSelect
 export type NewAppUser = typeof appUsers.$inferInsert
 export type Bay = typeof bays.$inferSelect
