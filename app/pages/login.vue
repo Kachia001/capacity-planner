@@ -2,6 +2,7 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 
 definePageMeta({
   middleware: 'guest-client',
@@ -11,8 +12,8 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
-const loginId = ref('')
-const password = ref('')
+const loginId = ref(null)
+const password = ref(null)
 const formError = ref<string | null>(null)
 
 const submitLabel = computed(() => (auth.pending ? '로그인 중' : '로그인'))
@@ -28,7 +29,7 @@ async function submit() {
   try {
     await auth.signIn(loginId.value, password.value)
 
-    await router.push(typeof route.query.redirect === 'string' ? route.query.redirect : '/')
+    await router.push(typeof route.query.redirect === 'string' ? route.query.redirect : '/bay')
   } catch (error) {
     formError.value = error instanceof Error ? error.message : '인증 요청에 실패했습니다.'
   }
@@ -48,24 +49,17 @@ async function submit() {
         <form class="flex flex-col gap-4" @submit.prevent="submit">
           <label class="flex flex-col gap-2 text-sm font-medium">
             아이디
-            <input
-              v-model="loginId"
-              autocomplete="username"
-              class="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
-              placeholder="admin"
-              type="text"
-            >
+            <Input v-model="loginId" autocomplete="username" placeholder="admin" type="text" />
           </label>
 
           <label class="flex flex-col gap-2 text-sm font-medium">
             비밀번호
-            <input
+            <Input
               v-model="password"
               autocomplete="current-password"
-              class="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
               placeholder="6자 이상"
               type="password"
-            >
+            />
           </label>
 
           <Alert v-if="formError || auth.errorMessage" variant="destructive">

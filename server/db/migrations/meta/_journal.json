@@ -29,6 +29,13 @@
       "when": 1783828800000,
       "tag": "0003_bay_templates_and_bays",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783915200000,
+      "tag": "0004_work_execution_policy",
+      "breakpoints": true
     }
   ]
 }

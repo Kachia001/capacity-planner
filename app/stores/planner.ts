@@ -2,15 +2,22 @@ import { defineStore } from 'pinia'
 
 type DashboardSummary = {
   total?: number
+  notStarted?: number
+  inProgress?: number
   completed?: number
   issues?: number
+  highAltitudeInProgress?: number
 }
 
 type BaySummary = {
   bay: string
+  id: string
   total: number
+  notStarted: number
+  inProgress: number
   completed: number
   issues: number
+  highAltitudeInProgress: number
   completionRate: number
 }
 
@@ -25,6 +32,13 @@ type WorkItem = {
   partNo: string | null
   itemName: string | null
   bolt: string | null
+  status: 'not_started' | 'in_progress' | 'completed'
+  startedBy: string | null
+  startedAt: string | null
+  completedBy: string | null
+  completedAt: string | null
+  isHighAltitude: boolean
+  safetyNote: string | null
   hasIssue: boolean
   isCompleted: boolean
   worker: string | null

@@ -1,7 +1,5 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
-@import "tw-animate-css";
-@import "shadcn-vue/tailwind.css";
+@import 'tw-animate-css';
+@import 'shadcn-vue/tailwind.css';
 
 @tailwind base;
 @tailwind components;
@@ -87,7 +85,7 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
   .theme {
-    --font-sans: 'Geist Variable', sans-serif;
+    --font-sans: 'Geist Variable', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
     --font-heading: var(--font-sans);
   }
 }

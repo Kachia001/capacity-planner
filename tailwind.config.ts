@@ -21,6 +21,7 @@ export default {
     },
     extend: {
       fontFamily: {
+        sans: ['Geist Variable', 'Apple SD Gothic Neo', 'Malgun Gothic', 'sans-serif'],
         mono: ['IBM Plex Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       colors: {

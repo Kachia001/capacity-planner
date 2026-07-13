@@ -10,6 +10,8 @@ const itemSchema = z.object({
   partNo: nullableText,
   itemName: nullableText,
   bolt: nullableText,
+  isHighAltitude: z.boolean(),
+  safetyNote: nullableText,
 })
 const groupSchema = z.object({
   sortOrder: z.number().int().positive(),
@@ -18,56 +20,87 @@ const groupSchema = z.object({
   workName: z.string().trim().max(300),
   items: z.array(itemSchema).min(1),
 })
-const createBaySchema = z.object({
-  bay: z.object({
-    code: z.string().trim().regex(/^[A-Za-z0-9_-]{2,40}$/),
-    description: z.string().trim().max(300),
-  }),
-  groups: z.array(groupSchema).min(1),
-}).superRefine(({ groups }, ctx) => {
-  groups.forEach((group, groupIndex) => {
-    if (group.sortOrder !== groupIndex + 1) {
-      ctx.addIssue({ code: 'custom', path: ['groups', groupIndex, 'sortOrder'], message: 'Group order must be sequential.' })
-    }
-    if (group.kind === 'work' && !group.workName) {
-      ctx.addIssue({ code: 'custom', path: ['groups', groupIndex, 'workName'], message: 'Work groups require a name.' })
-    }
-    group.items.forEach((item, itemIndex) => {
-      if (item.sortOrder !== itemIndex + 1) {
-        ctx.addIssue({ code: 'custom', path: ['groups', groupIndex, 'items', itemIndex, 'sortOrder'], message: 'Item order must be sequential.' })
+const createBaySchema = z
+  .object({
+    bay: z.object({
+      code: z
+        .string()
+        .trim()
+        .regex(/^[A-Za-z0-9_-]{2,40}$/),
+      description: z.string().trim().max(300),
+    }),
+    groups: z.array(groupSchema).min(1),
+  })
+  .superRefine(({ groups }, ctx) => {
+    groups.forEach((group, groupIndex) => {
+      if (group.sortOrder !== groupIndex + 1) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['groups', groupIndex, 'sortOrder'],
+          message: 'Group order must be sequential.',
+        })
       }
-      if (!item.legacySourceRow && ![item.workDetail, item.vendor, item.partNo, item.itemName, item.bolt].some(Boolean)) {
-        ctx.addIssue({ code: 'custom', path: ['groups', groupIndex, 'items', itemIndex], message: 'Empty work items are not allowed.' })
+      if (group.kind === 'work' && !group.workName) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['groups', groupIndex, 'workName'],
+          message: 'Work groups require a name.',
+        })
       }
+      group.items.forEach((item, itemIndex) => {
+        if (item.sortOrder !== itemIndex + 1) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['groups', groupIndex, 'items', itemIndex, 'sortOrder'],
+            message: 'Item order must be sequential.',
+          })
+        }
+        if (
+          !item.legacySourceRow &&
+          ![item.workDetail, item.vendor, item.partNo, item.itemName, item.bolt].some(Boolean)
+        ) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['groups', groupIndex, 'items', itemIndex],
+            message: 'Empty work items are not allowed.',
+          })
+        }
+      })
     })
   })
-})
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   await requireAppUser(event, ['admin'])
   const body = createBaySchema.parse(await readBody(event))
   const db = useDb()
 
   try {
-    return await db.transaction(async (tx) => {
-      const [bay] = await tx.insert(bays).values({
-        code: body.bay.code,
-        description: body.bay.description || null,
-      }).returning()
+    return await db.transaction(async tx => {
+      const [bay] = await tx
+        .insert(bays)
+        .values({
+          code: body.bay.code,
+          description: body.bay.description || null,
+        })
+        .returning()
 
       const rows = body.groups.flatMap(group => group.items.map(item => ({ group, item })))
-      await tx.insert(workItems).values(rows.map(({ group, item }, index) => ({
-        bayId: bay!.id,
-        sortOrder: index + 1,
-        sourceRow: item.legacySourceRow,
-        workNo: group.workNo,
-        workName: group.workName || null,
-        workDetail: item.workDetail || null,
-        vendor: item.vendor || null,
-        partNo: item.partNo || null,
-        itemName: item.itemName || null,
-        bolt: item.bolt || null,
-      })))
+      await tx.insert(workItems).values(
+        rows.map(({ group, item }, index) => ({
+          bayId: bay!.id,
+          sortOrder: index + 1,
+          sourceRow: item.legacySourceRow,
+          workNo: group.workNo,
+          workName: group.workName || null,
+          workDetail: item.workDetail || null,
+          vendor: item.vendor || null,
+          partNo: item.partNo || null,
+          itemName: item.itemName || null,
+          bolt: item.bolt || null,
+          isHighAltitude: item.isHighAltitude,
+          safetyNote: item.safetyNote || null,
+        })),
+      )
 
       return { id: bay!.id, code: bay!.code, workItemCount: rows.length }
     })

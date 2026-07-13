@@ -8,7 +8,7 @@ const createUserSchema = z.object({
   role: z.enum(['admin', 'manager', 'worker']),
 })
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   const { authUser, profile } = await requireAppUser(event, ['admin', 'manager'])
   const body = createUserSchema.parse(await readBody(event))
 
@@ -39,13 +39,20 @@ export default defineEventHandler(async (event) => {
 
   try {
     const db = useDb()
-    const [created] = await db.insert(appUsers).values({
-      authUserId: data.user.id,
-      email: body.email,
-      displayName: body.displayName || null,
-      role: body.role as AppUser['role'],
-      createdBy: authUser.id,
-    }).returning()
+    const [created] = await db
+      .insert(appUsers)
+      .values({
+        authUserId: data.user.id,
+        email: body.email,
+        displayName: body.displayName || null,
+        role: body.role as AppUser['role'],
+        createdBy: authUser.id,
+      })
+      .returning()
+
+    if (!created) {
+      throw new Error('Failed to read the created app user profile.')
+    }
 
     return {
       id: created.authUserId,
