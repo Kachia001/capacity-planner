@@ -61,6 +61,10 @@ let requestSequence = 0
 const isSupervisor = computed(
   () => auth.profile?.role === 'admin' || auth.profile?.role === 'manager',
 )
+const showsManagementOverview = computed(() => auth.profile?.role === 'manager')
+const usesWorkerDetail = computed(
+  () => auth.profile?.role === 'worker' || auth.profile?.role === 'admin',
+)
 const actorLabel = computed(() => auth.profile?.displayName || auth.profile?.email || '사용자')
 const routeTargetBay = computed(() => {
   const target = route.query.targetBay
@@ -102,7 +106,7 @@ async function loadBays() {
 }
 
 async function loadDashboard() {
-  if (!isSupervisor.value) {
+  if (!showsManagementOverview.value) {
     return
   }
 
@@ -326,7 +330,10 @@ function workItemDetails(item: OperationWorkItem) {
 }
 
 async function refreshAfterMutation() {
-  await Promise.all([loadWorkItems(), isSupervisor.value ? loadDashboard() : Promise.resolve()])
+  await Promise.all([
+    loadWorkItems(),
+    showsManagementOverview.value ? loadDashboard() : Promise.resolve(),
+  ])
 }
 
 async function requestStart(item: OperationWorkItem) {
@@ -490,8 +497,11 @@ onMounted(async () => {
       throw new Error('등록된 역할 정보를 확인할 수 없습니다.')
     }
 
-    filters.status = auth.profile.role === 'worker' ? 'not_started' : 'all'
-    await Promise.all([loadBays(), isSupervisor.value ? loadDashboard() : Promise.resolve()])
+    filters.status = usesWorkerDetail.value ? 'not_started' : 'all'
+    await Promise.all([
+      loadBays(),
+      showsManagementOverview.value ? loadDashboard() : Promise.resolve(),
+    ])
 
     const routeBay = findRouteBay(routeTargetBay.value)
     if (routeBay) {
@@ -506,7 +516,7 @@ onMounted(async () => {
 
     refreshTimer = setInterval(() => {
       if (mutationItemId.value === null && !listPending.value) {
-        if (isSupervisor.value) {
+        if (showsManagementOverview.value) {
           void loadDashboard()
         } else if (selectedBayId.value) {
           void loadWorkItems()
@@ -564,19 +574,18 @@ onBeforeUnmount(() => {
 
   <template v-else>
     <WorkerOperationsHeader
-      v-if="auth.profile.role === 'worker'"
+      v-if="usesWorkerDetail"
       :display-name="actorLabel"
       :bay-count="bays.length"
+      :is-admin="auth.profile.role === 'admin'"
     />
 
     <ManagementOverview
-      v-else
+      v-else-if="showsManagementOverview"
       :dashboard="dashboard"
-      :selected-bay-id="selectedBayId"
       :pending="dashboardPending"
       :error-message="dashboardError"
       :actor-label="actorLabel"
-      @select-bay="chooseBay"
       @select-work-item="focusDashboardWorkItem"
       @refresh="refreshAll"
     />
@@ -598,9 +607,9 @@ onBeforeUnmount(() => {
         :error-message="listError"
         :notice-message="noticeMessage"
         :notice-tone="noticeTone"
-        :title="auth.profile.role === 'worker' ? '상세 작업 찾기' : 'Bay 상세 운영'"
+        :title="usesWorkerDetail ? '상세 작업 찾기' : 'Bay 상세 운영'"
         :description="
-          auth.profile.role === 'worker'
+          usesWorkerDetail
             ? '작업명과 품번을 검색하고 현재 가능한 다음 행동만 처리하세요.'
             : '선택한 Bay의 작업 상태를 확인하고 잘못된 시작을 사유와 함께 취소할 수 있습니다.'
         "
