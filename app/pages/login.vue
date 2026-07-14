@@ -29,7 +29,10 @@ async function submit() {
   try {
     await auth.signIn(loginId.value, password.value)
 
-    await router.push(typeof route.query.redirect === 'string' ? route.query.redirect : '/bay')
+    const defaultDestination = auth.isAdmin ? '/admin/bays' : '/bay'
+    await router.push(
+      typeof route.query.redirect === 'string' ? route.query.redirect : defaultDestination,
+    )
   } catch (error) {
     formError.value = error instanceof Error ? error.message : '인증 요청에 실패했습니다.'
   }

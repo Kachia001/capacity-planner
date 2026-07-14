@@ -16,7 +16,11 @@ import { cloneTemplateGroups, fetchBayTemplates } from '@/composables/useBayTemp
 import { getRequestErrorMessage } from '@/composables/useOperationsApi'
 import type { ExistingTemplateDraft, TemplateGroupDraft } from '@/types/template'
 
-definePageMeta({ middleware: ['auth-client', 'role-client'], roles: ['admin'] })
+definePageMeta({
+  layout: 'admin',
+  middleware: ['auth-client', 'role-client'],
+  roles: ['admin'],
+})
 useHead({ title: '새 BAY 만들기 · Capacity Planner' })
 
 const auth = useAuthStore()
@@ -142,12 +146,12 @@ onMounted(loadTemplates)
     <header class="border-b border-zinc-300 bg-[#f8faf7]">
       <div class="mx-auto w-full max-w-[92rem] px-4 py-6 sm:px-6 lg:px-8">
         <NuxtLink
-          to="/bay"
+          to="/admin/bays"
           class="inline-flex items-center gap-2 text-sm font-semibold text-zinc-600 hover:text-zinc-950"
         >
           <ArrowLeft class="size-4" /> 운영 현황
         </NuxtLink>
-        <div class="mt-7 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div class="mt-7 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p class="font-mono text-[11px] font-bold uppercase tracking-[0.26em] text-emerald-700">
               Bay commissioning
@@ -181,17 +185,17 @@ onMounted(loadTemplates)
           생성되었습니다.
         </p>
         <NuxtLink
-          :to="{ path: '/bay', query: { targetBay: bayCode } }"
+          :to="{ path: '/admin/bays', query: { q: bayCode } }"
           class="mt-7 inline-flex h-11 items-center gap-2 rounded-sm bg-zinc-950 px-5 text-sm font-semibold text-white"
         >
-          운영 화면에서 확인 <ChevronRight class="size-4" />
+          Bay 목록에서 확인 <ChevronRight class="size-4" />
         </NuxtLink>
       </section>
     </div>
 
     <div
       v-else
-      class="mx-auto grid w-full max-w-[92rem] gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_21rem] lg:px-8"
+      class="mx-auto grid w-full max-w-[92rem] gap-6 px-4 py-8 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_21rem]"
     >
       <div class="min-w-0 space-y-6">
         <section class="rounded-md border border-zinc-300 bg-white shadow-sm">
@@ -341,7 +345,7 @@ onMounted(loadTemplates)
       </div>
 
       <aside
-        class="h-fit rounded-md border border-zinc-800 bg-zinc-950 text-white lg:sticky lg:top-5"
+        class="h-fit rounded-md border border-zinc-800 bg-zinc-950 text-white xl:sticky xl:top-5"
       >
         <div class="border-b border-zinc-800 p-5">
           <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-300">

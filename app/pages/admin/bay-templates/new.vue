@@ -16,7 +16,11 @@ import {
 } from '@/composables/useBayTemplates'
 import type { ExistingTemplateDraft, TemplateGroupDraft, TemplateSource } from '@/types/template'
 
-definePageMeta({ middleware: ['auth-client', 'role-client'], roles: ['admin'] })
+definePageMeta({
+  layout: 'admin',
+  middleware: ['auth-client', 'role-client'],
+  roles: ['admin'],
+})
 useHead({ title: '새 BAY 템플릿 · Capacity Planner' })
 
 const auth = useAuthStore()
@@ -139,16 +143,16 @@ onMounted(loadTemplates)
       <div class="mx-auto w-full max-w-[92rem] px-4 py-6 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between gap-3">
           <NuxtLink
-            to="/bay"
+            to="/admin/bays"
             class="inline-flex items-center gap-2 text-sm font-semibold text-zinc-600 hover:text-zinc-950"
-            ><ArrowLeft class="size-4" /> Dashboard</NuxtLink
+            ><ArrowLeft class="size-4" /> Bay 목록</NuxtLink
           ><NuxtLink
             to="/admin/bays/new"
             class="text-sm font-semibold text-emerald-700 hover:underline"
             >BAY 생성으로 이동</NuxtLink
           >
         </div>
-        <div class="mt-7 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div class="mt-7 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p class="font-mono text-[11px] font-bold uppercase tracking-[0.26em] text-emerald-700">
               Blueprint workshop
@@ -200,7 +204,7 @@ onMounted(loadTemplates)
 
     <div v-else class="mx-auto w-full max-w-[92rem] space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <section
-        class="grid gap-6 rounded-md border border-zinc-300 bg-white p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_22rem]"
+        class="grid gap-6 rounded-md border border-zinc-300 bg-white p-5 shadow-sm xl:grid-cols-[minmax(0,1fr)_22rem]"
       >
         <div class="grid gap-4 sm:grid-cols-2">
           <label class="grid gap-2 text-sm font-semibold"
@@ -291,7 +295,7 @@ onMounted(loadTemplates)
 
     <footer
       v-if="!savedTemplateName"
-      class="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-300 bg-[#f8faf7]/95 backdrop-blur"
+      class="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-300 bg-[#f8faf7]/95 backdrop-blur lg:left-64"
     >
       <div
         class="mx-auto flex w-full max-w-[92rem] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8"
