@@ -20,6 +20,10 @@ const navigation = [
 ]
 
 const pageContext = computed(() => {
+  if (route.path === '/admin') {
+    return { eyebrow: 'OPERATIONS OVERVIEW', title: '관리자 대시보드' }
+  }
+
   if (route.path === '/bay') {
     const targetBay = typeof route.query.targetBay === 'string' ? route.query.targetBay : ''
 
@@ -122,7 +126,7 @@ onMounted(() => {
           class="absolute inset-x-0 top-0 h-48 bg-[radial-gradient(circle_at_20%_0%,rgba(197,242,119,0.12),transparent_68%)]"
         />
         <NuxtLink
-          to="/admin/bays"
+          to="/admin"
           class="relative flex h-24 items-center gap-3 border-b border-white/[0.07] px-7"
         >
           <span

@@ -4,7 +4,7 @@ export default defineNuxtRouteMiddleware(async () => {
   await auth.initialize()
 
   if (auth.user && auth.profile) {
-    return navigateTo(auth.isAdmin ? '/admin/bays' : '/bay')
+    return navigateTo(auth.isAdmin ? '/admin' : '/bay')
   }
 
   if (auth.user && !auth.profile) {
