@@ -65,6 +65,9 @@ const showsManagementOverview = computed(() => auth.profile?.role === 'manager')
 const usesWorkerDetail = computed(
   () => auth.profile?.role === 'worker' || auth.profile?.role === 'admin',
 )
+const usesMobileOperations = computed(
+  () => auth.profile?.role === 'manager' || auth.profile?.role === 'worker',
+)
 const actorLabel = computed(() => auth.profile?.displayName || auth.profile?.email || '사용자')
 const routeTargetBay = computed(() => {
   const target = route.query.targetBay
@@ -329,6 +332,10 @@ function workItemDetails(item: OperationWorkItem) {
   ]
 }
 
+function workDetailLabel(item: OperationWorkItem) {
+  return item.workDetail?.trim() || `세부 작업 #${item.id}`
+}
+
 async function refreshAfterMutation() {
   await Promise.all([
     loadWorkItems(),
@@ -339,10 +346,10 @@ async function refreshAfterMutation() {
 async function requestStart(item: OperationWorkItem) {
   const accepted = await globalAlert.confirm({
     variant: 'warning',
-    title: '작업을 시작하면 되돌릴 수 없습니다',
+    title: '선택한 세부 작업을 시작할까요?',
     message:
-      '작업을 시작하면 작업자 권한으로 취소하거나 미작업 상태로 되돌릴 수 없습니다. 대상 작업과 Bay를 다시 확인해 주세요. 잘못 시작한 경우 관리자에게 취소를 요청해야 합니다.',
-    confirmLabel: '작업 시작',
+      '선택한 workDetail 1건만 작업 중으로 변경됩니다. 같은 workName에 포함된 다른 세부 작업의 상태는 변경되지 않습니다. 작업자는 시작 후 직접 취소할 수 없으므로 대상을 다시 확인해 주세요.',
+    confirmLabel: '세부 작업 시작',
     cancelLabel: '돌아가기',
     details: workItemDetails(item),
     acknowledgementLabel: item.isHighAltitude
@@ -356,15 +363,7 @@ async function requestStart(item: OperationWorkItem) {
   try {
     const accessToken = await requireAccessToken()
     await startWorkItem(accessToken, item.id)
-    if (auth.profile?.role === 'worker') {
-      filters.status = 'in_progress'
-    }
-    showNotice(
-      auth.profile?.role === 'worker'
-        ? '작업을 시작했습니다. 작업 중 상태로 전환했으며, 작업자는 시작을 취소할 수 없습니다.'
-        : '작업을 시작했습니다.',
-      'success',
-    )
+    showNotice(`“${workDetailLabel(item)}” 세부 작업 1건을 시작했습니다.`, 'success')
     await refreshAfterMutation()
     await revealWorkItem(item.id)
   } catch (error) {
@@ -378,10 +377,10 @@ async function requestStart(item: OperationWorkItem) {
 async function requestComplete(item: OperationWorkItem) {
   const accepted = await globalAlert.confirm({
     variant: 'success',
-    title: '작업 완료를 확정할까요?',
+    title: '선택한 세부 작업을 완료할까요?',
     message:
-      '완료 처리 후 작업자는 상태를 되돌릴 수 없습니다. 실제 작업 결과와 대상 항목을 다시 확인해 주세요.',
-    confirmLabel: '작업 완료',
+      '선택한 workDetail 1건만 완료로 변경됩니다. 같은 workName의 다른 세부 작업은 현재 상태를 유지합니다. 실제 작업 결과와 대상 항목을 다시 확인해 주세요.',
+    confirmLabel: '세부 작업 완료',
     cancelLabel: '계속 작업',
     details: workItemDetails(item),
   })
@@ -392,15 +391,7 @@ async function requestComplete(item: OperationWorkItem) {
   try {
     const accessToken = await requireAccessToken()
     await completeWorkItem(accessToken, item.id)
-    if (auth.profile?.role === 'worker') {
-      filters.status = 'completed'
-    }
-    showNotice(
-      auth.profile?.role === 'worker'
-        ? '작업 완료를 기록했습니다. 완료 상태로 전환해 처리한 작업을 표시합니다.'
-        : '작업 완료를 기록했습니다.',
-      'success',
-    )
+    showNotice(`“${workDetailLabel(item)}” 세부 작업 1건을 완료했습니다.`, 'success')
     await refreshAfterMutation()
     await revealWorkItem(item.id)
   } catch (error) {
@@ -414,10 +405,10 @@ async function requestComplete(item: OperationWorkItem) {
 async function requestCancelStart(item: OperationWorkItem) {
   const reason = await globalAlert.prompt({
     variant: 'warning',
-    title: '잘못 시작한 작업을 취소합니다',
+    title: '선택한 세부 작업의 시작을 취소합니다',
     message:
-      '작업 상태는 미작업으로 돌아가지만 기존 시작과 관리자 취소 기록은 감사 이력에 남습니다.',
-    confirmLabel: '시작 취소',
+      '선택한 workDetail 1건만 미작업으로 돌아가며 기존 시작과 관리자 취소 기록은 감사 이력에 남습니다.',
+    confirmLabel: '세부 시작 취소',
     cancelLabel: '돌아가기',
     details: workItemDetails(item),
     prompt: {
@@ -497,7 +488,7 @@ onMounted(async () => {
       throw new Error('등록된 역할 정보를 확인할 수 없습니다.')
     }
 
-    filters.status = usesWorkerDetail.value ? 'not_started' : 'all'
+    filters.status = usesMobileOperations.value ? 'all' : 'not_started'
     await Promise.all([
       loadBays(),
       showsManagementOverview.value ? loadDashboard() : Promise.resolve(),
@@ -607,11 +598,11 @@ onBeforeUnmount(() => {
         :error-message="listError"
         :notice-message="noticeMessage"
         :notice-tone="noticeTone"
-        :title="usesWorkerDetail ? '상세 작업 찾기' : 'Bay 상세 운영'"
+        :title="usesMobileOperations ? '작업 그룹 선택' : '상세 작업 찾기'"
         :description="
-          usesWorkerDetail
-            ? '작업명과 품번을 검색하고 현재 가능한 다음 행동만 처리하세요.'
-            : '선택한 Bay의 작업 상태를 확인하고 잘못된 시작을 사유와 함께 취소할 수 있습니다.'
+          usesMobileOperations
+            ? '큰 작업명을 터치하면 세부 작업이 아래로 펼쳐집니다. 필요한 항목에서 작업을 처리하세요.'
+            : '작업명과 품번을 검색하고 현재 가능한 다음 행동만 처리하세요.'
         "
         @select-bay="chooseBay"
         @update-search="updateSearch"
