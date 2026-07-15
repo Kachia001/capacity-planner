@@ -1,5 +1,6 @@
 import type {
   BayOption,
+  CompletedWorkItemRestoreTarget,
   OperationsDashboardResponse,
   WorkItemSearchFilters,
   WorkItemSearchResponse,
@@ -80,6 +81,19 @@ export async function cancelWorkItemStart(accessToken: string, workItemId: numbe
     method: 'POST',
     headers: authorizationHeaders(accessToken),
     body: { reason },
+  })
+}
+
+export async function restoreCompletedWorkItem(
+  accessToken: string,
+  workItemId: number,
+  targetStatus: CompletedWorkItemRestoreTarget,
+  reason: string,
+) {
+  return await $fetch(`/api/work-items/${workItemId}/restore-completed`, {
+    method: 'POST',
+    headers: authorizationHeaders(accessToken),
+    body: { targetStatus, reason },
   })
 }
 

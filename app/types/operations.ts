@@ -1,9 +1,10 @@
 import type { AppRole } from '@/stores/auth'
 
 export type WorkItemStatus = 'not_started' | 'in_progress' | 'completed'
+export type CompletedWorkItemRestoreTarget = Exclude<WorkItemStatus, 'completed'>
 export type IssueStatus = 'open' | 'resolved'
 export type IssueSeverity = 'low' | 'medium' | 'high' | 'critical'
-export type WorkItemEventAction = 'start' | 'complete' | 'cancel_start' | 'void'
+export type WorkItemEventAction = 'start' | 'complete' | 'cancel_start' | 'restore' | 'void'
 
 export interface BayOption {
   id: string

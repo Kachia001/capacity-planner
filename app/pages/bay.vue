@@ -10,11 +10,13 @@ import {
   fetchBayWorkItems,
   fetchOperationsDashboard,
   getRequestErrorMessage,
+  restoreCompletedWorkItem,
   startWorkItem,
   voidWorkItem,
 } from '@/composables/useOperationsApi'
 import type {
   BayOption,
+  CompletedWorkItemRestoreTarget,
   OperationWorkItem,
   OperationsDashboardResponse,
   WorkItemSearchFilters,
@@ -435,6 +437,49 @@ async function requestCancelStart(item: OperationWorkItem) {
   }
 }
 
+async function requestRestoreCompleted(
+  item: OperationWorkItem,
+  targetStatus: CompletedWorkItemRestoreTarget,
+) {
+  const targetLabel = targetStatus === 'in_progress' ? '작업 중' : '대기'
+  const reason = await globalAlert.prompt({
+    variant: 'warning',
+    title: `완료 작업을 ${targetLabel} 상태로 변경합니다`,
+    message:
+      targetStatus === 'in_progress'
+        ? '완료 처리를 해제하고 기존 작업자와 시작 기록을 유지한 채 작업 중 상태로 되돌립니다. 기존 완료 이력과 이번 변경 사유는 감사 기록에 남습니다.'
+        : '완료와 시작 처리를 모두 해제하고 새로 시작할 수 있는 대기 상태로 되돌립니다. 기존 이력과 이번 변경 사유는 감사 기록에 남습니다.',
+    confirmLabel: `${targetLabel} 상태로 변경`,
+    cancelLabel: '돌아가기',
+    details: workItemDetails(item),
+    prompt: {
+      label: '상태 변경 사유',
+      placeholder: '예: 완료 처리 오류로 재작업 필요',
+      minLength: 3,
+      maxLength: 500,
+    },
+  })
+
+  if (!reason) return
+
+  mutationItemId.value = item.id
+  try {
+    const accessToken = await requireAccessToken()
+    await restoreCompletedWorkItem(accessToken, item.id, targetStatus, reason)
+    showNotice(
+      `“${workDetailLabel(item)}” 세부 작업을 ${targetLabel} 상태로 변경했습니다.`,
+      'success',
+    )
+    await refreshAfterMutation()
+    await revealWorkItem(item.id)
+  } catch (error) {
+    showNotice(getRequestErrorMessage(error, '완료 작업의 상태를 변경하지 못했습니다.'), 'error')
+    await loadWorkItems()
+  } finally {
+    mutationItemId.value = null
+  }
+}
+
 async function requestVoid(item: OperationWorkItem) {
   const reason = await globalAlert.prompt({
     variant: 'destructive',
@@ -612,6 +657,7 @@ onBeforeUnmount(() => {
         @start="requestStart"
         @complete="requestComplete"
         @cancel-start="requestCancelStart"
+        @restore-completed="requestRestoreCompleted"
         @void="requestVoid"
         @clear-focus="clearFocusedWorkItem"
         @load-more="loadMoreWorkItems"

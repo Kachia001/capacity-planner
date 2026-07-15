@@ -6,6 +6,7 @@ import {
   CircleOff,
   Layers3,
   Loader2,
+  Play,
   RotateCcw,
   ShieldAlert,
   UserRound,
@@ -14,7 +15,7 @@ import HighAltitudeBadge from '@/components/operations/HighAltitudeBadge.vue'
 import WorkStatusBadge from '@/components/operations/WorkStatusBadge.vue'
 import { Button } from '@/components/ui/button'
 import type { AppRole } from '@/stores/auth'
-import type { OperationWorkItem } from '@/types/operations'
+import type { CompletedWorkItemRestoreTarget, OperationWorkItem } from '@/types/operations'
 
 interface WorkItemGroup {
   key: string
@@ -42,6 +43,7 @@ const emit = defineEmits<{
   start: [item: OperationWorkItem]
   complete: [item: OperationWorkItem]
   cancelStart: [item: OperationWorkItem]
+  restoreCompleted: [item: OperationWorkItem, targetStatus: CompletedWorkItemRestoreTarget]
   void: [item: OperationWorkItem]
 }>()
 
@@ -162,6 +164,13 @@ function requestComplete(item: OperationWorkItem) {
 
 function requestCancelStart(item: OperationWorkItem) {
   emit('cancelStart', item)
+}
+
+function requestRestoreCompleted(
+  item: OperationWorkItem,
+  targetStatus: CompletedWorkItemRestoreTarget,
+) {
+  emit('restoreCompleted', item, targetStatus)
 }
 
 function requestVoid(item: OperationWorkItem) {
@@ -412,6 +421,44 @@ function requestVoid(item: OperationWorkItem) {
                 >
                   <RotateCcw class="size-4" /> 세부 시작 취소
                 </Button>
+                <div
+                  v-if="props.role === 'manager' && item.status === 'completed'"
+                  class="w-full rounded-xl border border-sky-200 bg-sky-50/80 p-3"
+                >
+                  <div class="flex items-center justify-between gap-3">
+                    <div>
+                      <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-sky-700">
+                        완료 상태 조정
+                      </p>
+                      <p class="mt-1 text-xs leading-5 text-sky-950">
+                        사유를 기록하고 이 세부 작업만 다시 활성화합니다.
+                      </p>
+                    </div>
+                    <Loader2
+                      v-if="props.mutationItemId === item.id"
+                      class="size-4 shrink-0 animate-spin text-sky-600"
+                    />
+                    <RotateCcw v-else class="size-4 shrink-0 text-sky-600" />
+                  </div>
+                  <div class="mt-3 grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      class="h-11 border-amber-300 bg-white px-2 text-xs font-bold text-amber-800 hover:bg-amber-50"
+                      :disabled="props.mutationItemId !== null"
+                      @click="requestRestoreCompleted(item, 'in_progress')"
+                    >
+                      <Play class="size-4" /> 작업 중으로
+                    </Button>
+                    <Button
+                      variant="outline"
+                      class="h-11 border-zinc-300 bg-white px-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50"
+                      :disabled="props.mutationItemId !== null"
+                      @click="requestRestoreCompleted(item, 'not_started')"
+                    >
+                      <RotateCcw class="size-4" /> 대기로
+                    </Button>
+                  </div>
+                </div>
                 <Button
                   v-if="item.status === 'not_started'"
                   class="h-12 min-w-32 flex-1 bg-emerald-700 px-4 text-white hover:bg-emerald-600"
@@ -437,7 +484,7 @@ function requestVoid(item: OperationWorkItem) {
                   다른 작업자가 이 세부 작업 진행 중
                 </span>
                 <span
-                  v-else
+                  v-else-if="item.status === 'completed' && props.role !== 'manager'"
                   class="inline-flex h-12 w-full items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-800"
                 >
                   세부 작업 완료됨

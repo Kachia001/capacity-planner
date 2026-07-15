@@ -14,12 +14,7 @@ import {
 } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import HighAltitudeBadge from '@/components/operations/HighAltitudeBadge.vue'
-import type {
-  DashboardEvent,
-  IssueSeverity,
-  OperationsDashboardResponse,
-  WorkItemEventAction,
-} from '@/types/operations'
+import type { DashboardEvent, IssueSeverity, OperationsDashboardResponse } from '@/types/operations'
 
 const props = defineProps<{
   dashboard: OperationsDashboardResponse | null
@@ -125,10 +120,22 @@ function formatDateTime(value: string | null) {
   }).format(new Date(value))
 }
 
-function eventPresentation(action: WorkItemEventAction) {
-  if (action === 'start') return { label: '작업 시작', class: 'bg-amber-100 text-amber-900' }
-  if (action === 'complete') return { label: '작업 완료', class: 'bg-emerald-100 text-emerald-900' }
-  if (action === 'cancel_start') return { label: '시작 취소', class: 'bg-sky-100 text-sky-900' }
+function eventPresentation(event: DashboardEvent) {
+  if (event.action === 'start') {
+    return { label: '작업 시작', class: 'bg-amber-100 text-amber-900' }
+  }
+  if (event.action === 'complete') {
+    return { label: '작업 완료', class: 'bg-emerald-100 text-emerald-900' }
+  }
+  if (event.action === 'cancel_start') {
+    return { label: '시작 취소', class: 'bg-sky-100 text-sky-900' }
+  }
+  if (event.action === 'restore') {
+    return {
+      label: event.toStatus === 'in_progress' ? '완료→작업 중' : '완료→대기',
+      class: 'bg-indigo-100 text-indigo-900',
+    }
+  }
   return { label: '작업 무효화', class: 'bg-red-100 text-red-900' }
 }
 
@@ -357,9 +364,9 @@ function eventActor(event: DashboardEvent) {
             >
               <span
                 class="mt-0.5 rounded-full px-2 py-1 text-[10px] font-bold"
-                :class="eventPresentation(event.action).class"
+                :class="eventPresentation(event).class"
               >
-                {{ eventPresentation(event.action).label }}
+                {{ eventPresentation(event).label }}
               </span>
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-sm font-semibold text-zinc-900">

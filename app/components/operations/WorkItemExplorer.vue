@@ -19,6 +19,7 @@ import WorkStatusBadge from '@/components/operations/WorkStatusBadge.vue'
 import type { AppRole } from '@/stores/auth'
 import type {
   BayOption,
+  CompletedWorkItemRestoreTarget,
   OperationWorkItem,
   WorkItemSearchFilters,
   WorkItemStatus,
@@ -53,6 +54,7 @@ const emit = defineEmits<{
   start: [item: OperationWorkItem]
   complete: [item: OperationWorkItem]
   cancelStart: [item: OperationWorkItem]
+  restoreCompleted: [item: OperationWorkItem, targetStatus: CompletedWorkItemRestoreTarget]
   void: [item: OperationWorkItem]
   clearFocus: []
   loadMore: []
@@ -100,6 +102,13 @@ function requestComplete(item: OperationWorkItem) {
 
 function requestCancelStart(item: OperationWorkItem) {
   emit('cancelStart', item)
+}
+
+function requestRestoreCompleted(
+  item: OperationWorkItem,
+  targetStatus: CompletedWorkItemRestoreTarget,
+) {
+  emit('restoreCompleted', item, targetStatus)
 }
 
 function requestVoid(item: OperationWorkItem) {
@@ -400,6 +409,7 @@ function severityLabel(item: OperationWorkItem) {
             @start="requestStart"
             @complete="requestComplete"
             @cancel-start="requestCancelStart"
+            @restore-completed="requestRestoreCompleted"
             @void="requestVoid"
           />
 
