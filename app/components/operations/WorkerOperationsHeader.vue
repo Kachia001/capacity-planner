@@ -27,16 +27,20 @@ const description = computed(() =>
     <div
       class="pointer-events-none absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(52,211,153,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(52,211,153,0.08)_1px,transparent_1px)] [background-size:28px_28px]"
     />
-    <div class="relative mx-auto w-full max-w-7xl px-4 py-9 sm:px-6 lg:px-8">
-      <div class="grid gap-7 lg:grid-cols-[minmax(0,1fr)_28rem] lg:items-end">
+    <div class="relative mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-9 lg:px-8">
+      <div class="grid gap-5 sm:gap-7 lg:grid-cols-[minmax(0,1fr)_28rem] lg:items-end">
         <div>
-          <p class="font-mono text-[11px] font-bold uppercase tracking-[0.26em] text-emerald-300">
+          <p
+            class="font-mono text-[9px] font-bold uppercase tracking-[0.24em] text-emerald-300 sm:text-[11px]"
+          >
             {{ eyebrow }}
           </p>
-          <h1 class="mt-3 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
+          <h1 class="mt-2.5 text-2xl font-semibold tracking-[-0.04em] sm:mt-3 sm:text-4xl">
             {{ title }}
           </h1>
-          <p class="mt-3 max-w-2xl text-sm leading-6 text-zinc-300">
+          <p
+            class="mt-2.5 max-w-2xl text-[13px] leading-5 text-zinc-300 sm:mt-3 sm:text-sm sm:leading-6"
+          >
             {{ description }}
           </p>
         </div>
@@ -44,22 +48,22 @@ const description = computed(() =>
         <div
           class="grid grid-cols-3 divide-x divide-zinc-700 overflow-hidden rounded-md border border-zinc-700 bg-zinc-900/90"
         >
-          <div class="p-4">
-            <SearchCheck class="size-5 text-emerald-300" />
-            <p class="mt-3 text-xs text-zinc-400">선택 가능 Bay</p>
-            <p class="mt-1 text-xl font-semibold tabular-nums">{{ props.bayCount }}</p>
+          <div class="p-3 sm:p-4">
+            <SearchCheck class="size-[18px] text-emerald-300 sm:size-5" />
+            <p class="mt-2 text-[10px] text-zinc-400 sm:mt-3 sm:text-xs">선택 가능 Bay</p>
+            <p class="mt-1 text-lg font-semibold tabular-nums sm:text-xl">{{ props.bayCount }}</p>
           </div>
-          <div class="p-4">
-            <UserRoundCheck class="size-5 text-amber-300" />
-            <p class="mt-3 text-xs text-zinc-400">상태 변경</p>
-            <p class="mt-1 text-sm font-semibold">
+          <div class="p-3 sm:p-4">
+            <UserRoundCheck class="size-[18px] text-amber-300 sm:size-5" />
+            <p class="mt-2 text-[10px] text-zinc-400 sm:mt-3 sm:text-xs">상태 변경</p>
+            <p class="mt-1 text-xs font-semibold sm:text-sm">
               {{ props.isAdmin ? '관리자 제어' : '순방향 전용' }}
             </p>
           </div>
-          <div class="p-4">
-            <ShieldCheck class="size-5 text-sky-300" />
-            <p class="mt-3 text-xs text-zinc-400">안전 구분</p>
-            <p class="mt-1 text-sm font-semibold">항상 표시</p>
+          <div class="p-3 sm:p-4">
+            <ShieldCheck class="size-[18px] text-sky-300 sm:size-5" />
+            <p class="mt-2 text-[10px] text-zinc-400 sm:mt-3 sm:text-xs">안전 구분</p>
+            <p class="mt-1 text-xs font-semibold sm:text-sm">항상 표시</p>
           </div>
         </div>
       </div>

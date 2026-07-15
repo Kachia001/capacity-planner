@@ -34,6 +34,7 @@ const emit = defineEmits<{
 }>()
 
 const issuesExpanded = ref(false)
+const detailsExpanded = ref(false)
 
 const issueTotal = computed(() => props.dashboard?.issues.length ?? 0)
 const visibleIssues = computed(() => {
@@ -104,6 +105,10 @@ function toggleIssuesExpanded() {
   issuesExpanded.value = !issuesExpanded.value
 }
 
+function toggleDetailsExpanded() {
+  detailsExpanded.value = !detailsExpanded.value
+}
+
 function refreshDashboard() {
   emit('refresh')
 }
@@ -141,9 +146,9 @@ function eventActor(event: DashboardEvent) {
 
 <template>
   <section class="border-b border-zinc-300 bg-[#edf2ee]">
-    <div class="mx-auto w-full max-w-[94rem] px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto w-full max-w-[94rem] px-3 py-4 sm:px-6 sm:py-8 lg:px-8">
       <header
-        class="relative overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 px-5 py-6 text-white shadow-[0_28px_80px_-54px_rgba(15,23,42,0.85)] sm:px-7"
+        class="relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-5 text-white shadow-[0_28px_80px_-54px_rgba(15,23,42,0.85)] sm:rounded-lg sm:px-7 sm:py-6"
       >
         <div class="absolute -right-20 -top-24 size-64 rounded-full bg-emerald-500/10 blur-3xl" />
         <div class="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -156,26 +161,33 @@ function eventActor(event: DashboardEvent) {
               />
               Operations control room
             </p>
-            <h1 class="mt-3 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
+            <h1 class="mt-3 text-2xl font-semibold tracking-[-0.04em] sm:text-4xl">
               전체 Bay 운영 현황
             </h1>
             <p class="mt-3 max-w-2xl text-sm leading-6 text-zinc-300">
               작업 상태 요약과 이슈·고소작업을 확인하고 필요한 작업으로 바로 이동합니다.
             </p>
           </div>
-          <div class="flex flex-wrap items-center gap-3">
-            <div class="rounded-md border border-zinc-700 bg-zinc-900 px-4 py-2.5">
+          <div
+            class="grid grid-cols-[minmax(0,1fr)_auto] items-stretch gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3"
+          >
+            <div
+              class="min-w-0 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 sm:rounded-md sm:px-4"
+            >
               <p class="text-[10px] uppercase tracking-[0.14em] text-zinc-500">Signed in</p>
-              <p class="mt-1 text-sm font-semibold text-zinc-100">{{ props.actorLabel }}</p>
+              <p class="mt-1 truncate text-sm font-semibold text-zinc-100">
+                {{ props.actorLabel }}
+              </p>
             </div>
             <Button
               variant="outline"
-              class="h-11 border-zinc-700 bg-zinc-900 px-4 text-white hover:bg-zinc-800 hover:text-white"
+              class="h-auto min-h-12 rounded-xl border-zinc-700 bg-zinc-900 px-3 text-white hover:bg-zinc-800 hover:text-white sm:h-11 sm:min-h-0 sm:rounded-md sm:px-4"
               :disabled="props.pending"
               @click="refreshDashboard"
             >
               <RefreshCw class="size-4" :class="props.pending ? 'animate-spin' : ''" />
-              {{ props.pending ? '동기화 중' : '새로고침' }}
+              <span class="hidden sm:inline">{{ props.pending ? '동기화 중' : '새로고침' }}</span>
+              <span class="sm:hidden">동기화</span>
             </Button>
           </div>
         </div>
@@ -188,29 +200,63 @@ function eventActor(event: DashboardEvent) {
         {{ props.errorMessage }}
       </div>
 
-      <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      <div class="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:gap-3 xl:grid-cols-6">
         <article
           v-for="kpi in kpis"
           :key="kpi.label"
-          class="rounded-md border p-4 shadow-sm"
+          class="rounded-xl border p-3 shadow-sm sm:rounded-md sm:p-4"
           :class="kpi.class"
         >
           <div class="flex items-start justify-between gap-3">
             <div>
               <p class="text-xs font-semibold opacity-65">{{ kpi.label }}</p>
-              <p class="mt-2 text-3xl font-semibold tabular-nums tracking-[-0.04em]">
+              <p
+                class="mt-1.5 text-2xl font-semibold tabular-nums tracking-[-0.04em] sm:mt-2 sm:text-3xl"
+              >
                 {{ kpi.value }}
               </p>
             </div>
-            <span class="flex size-9 items-center justify-center rounded-md" :class="kpi.iconClass">
+            <span
+              class="flex size-8 items-center justify-center rounded-md sm:size-9"
+              :class="kpi.iconClass"
+            >
               <component :is="kpi.icon" class="size-4" />
             </span>
           </div>
-          <p class="mt-4 text-[11px] font-medium opacity-60">{{ kpi.detail }}</p>
+          <p class="mt-2 text-[10px] font-medium opacity-60 sm:mt-4 sm:text-[11px]">
+            {{ kpi.detail }}
+          </p>
         </article>
       </div>
 
-      <div class="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+      <button
+        type="button"
+        class="mt-3 flex min-h-12 w-full items-center justify-between rounded-xl border border-zinc-300 bg-white px-4 text-left text-sm font-semibold text-zinc-800 shadow-sm transition active:bg-zinc-50 sm:mt-5"
+        :aria-expanded="detailsExpanded"
+        @click="toggleDetailsExpanded"
+      >
+        <span class="flex items-center gap-2">
+          관리 큐
+          <span
+            v-if="issueTotal"
+            class="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700"
+          >
+            이슈 {{ issueTotal }}건
+          </span>
+        </span>
+        <span class="flex items-center gap-2 text-xs font-medium text-zinc-500">
+          {{ detailsExpanded ? '접기' : '이슈·최근 활동 보기' }}
+          <ChevronDown
+            class="size-4 transition-transform"
+            :class="detailsExpanded ? 'rotate-180' : ''"
+          />
+        </span>
+      </button>
+
+      <div
+        v-if="detailsExpanded"
+        class="mt-3 grid gap-3 sm:mt-5 sm:gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]"
+      >
         <section class="overflow-hidden rounded-lg border border-zinc-300 bg-white shadow-sm">
           <header
             class="flex items-center justify-between gap-3 border-b border-zinc-200 px-5 py-4"

@@ -8,7 +8,7 @@ const auth = useAuthStore()
 
 const roleLabel = computed(() => {
   if (auth.profile?.role === 'admin') return 'Admin'
-  if (auth.profile?.role === 'manager') return '관리자'
+  if (auth.profile?.role === 'manager') return '운영 관리자'
   if (auth.profile?.role === 'worker') return '작업자'
   return ''
 })
@@ -24,12 +24,16 @@ async function signOut() {
 </script>
 
 <template>
-  <header class="border-b border-emerald-200/70 bg-white">
+  <header
+    class="sticky top-0 z-40 border-b border-emerald-200/70 bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur-xl"
+  >
     <div
-      class="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8"
+      class="mx-auto flex min-h-14 w-full max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:min-h-0 sm:px-6 sm:py-4 lg:px-8"
     >
       <NuxtLink to="/bay" class="flex min-w-0 flex-col">
-        <span class="truncate text-lg font-semibold tracking-tight">Capacity Planner</span>
+        <span class="truncate text-base font-semibold tracking-tight sm:text-lg"
+          >Capacity Planner</span
+        >
         <span class="hidden truncate text-xs font-medium text-muted-foreground sm:block"
           >Bay workload dashboard</span
         >
@@ -47,7 +51,11 @@ async function signOut() {
             >
               {{ auth.profile?.role === 'worker' ? '작업 실행' : '운영 현황' }}
             </NuxtLink>
-            <Badge v-if="roleLabel" variant="outline" class="hidden h-7 sm:inline-flex">
+            <Badge
+              v-if="roleLabel"
+              variant="outline"
+              class="inline-flex h-7 max-w-24 truncate border-emerald-200 bg-emerald-50 px-2 text-[10px] text-emerald-800 sm:max-w-none sm:text-xs"
+            >
               {{ roleLabel }}
             </Badge>
             <HeaderAdminAction v-if="auth.user && auth.isAdmin" />
@@ -57,11 +65,12 @@ async function signOut() {
               variant="secondary"
               size="sm"
               :disabled="auth.pending"
-              class="h-9 gap-2 rounded-md px-3"
+              :aria-label="`${roleLabel} 계정 로그아웃`"
+              class="size-10 gap-2 rounded-lg p-0 sm:h-9 sm:w-auto sm:px-3"
               @click="signOut"
             >
               <LogOut class="size-4 shrink-0 overflow-visible" />
-              로그아웃
+              <span class="hidden sm:inline">로그아웃</span>
             </Button>
           </div>
         </ClientOnly>
