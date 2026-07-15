@@ -19,6 +19,7 @@ export const workItemEventAction = pgEnum('work_item_event_action', [
   'complete',
   'cancel_start',
   'void',
+  'restore',
 ])
 export const issueStatus = pgEnum('issue_status', ['open', 'resolved'])
 export const issueSeverity = pgEnum('issue_severity', ['low', 'medium', 'high', 'critical'])
