@@ -24,6 +24,8 @@ logs
 !.env.example
 
 # Local data must never be committed
+backup/
+*.7z
 data/
 datasets/
 uploads/
