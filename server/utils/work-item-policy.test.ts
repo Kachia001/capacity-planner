@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { canCompleteWorkItem, canWorkerTransition, isSupervisor } from './work-item-policy'
+import {
+  canCompleteWorkItem,
+  canRestoreCompletedWorkItem,
+  canWorkerTransition,
+  isSupervisor,
+} from './work-item-policy'
 
 describe('work item state policy', () => {
   it('allows workers to move forward one state at a time', () => {
@@ -26,5 +31,12 @@ describe('work item state policy', () => {
     expect(isSupervisor('worker')).toBe(false)
     expect(canCompleteWorkItem('admin', 'admin-a', 'worker-a')).toBe(true)
     expect(canCompleteWorkItem('manager', 'manager-a', null)).toBe(true)
+  })
+
+  it('allows only supervisors to restore completed work to an active state', () => {
+    expect(canRestoreCompletedWorkItem('manager', 'in_progress')).toBe(true)
+    expect(canRestoreCompletedWorkItem('manager', 'not_started')).toBe(true)
+    expect(canRestoreCompletedWorkItem('admin', 'not_started')).toBe(true)
+    expect(canRestoreCompletedWorkItem('worker', 'in_progress')).toBe(false)
   })
 })
