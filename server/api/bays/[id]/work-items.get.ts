@@ -141,15 +141,7 @@ export default defineEventHandler(async event => {
     .from(workItems)
     .leftJoin(appUsers, eq(workItems.startedBy, appUsers.authUserId))
     .where(where)
-    .orderBy(
-      sql`CASE ${workItems.status}
-        WHEN 'not_started' THEN 0
-        WHEN 'in_progress' THEN 1
-        ELSE 2
-      END`,
-      asc(workItems.sortOrder),
-      asc(workItems.id),
-    )
+    .orderBy(asc(workItems.sortOrder), asc(workItems.id))
     .limit(limit + 1)
     .offset(cursor)
 
