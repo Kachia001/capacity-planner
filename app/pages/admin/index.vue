@@ -48,9 +48,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-[100rem] px-8 py-8 xl:px-10 xl:py-10">
+  <div>
     <section class="animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <div class="flex items-end justify-between gap-8">
+      <div class="flex flex-col lg:flex-row items-end justify-between gap-8">
         <div>
           <p class="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-[#718068]">
             Operations overview
