@@ -14,6 +14,7 @@ function parseWorkItemId(event: Parameters<typeof getRouterParam>[0]) {
 
 export default defineEventHandler(async event => {
   const { profile } = await requireAppUser(event, ['admin', 'manager', 'worker'])
+  await requireOperationOpen()
   const workItemId = parseWorkItemId(event)
   const db = useDb()
   const now = new Date()

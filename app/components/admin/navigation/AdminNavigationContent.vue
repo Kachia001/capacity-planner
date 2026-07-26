@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Boxes, ChevronRight, PanelsTopLeft, UsersRound } from '@lucide/vue'
+import { BellRing, Boxes, ChevronRight, PanelsTopLeft, UsersRound } from '@lucide/vue'
 
 const route = useRoute()
 
@@ -15,6 +15,12 @@ const navigation = [
     caption: 'Account control',
     to: '/admin/accounts',
     icon: UsersRound,
+  },
+  {
+    label: 'Telegram 알림',
+    caption: 'Issue notifications',
+    to: '/admin/notifications',
+    icon: BellRing,
   },
 ]
 

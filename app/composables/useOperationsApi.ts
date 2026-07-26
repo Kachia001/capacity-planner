@@ -1,7 +1,10 @@
 import type {
   BayOption,
   CompletedWorkItemRestoreTarget,
+  IssueSeverity,
+  OperationStatus,
   OperationsDashboardResponse,
+  WorkItemIssueResponse,
   WorkItemSearchFilters,
   WorkItemSearchResponse,
 } from '@/types/operations'
@@ -37,6 +40,27 @@ export async function fetchBayOptions(accessToken: string) {
 
 export async function fetchOperationsDashboard(accessToken: string) {
   return await $fetch<OperationsDashboardResponse>('/api/dashboard/bays', {
+    headers: authorizationHeaders(accessToken),
+  })
+}
+
+export async function fetchOperationStatus(accessToken: string) {
+  return await $fetch<OperationStatus>('/api/operations/status', {
+    headers: authorizationHeaders(accessToken),
+  })
+}
+
+export async function openOperation(accessToken: string, extensionMinutes?: number) {
+  return await $fetch<OperationStatus>('/api/operations/open', {
+    method: 'POST',
+    headers: authorizationHeaders(accessToken),
+    body: extensionMinutes === undefined ? {} : { extensionMinutes },
+  })
+}
+
+export async function closeOperation(accessToken: string) {
+  return await $fetch<OperationStatus>('/api/operations/close', {
+    method: 'POST',
     headers: authorizationHeaders(accessToken),
   })
 }
@@ -102,5 +126,18 @@ export async function voidWorkItem(accessToken: string, workItemId: number, reas
     method: 'POST',
     headers: authorizationHeaders(accessToken),
     body: { reason },
+  })
+}
+
+export async function reportWorkItemIssue(
+  accessToken: string,
+  workItemId: number,
+  severity: IssueSeverity,
+  note: string,
+) {
+  return await $fetch<WorkItemIssueResponse>(`/api/work-items/${workItemId}/issue`, {
+    method: 'POST',
+    headers: authorizationHeaders(accessToken),
+    body: { severity, note },
   })
 }

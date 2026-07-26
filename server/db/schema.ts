@@ -82,6 +82,28 @@ export const bays = pgTable('bays', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+export const operationControl = pgTable('operation_control', {
+  id: integer('id').primaryKey().default(1),
+  manualClosedUntil: timestamp('manual_closed_until', { withTimezone: true }),
+  extensionUntil: timestamp('extension_until', { withTimezone: true }),
+  updatedBy: uuid('updated_by').references(() => appUsers.authUserId, {
+    onDelete: 'set null',
+  }),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const telegramSettings = pgTable('telegram_settings', {
+  id: integer('id').primaryKey().default(1),
+  botTokenEncrypted: text('bot_token_encrypted').notNull(),
+  botTokenLastFour: text('bot_token_last_four').notNull(),
+  chatId: text('chat_id').notNull(),
+  isEnabled: boolean('is_enabled').notNull().default(true),
+  updatedBy: uuid('updated_by').references(() => appUsers.authUserId, {
+    onDelete: 'set null',
+  }),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const workItems = pgTable(
   'work_items',
   {
@@ -102,6 +124,9 @@ export const workItems = pgTable(
     issueStatus: issueStatus('issue_status'),
     issueSeverity: issueSeverity('issue_severity'),
     issueCreatedAt: timestamp('issue_created_at', { withTimezone: true }),
+    issueCreatedBy: uuid('issue_created_by').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
     issueResolvedAt: timestamp('issue_resolved_at', { withTimezone: true }),
     issueResolvedBy: uuid('issue_resolved_by').references(() => appUsers.authUserId, {
       onDelete: 'set null',
@@ -183,6 +208,8 @@ export type AppUser = typeof appUsers.$inferSelect
 export type NewAppUser = typeof appUsers.$inferInsert
 export type Bay = typeof bays.$inferSelect
 export type NewBay = typeof bays.$inferInsert
+export type OperationControl = typeof operationControl.$inferSelect
+export type TelegramSettings = typeof telegramSettings.$inferSelect
 export type BayTemplate = typeof bayTemplates.$inferSelect
 export type NewBayTemplate = typeof bayTemplates.$inferInsert
 export type BayTemplateRow = typeof bayTemplateRows.$inferSelect

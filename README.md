@@ -36,6 +36,16 @@ NUXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 
 `NUXT_PUBLIC_SUPABASE_ANON_KEY`와 `NUXT_SUPABASE_SERVICE_ROLE_KEY`는 로컬 Supabase 출력값에서 채웁니다.
 
+Telegram 이슈 알림을 사용할 때는 Bot Token 암호화용 서버 키를 32자 이상의 임의 문자열로
+설정합니다.
+
+```env
+NUXT_TELEGRAM_ENCRYPTION_KEY=replace-with-a-random-secret-at-least-32-characters
+```
+
+이 값은 Telegram Bot Token이 아니며 관리자 화면이나 클라이언트로 전달되지 않습니다. 환경별로
+동일한 값을 유지해야 기존에 암호화한 Bot Token을 계속 복호화할 수 있습니다.
+
 ## Database
 
 스키마는 `server/db/schema.ts`에 있습니다.
@@ -44,6 +54,7 @@ NUXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 - `bay_template_rows`: 템플릿에 속한 초기 작업 행
 - `bays`: 실제 운영 BAY 메타데이터
 - `work_items`: BAY에 속한 독립 작업 행, 품번, 품명, 업체, 이슈, 완료 상태, 작업자, 작업일
+- `telegram_settings`: 암호화된 Telegram Bot Token과 대상 Chat ID를 보관하는 단일 설정
 
 템플릿으로 BAY를 생성할 때 `bay_template_rows`를 `work_items`로 복사합니다. 생성된 BAY와 템플릿은 이후 서로 독립적으로 편집합니다.
 
@@ -51,9 +62,21 @@ Drizzle 명령:
 
 ```bash
 pnpm db:generate
+pnpm db:migrate
 pnpm db:push
 pnpm db:studio
 ```
+
+## Telegram Issue Notifications
+
+- Manager, Worker, Admin은 작업 상세에서 심각도와 내용을 입력해 이슈를 등록할 수 있습니다.
+- 이슈는 PostgreSQL에 먼저 저장하고, 활성화된 Telegram 설정이 있으면 Bot API로 즉시
+  전송합니다.
+- Telegram 전송 실패가 현장 이슈 저장을 롤백하지는 않으며 화면에서 전송 실패를 별도로
+  안내합니다.
+- Bot Token, Chat ID, 알림 활성화 여부는 `/admin/notifications`에서 Admin만 관리할 수
+  있습니다.
+- Bot Token은 AES-GCM으로 암호화되며 조회 API는 원문 대신 마지막 네 자리만 반환합니다.
 
 ## Development Policies
 

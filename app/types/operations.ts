@@ -5,6 +5,19 @@ export type CompletedWorkItemRestoreTarget = Exclude<WorkItemStatus, 'completed'
 export type IssueStatus = 'open' | 'resolved'
 export type IssueSeverity = 'low' | 'medium' | 'high' | 'critical'
 export type WorkItemEventAction = 'start' | 'complete' | 'cancel_start' | 'restore' | 'void'
+export type OperationMode = 'regular' | 'extension' | 'closed'
+
+export interface OperationStatus {
+  isOpen: boolean
+  mode: OperationMode
+  isWithinRegularHours: boolean
+  regularOpensAt: string
+  regularClosesAt: string
+  closesAt: string | null
+  nextRegularOpensAt: string | null
+  serverNow: string
+  timeZone: 'Asia/Seoul'
+}
 
 export interface BayOption {
   id: string
@@ -54,6 +67,24 @@ export interface WorkItemSearchResponse {
   items: OperationWorkItem[]
   total: number
   nextCursor: string | null
+}
+
+export type TelegramDeliveryResult =
+  | { status: 'sent' }
+  | { status: 'skipped'; reason: 'not_configured' | 'disabled' }
+  | { status: 'failed'; message: string }
+
+export interface WorkItemIssueResponse {
+  item: {
+    id: number
+    hasIssue: boolean
+    issueStatus: IssueStatus | null
+    issueSeverity: IssueSeverity | null
+    issueNote: string | null
+    issueCreatedAt: string | null
+    version: number
+  }
+  telegram: TelegramDeliveryResult
 }
 
 export interface DashboardBaySummary extends BayOption {

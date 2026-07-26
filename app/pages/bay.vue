@@ -1,15 +1,21 @@
 <script setup lang="ts">
 import { Loader2, ShieldAlert } from '@lucide/vue'
 import ManagementOverview from '@/components/operations/ManagementOverview.vue'
+import IssueReportDialog from '@/components/operations/IssueReportDialog.vue'
+import OperationControlPanel from '@/components/operations/OperationControlPanel.vue'
 import WorkerOperationsHeader from '@/components/operations/WorkerOperationsHeader.vue'
 import WorkItemExplorer from '@/components/operations/WorkItemExplorer.vue'
 import {
   cancelWorkItemStart,
+  closeOperation,
   completeWorkItem,
   fetchBayOptions,
   fetchBayWorkItems,
+  fetchOperationStatus,
   fetchOperationsDashboard,
   getRequestErrorMessage,
+  openOperation,
+  reportWorkItemIssue,
   restoreCompletedWorkItem,
   startWorkItem,
   voidWorkItem,
@@ -17,10 +23,12 @@ import {
 import type {
   BayOption,
   CompletedWorkItemRestoreTarget,
+  OperationStatus,
   OperationWorkItem,
   OperationsDashboardResponse,
   WorkItemSearchFilters,
   WorkItemStatus,
+  IssueSeverity,
 } from '@/types/operations'
 
 definePageMeta({ middleware: 'auth-client' })
@@ -48,6 +56,13 @@ const listError = ref<string | null>(null)
 const mutationItemId = ref<number | null>(null)
 const noticeMessage = ref<string | null>(null)
 const noticeTone = ref<'success' | 'error'>('success')
+const operationStatus = ref<OperationStatus | null>(null)
+const operationPending = ref(false)
+const operationMutationPending = ref(false)
+const operationError = ref<string | null>(null)
+const issueReportItem = ref<OperationWorkItem | null>(null)
+const issueReportPending = ref(false)
+const issueReportError = ref<string | null>(null)
 const filters = reactive<WorkItemSearchFilters>({
   q: '',
   status: 'all',
@@ -88,6 +103,7 @@ const routeTargetWorkItem = computed(() => {
 const selectedBay = computed(
   () => bays.value.find(candidate => candidate.id === selectedBayId.value) ?? null,
 )
+const isOperationOpen = computed(() => operationStatus.value?.isOpen === true)
 
 async function requireAccessToken() {
   const accessToken = await auth.getAccessToken()
@@ -129,6 +145,62 @@ async function loadDashboard() {
   } finally {
     dashboardPending.value = false
   }
+}
+
+async function loadOperationControl() {
+  operationPending.value = true
+  operationError.value = null
+
+  try {
+    const accessToken = await requireAccessToken()
+    operationStatus.value = await fetchOperationStatus(accessToken)
+  } catch (error) {
+    operationError.value = getRequestErrorMessage(error, '운영 상태를 불러오지 못했습니다.')
+  } finally {
+    operationPending.value = false
+  }
+}
+
+async function requestOperationOpen(extensionMinutes?: number) {
+  operationMutationPending.value = true
+  operationError.value = null
+
+  try {
+    const accessToken = await requireAccessToken()
+    operationStatus.value = await openOperation(accessToken, extensionMinutes)
+    showNotice('작업 운영을 Open했습니다.', 'success')
+  } catch (error) {
+    operationError.value = getRequestErrorMessage(error, '운영을 Open하지 못했습니다.')
+  } finally {
+    operationMutationPending.value = false
+  }
+}
+
+async function requestOperationClose() {
+  operationMutationPending.value = true
+  operationError.value = null
+
+  try {
+    const accessToken = await requireAccessToken()
+    operationStatus.value = await closeOperation(accessToken)
+    showNotice('작업 운영을 Close했습니다.', 'success')
+  } catch (error) {
+    operationError.value = getRequestErrorMessage(error, '운영을 Close하지 못했습니다.')
+  } finally {
+    operationMutationPending.value = false
+  }
+}
+
+function handleOperationExpired() {
+  if (operationStatus.value) {
+    operationStatus.value = {
+      ...operationStatus.value,
+      isOpen: false,
+      mode: 'closed',
+      closesAt: null,
+    }
+  }
+  void loadOperationControl()
 }
 
 async function loadWorkItems(append = false) {
@@ -346,6 +418,11 @@ async function refreshAfterMutation() {
 }
 
 async function requestStart(item: OperationWorkItem) {
+  if (!isOperationOpen.value) {
+    showNotice('현재 운영이 Close 상태라 작업을 시작할 수 없습니다.', 'error')
+    return
+  }
+
   const accepted = await globalAlert.confirm({
     variant: 'warning',
     title: '선택한 세부 작업을 시작할까요?',
@@ -377,6 +454,11 @@ async function requestStart(item: OperationWorkItem) {
 }
 
 async function requestComplete(item: OperationWorkItem) {
+  if (!isOperationOpen.value) {
+    showNotice('현재 운영이 Close 상태라 작업을 완료할 수 없습니다.', 'error')
+    return
+  }
+
   const accepted = await globalAlert.confirm({
     variant: 'success',
     title: '선택한 세부 작업을 완료할까요?',
@@ -513,8 +595,60 @@ async function requestVoid(item: OperationWorkItem) {
   }
 }
 
+function openIssueReport(item: OperationWorkItem) {
+  issueReportError.value = null
+  issueReportItem.value = item
+}
+
+function closeIssueReport() {
+  if (!issueReportPending.value) {
+    issueReportItem.value = null
+    issueReportError.value = null
+  }
+}
+
+async function submitIssueReport(severity: IssueSeverity, note: string) {
+  const item = issueReportItem.value
+  if (!item) return
+
+  issueReportPending.value = true
+  issueReportError.value = null
+  mutationItemId.value = item.id
+
+  try {
+    const accessToken = await requireAccessToken()
+    const response = await reportWorkItemIssue(accessToken, item.id, severity, note)
+    issueReportItem.value = null
+
+    if (response.telegram.status === 'sent') {
+      showNotice('이슈를 등록하고 Telegram으로 전송했습니다.', 'success')
+    } else if (response.telegram.status === 'failed') {
+      showNotice('이슈는 등록했지만 Telegram 전송에 실패했습니다. 관리자에게 알려주세요.', 'error')
+    } else {
+      showNotice(
+        response.telegram.reason === 'disabled'
+          ? '이슈를 등록했습니다. Telegram 알림은 현재 비활성화 상태입니다.'
+          : '이슈를 등록했습니다. Telegram 연동은 아직 설정되지 않았습니다.',
+        'success',
+      )
+    }
+
+    await refreshAfterMutation()
+    await revealWorkItem(item.id)
+  } catch (error) {
+    issueReportError.value = getRequestErrorMessage(error, '이슈를 등록하지 못했습니다.')
+  } finally {
+    mutationItemId.value = null
+    issueReportPending.value = false
+  }
+}
+
 async function refreshAll() {
-  await Promise.all([loadDashboard(), selectedBayId.value ? loadWorkItems() : Promise.resolve()])
+  await Promise.all([
+    loadDashboard(),
+    loadOperationControl(),
+    selectedBayId.value ? loadWorkItems() : Promise.resolve(),
+  ])
 }
 
 function findRouteBay(target: string | null) {
@@ -536,6 +670,7 @@ onMounted(async () => {
     filters.status = usesMobileOperations.value ? 'all' : 'not_started'
     await Promise.all([
       loadBays(),
+      loadOperationControl(),
       showsManagementOverview.value ? loadDashboard() : Promise.resolve(),
     ])
 
@@ -557,6 +692,7 @@ onMounted(async () => {
         } else if (selectedBayId.value) {
           void loadWorkItems()
         }
+        void loadOperationControl()
       }
     }, 30000)
   } catch (error) {
@@ -626,6 +762,21 @@ onBeforeUnmount(() => {
       @refresh="refreshAll"
     />
 
+    <div class="bg-[#f5f8f5] px-4 pt-4 sm:px-6">
+      <OperationControlPanel
+        class="mx-auto max-w-7xl"
+        :status="operationStatus"
+        :can-manage="isSupervisor"
+        :pending="operationPending"
+        :mutation-pending="operationMutationPending"
+        :error-message="operationError"
+        @open="requestOperationOpen"
+        @close="requestOperationClose"
+        @refresh="loadOperationControl"
+        @expired="handleOperationExpired"
+      />
+    </div>
+
     <div id="work-item-explorer" class="scroll-mt-4 bg-[#f5f8f5]">
       <WorkItemExplorer
         :role="auth.profile.role"
@@ -639,6 +790,7 @@ onBeforeUnmount(() => {
         :pending="listPending"
         :loading-more="loadingMore"
         :mutation-item-id="mutationItemId"
+        :operation-open="isOperationOpen"
         :focused-work-item-id="focusedWorkItemId"
         :error-message="listError"
         :notice-message="noticeMessage"
@@ -658,11 +810,22 @@ onBeforeUnmount(() => {
         @complete="requestComplete"
         @cancel-start="requestCancelStart"
         @restore-completed="requestRestoreCompleted"
+        @report-issue="openIssueReport"
         @void="requestVoid"
         @clear-focus="clearFocusedWorkItem"
         @load-more="loadMoreWorkItems"
         @retry="retryWorkItems"
       />
     </div>
+
+    <IssueReportDialog
+      v-if="issueReportItem && selectedBay"
+      :item="issueReportItem"
+      :bay-code="selectedBay.code"
+      :pending="issueReportPending"
+      :error-message="issueReportError"
+      @submit="submitIssueReport"
+      @close="closeIssueReport"
+    />
   </template>
 </template>

@@ -5,6 +5,7 @@ import {
   ChevronDown,
   CircleOff,
   Loader2,
+  LockKeyhole,
   MapPin,
   RefreshCw,
   RotateCcw,
@@ -37,6 +38,7 @@ const props = defineProps<{
   pending: boolean
   loadingMore: boolean
   mutationItemId: number | null
+  operationOpen: boolean
   focusedWorkItemId: number | null
   errorMessage: string | null
   noticeMessage: string | null
@@ -55,6 +57,7 @@ const emit = defineEmits<{
   complete: [item: OperationWorkItem]
   cancelStart: [item: OperationWorkItem]
   restoreCompleted: [item: OperationWorkItem, targetStatus: CompletedWorkItemRestoreTarget]
+  reportIssue: [item: OperationWorkItem]
   void: [item: OperationWorkItem]
   clearFocus: []
   loadMore: []
@@ -113,6 +116,10 @@ function requestRestoreCompleted(
 
 function requestVoid(item: OperationWorkItem) {
   emit('void', item)
+}
+
+function requestReportIssue(item: OperationWorkItem) {
+  emit('reportIssue', item)
 }
 
 function requestClearFocus() {
@@ -317,6 +324,15 @@ function severityLabel(item: OperationWorkItem) {
       </div>
 
       <div
+        v-if="!props.operationOpen"
+        role="status"
+        class="flex items-center gap-2 border-b border-zinc-300 bg-zinc-100 px-4 py-3 text-sm font-semibold text-zinc-700 sm:px-6"
+      >
+        <LockKeyhole class="size-4 shrink-0" />
+        현재 운영이 Close 상태입니다. 목록 조회는 가능하지만 작업 시작·완료는 할 수 없습니다.
+      </div>
+
+      <div
         v-if="props.focusedWorkItemId"
         role="status"
         class="flex flex-col gap-3 border-b border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950 sm:flex-row sm:items-center sm:justify-between sm:px-6"
@@ -405,11 +421,13 @@ function severityLabel(item: OperationWorkItem) {
             :current-user-id="props.currentUserId"
             :items="props.items"
             :mutation-item-id="props.mutationItemId"
+            :operation-open="props.operationOpen"
             :focused-work-item-id="props.focusedWorkItemId"
             @start="requestStart"
             @complete="requestComplete"
             @cancel-start="requestCancelStart"
             @restore-completed="requestRestoreCompleted"
+            @report-issue="requestReportIssue"
             @void="requestVoid"
           />
 
@@ -543,6 +561,15 @@ function severityLabel(item: OperationWorkItem) {
 
                   <div class="flex flex-wrap justify-end gap-2">
                     <Button
+                      v-if="!item.hasIssue || item.issueStatus === 'resolved'"
+                      variant="outline"
+                      class="h-10 border-red-200 px-3 text-red-700 hover:bg-red-50"
+                      :disabled="props.mutationItemId !== null"
+                      @click="requestReportIssue(item)"
+                    >
+                      <AlertCircle class="size-4" /> 이슈 등록
+                    </Button>
+                    <Button
                       v-if="props.role === 'admin'"
                       variant="destructive"
                       class="h-10 px-3"
@@ -563,7 +590,7 @@ function severityLabel(item: OperationWorkItem) {
                     <Button
                       v-if="item.status === 'not_started'"
                       class="h-10 bg-emerald-700 px-4 text-white hover:bg-emerald-600"
-                      :disabled="props.mutationItemId !== null"
+                      :disabled="props.mutationItemId !== null || !props.operationOpen"
                       @click="requestStart(item)"
                     >
                       <Loader2
@@ -575,7 +602,7 @@ function severityLabel(item: OperationWorkItem) {
                     <Button
                       v-else-if="item.status === 'in_progress' && canComplete(item)"
                       class="h-10 bg-zinc-950 px-4 text-white hover:bg-zinc-800"
-                      :disabled="props.mutationItemId !== null"
+                      :disabled="props.mutationItemId !== null || !props.operationOpen"
                       @click="requestComplete(item)"
                     >
                       <Loader2

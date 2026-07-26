@@ -36,6 +36,7 @@ const props = defineProps<{
   currentUserId: string
   items: OperationWorkItem[]
   mutationItemId: number | null
+  operationOpen: boolean
   focusedWorkItemId: number | null
 }>()
 
@@ -44,6 +45,7 @@ const emit = defineEmits<{
   complete: [item: OperationWorkItem]
   cancelStart: [item: OperationWorkItem]
   restoreCompleted: [item: OperationWorkItem, targetStatus: CompletedWorkItemRestoreTarget]
+  reportIssue: [item: OperationWorkItem]
   void: [item: OperationWorkItem]
 }>()
 
@@ -175,6 +177,10 @@ function requestRestoreCompleted(
 
 function requestVoid(item: OperationWorkItem) {
   emit('void', item)
+}
+
+function requestReportIssue(item: OperationWorkItem) {
+  emit('reportIssue', item)
 }
 </script>
 
@@ -404,6 +410,15 @@ function requestVoid(item: OperationWorkItem) {
 
               <div class="mt-4 flex flex-wrap gap-2">
                 <Button
+                  v-if="!item.hasIssue || item.issueStatus === 'resolved'"
+                  variant="outline"
+                  class="h-12 min-w-28 flex-1 border-red-200 bg-white px-3 text-red-700 hover:bg-red-50"
+                  :disabled="props.mutationItemId !== null"
+                  @click="requestReportIssue(item)"
+                >
+                  <AlertCircle class="size-4" /> 이슈 등록
+                </Button>
+                <Button
                   v-if="props.role === 'admin'"
                   variant="destructive"
                   class="h-12 min-w-24 flex-1 px-3"
@@ -462,7 +477,7 @@ function requestVoid(item: OperationWorkItem) {
                 <Button
                   v-if="item.status === 'not_started'"
                   class="h-12 min-w-32 flex-1 bg-emerald-700 px-4 text-white hover:bg-emerald-600"
-                  :disabled="props.mutationItemId !== null"
+                  :disabled="props.mutationItemId !== null || !props.operationOpen"
                   @click="requestStart(item)"
                 >
                   <Loader2 v-if="props.mutationItemId === item.id" class="size-4 animate-spin" />
@@ -471,7 +486,7 @@ function requestVoid(item: OperationWorkItem) {
                 <Button
                   v-else-if="item.status === 'in_progress' && canComplete(item)"
                   class="h-12 min-w-32 flex-1 bg-[#171b18] px-4 text-white hover:bg-[#2d352e]"
-                  :disabled="props.mutationItemId !== null"
+                  :disabled="props.mutationItemId !== null || !props.operationOpen"
                   @click="requestComplete(item)"
                 >
                   <Loader2 v-if="props.mutationItemId === item.id" class="size-4 animate-spin" />
