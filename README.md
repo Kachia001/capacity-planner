@@ -41,6 +41,7 @@ Telegram 이슈 알림을 사용할 때는 Bot Token 암호화용 서버 키를 
 
 ```env
 NUXT_TELEGRAM_ENCRYPTION_KEY=replace-with-a-random-secret-at-least-32-characters
+NUXT_TELEGRAM_API_BASE_URL=https://api.telegram.org
 ```
 
 이 값은 Telegram Bot Token이 아니며 관리자 화면이나 클라이언트로 전달되지 않습니다. 환경별로
@@ -55,6 +56,7 @@ NUXT_TELEGRAM_ENCRYPTION_KEY=replace-with-a-random-secret-at-least-32-characters
 - `bays`: 실제 운영 BAY 메타데이터
 - `work_items`: BAY에 속한 독립 작업 행, 품번, 품명, 업체, 이슈, 완료 상태, 작업자, 작업일
 - `telegram_settings`: 암호화된 Telegram Bot Token과 대상 Chat ID를 보관하는 단일 설정
+- `telegram_delivery_outbox`: Telegram 이슈 알림의 대기·재시도·성공·실패 상태
 
 템플릿으로 BAY를 생성할 때 `bay_template_rows`를 `work_items`로 복사합니다. 생성된 BAY와 템플릿은 이후 서로 독립적으로 편집합니다.
 
@@ -74,9 +76,21 @@ pnpm db:studio
   전송합니다.
 - Telegram 전송 실패가 현장 이슈 저장을 롤백하지는 않으며 화면에서 전송 실패를 별도로
   안내합니다.
+- 이슈 저장 트랜잭션에서 Outbox를 함께 생성하고, Nitro 예약 작업이 매분 전송을 처리합니다.
+- 일시적인 네트워크 오류, Telegram 429 또는 5xx 응답은 최대 5회까지 자동 재시도합니다.
+- 영구 실패와 전송 제외 항목은 관리자 화면에서 원인을 확인하고 다시 처리할 수 있습니다.
 - Bot Token, Chat ID, 알림 활성화 여부는 `/admin/notifications`에서 Admin만 관리할 수
   있습니다.
 - Bot Token은 AES-GCM으로 암호화되며 조회 API는 원문 대신 마지막 네 자리만 반환합니다.
+
+로컬 통합 테스트용 Telegram Mock 서버는 아래 명령으로 실행합니다.
+
+```bash
+pnpm test:telegram:mock
+```
+
+Mock 서버를 사용할 때만 `NUXT_TELEGRAM_API_BASE_URL=http://127.0.0.1:3123`으로
+설정합니다. 운영 환경에서는 기본 Telegram API 주소를 유지합니다.
 
 ## Development Policies
 
