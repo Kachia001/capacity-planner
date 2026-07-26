@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Boxes, LogOut } from '@lucide/vue'
+import AdminMobileNavigation from '@/components/admin/navigation/AdminMobileNavigation.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -30,6 +31,10 @@ const pageContext = computed(() => {
     return { eyebrow: 'ACCESS CONTROL', title: '계정관리' }
   }
 
+  if (route.path.startsWith('/admin/notifications')) {
+    return { eyebrow: 'NOTIFICATION SETTINGS', title: 'Telegram 알림' }
+  }
+
   return { eyebrow: 'BAY MANAGEMENT', title: 'Bay 조회' }
 })
 
@@ -58,33 +63,35 @@ onMounted(() => {
 
 <template>
   <header
-    class="sticky top-0 z-30 flex h-20 shrink-0 items-center justify-between gap-3 border-b border-[#d9ddd5] bg-[#fafbf8]/95 px-4 backdrop-blur-xl sm:px-6 lg:px-8 xl:px-10"
+    class="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-[#d9ddd5] bg-[#fafbf8]/95 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl sm:h-20 sm:px-6 lg:px-8 xl:px-10"
   >
     <NuxtLink
       to="/admin"
-      class="relative flex h-24 shrink-0 items-center gap-3 border-b border-white/[0.07] px-7"
+      class="relative flex min-w-0 shrink items-center gap-2.5 sm:shrink-0 sm:gap-3"
     >
       <span
-        class="flex size-10 items-center justify-center rounded-lg bg-[#c5f277] text-[#111512] shadow-[0_0_32px_rgba(197,242,119,0.16)]"
+        class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#c5f277] text-[#111512] shadow-[0_0_32px_rgba(197,242,119,0.16)] sm:size-10"
       >
         <Boxes class="size-5" stroke-width="2.2" />
       </span>
-      <span>
-        <strong class="block text-[15px] font-semibold tracking-[-0.02em]">
+      <span class="min-w-0">
+        <strong class="block truncate text-[13px] font-semibold tracking-[-0.02em] sm:text-[15px]">
           Capacity Planner
         </strong>
-        <span class="mt-1 block font-mono text-[9px] uppercase tracking-[0.22em] text-zinc-500">
+        <span
+          class="mt-1 hidden font-mono text-[9px] uppercase tracking-[0.22em] text-zinc-500 sm:block"
+        >
           Admin console
         </span>
       </span>
     </NuxtLink>
 
-    <section class="flex justify-center gap-2">
-      <div class="min-w-0">
+    <section class="ml-auto flex min-w-0 items-center justify-end gap-3">
+      <div class="hidden min-w-0 text-right sm:block lg:text-left">
         <p class="font-mono text-[9px] font-semibold tracking-[0.2em] text-[#6d756c]">
           {{ pageContext.eyebrow }}
         </p>
-        <h1 class="mt-1 truncate text-lg font-semibold tracking-[-0.025em]">
+        <h1 class="mt-1 truncate text-lg font-semibold tracking-tight">
           {{ pageContext.title }}
         </h1>
       </div>
@@ -116,6 +123,8 @@ onMounted(() => {
           <LogOut class="size-3.5" /> 로그아웃
         </button>
       </div>
+
+      <AdminMobileNavigation />
     </section>
   </header>
 </template>

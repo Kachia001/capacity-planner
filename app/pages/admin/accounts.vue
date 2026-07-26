@@ -197,7 +197,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-[100rem] px-8 py-8 xl:px-10 xl:py-10">
+  <div class="mx-auto w-full max-w-[100rem] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-10 xl:py-10">
     <section class="animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div
         class="flex flex-col items-stretch gap-6 xl:flex-row xl:items-end xl:justify-between xl:gap-8"
@@ -206,7 +206,7 @@ onMounted(() => {
           <p class="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-[#718068]">
             Identity & access control
           </p>
-          <h2 class="mt-2 text-[2rem] font-semibold tracking-[-0.045em] text-[#171a17]">
+          <h2 class="mt-2 text-2xl font-semibold tracking-[-0.045em] text-[#171a17] sm:text-[2rem]">
             접속 계정과 직책을 관리합니다.
           </h2>
           <p class="mt-2 max-w-2xl text-sm leading-6 text-[#727970]">
@@ -237,7 +237,7 @@ onMounted(() => {
       </div>
 
       <form
-        class="mt-8 rounded-xl border border-[#d9ddd5] bg-[#fafbf8] p-5 shadow-[0_10px_30px_rgba(24,35,26,0.035)]"
+        class="mt-6 rounded-xl border border-[#d9ddd5] bg-[#fafbf8] p-4 shadow-[0_10px_30px_rgba(24,35,26,0.035)] sm:mt-8 sm:p-5"
         @submit.prevent="applyFilters"
       >
         <div class="flex items-center justify-between border-b border-[#e2e5df] pb-4">
@@ -253,7 +253,7 @@ onMounted(() => {
         </div>
 
         <div
-          class="mt-4 grid grid-cols-2 items-end gap-4 xl:grid-cols-[minmax(22rem,1fr)_14rem_auto]"
+          class="mt-4 grid grid-cols-1 items-end gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(22rem,1fr)_14rem_auto]"
         >
           <label class="grid gap-2 text-xs font-semibold text-[#50574f]">
             ID / 이름
@@ -281,7 +281,7 @@ onMounted(() => {
               <option value="worker">작업자</option>
             </select>
           </label>
-          <div class="col-span-2 flex items-center justify-end gap-2 xl:col-span-1">
+          <div class="grid grid-cols-2 gap-2 sm:col-span-2 xl:col-span-1">
             <button
               type="button"
               class="inline-flex h-11 items-center gap-2 rounded-lg border border-[#d6dad2] bg-white px-4 text-xs font-semibold text-[#60675f] transition hover:border-[#aeb5ab] hover:text-[#171a17]"
@@ -347,7 +347,7 @@ onMounted(() => {
         </div>
 
         <form
-          class="mt-5 grid grid-cols-2 items-end gap-4 xl:grid-cols-[1fr_1fr_0.8fr_1fr_auto]"
+          class="mt-5 grid grid-cols-1 items-end gap-4 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_0.8fr_1fr_auto]"
           @submit.prevent="createAccount"
         >
           <label class="grid gap-2 text-xs font-semibold text-[#50574f]">
@@ -392,7 +392,7 @@ onMounted(() => {
           <button
             type="submit"
             :disabled="!canCreate"
-            class="col-span-2 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#171b18] px-5 text-xs font-semibold text-white transition hover:bg-[#2d352e] disabled:cursor-not-allowed disabled:opacity-40 xl:col-span-1"
+            class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#171b18] px-5 text-xs font-semibold text-white transition hover:bg-[#2d352e] disabled:cursor-not-allowed disabled:opacity-40 sm:col-span-2 xl:col-span-1"
           >
             <Loader2 v-if="createPending" class="size-3.5 animate-spin" />
             <UserPlus v-else class="size-3.5" /> 생성
@@ -455,56 +455,104 @@ onMounted(() => {
           <Search class="size-7 text-[#879084]" />
           <p class="mt-3 text-sm font-semibold">조건에 맞는 계정이 없습니다.</p>
         </div>
-        <table v-else class="w-full border-collapse text-left">
-          <thead class="bg-[#f7f8f5]">
-            <tr class="border-b border-[#e0e4dd]">
-              <th class="w-[25%] px-5 py-3.5 text-[11px] font-semibold text-[#697067]">
-                로그인 ID
-              </th>
-              <th class="w-[23%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">이름</th>
-              <th class="w-[18%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">직책</th>
-              <th class="w-[18%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">등록일</th>
-              <th class="w-[16%] px-5 py-3.5 text-right text-[11px] font-semibold text-[#697067]">
-                상태
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-[#eceee9]">
-            <tr
-              v-for="account in filteredAccounts"
-              :key="account.id"
-              class="transition hover:bg-[#fbfcf9]"
-            >
-              <td class="px-5 py-4">
-                <p class="font-mono text-xs font-bold text-[#20251f]">
-                  {{ getLoginId(account.email) }}
-                </p>
-                <p class="mt-1 text-[10px] text-[#969d94]">{{ account.email }}</p>
-              </td>
-              <td class="px-4 py-4 text-sm font-medium text-[#353b34]">
-                {{ account.displayName || '이름 미등록' }}
-              </td>
-              <td class="px-4 py-4">
+        <template v-else>
+          <div class="divide-y divide-[#eceee9] md:hidden">
+            <article v-for="account in filteredAccounts" :key="account.id" class="p-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="break-all font-mono text-sm font-bold text-[#20251f]">
+                    {{ getLoginId(account.email) }}
+                  </p>
+                  <p class="mt-1 break-all text-[10px] leading-4 text-[#969d94]">
+                    {{ account.email }}
+                  </p>
+                </div>
                 <span
-                  class="inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold"
+                  class="inline-flex shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold"
                   :class="getRoleClass(account.role)"
                 >
                   {{ getRoleLabel(account.role) }}
                 </span>
-              </td>
-              <td class="px-4 py-4 font-mono text-[11px] text-[#6f766d]">
-                {{ formatCreatedAt(account.createdAt) }}
-              </td>
-              <td class="px-5 py-4 text-right">
-                <span
-                  class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700"
+              </div>
+              <dl class="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-[#e0e4dd]">
+                <div class="bg-white px-3 py-3">
+                  <dt class="text-[9px] text-[#8b9289]">이름</dt>
+                  <dd class="mt-1 text-sm font-semibold text-[#353b34]">
+                    {{ account.displayName || '이름 미등록' }}
+                  </dd>
+                </div>
+                <div class="bg-white px-3 py-3">
+                  <dt class="text-[9px] text-[#8b9289]">등록일</dt>
+                  <dd class="mt-1 font-mono text-[11px] text-[#6f766d]">
+                    {{ formatCreatedAt(account.createdAt) }}
+                  </dd>
+                </div>
+              </dl>
+              <p
+                class="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700"
+              >
+                <span class="size-1.5 rounded-full bg-emerald-500" /> 활성
+              </p>
+            </article>
+          </div>
+
+          <div class="hidden overflow-x-auto md:block">
+            <table class="w-full min-w-[48rem] border-collapse text-left">
+              <thead class="bg-[#f7f8f5]">
+                <tr class="border-b border-[#e0e4dd]">
+                  <th class="w-[25%] px-5 py-3.5 text-[11px] font-semibold text-[#697067]">
+                    로그인 ID
+                  </th>
+                  <th class="w-[23%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">이름</th>
+                  <th class="w-[18%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">직책</th>
+                  <th class="w-[18%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">
+                    등록일
+                  </th>
+                  <th
+                    class="w-[16%] px-5 py-3.5 text-right text-[11px] font-semibold text-[#697067]"
+                  >
+                    상태
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[#eceee9]">
+                <tr
+                  v-for="account in filteredAccounts"
+                  :key="account.id"
+                  class="transition hover:bg-[#fbfcf9]"
                 >
-                  <span class="size-1.5 rounded-full bg-emerald-500" /> 활성
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  <td class="px-5 py-4">
+                    <p class="font-mono text-xs font-bold text-[#20251f]">
+                      {{ getLoginId(account.email) }}
+                    </p>
+                    <p class="mt-1 text-[10px] text-[#969d94]">{{ account.email }}</p>
+                  </td>
+                  <td class="px-4 py-4 text-sm font-medium text-[#353b34]">
+                    {{ account.displayName || '이름 미등록' }}
+                  </td>
+                  <td class="px-4 py-4">
+                    <span
+                      class="inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold"
+                      :class="getRoleClass(account.role)"
+                    >
+                      {{ getRoleLabel(account.role) }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-4 font-mono text-[11px] text-[#6f766d]">
+                    {{ formatCreatedAt(account.createdAt) }}
+                  </td>
+                  <td class="px-5 py-4 text-right">
+                    <span
+                      class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700"
+                    >
+                      <span class="size-1.5 rounded-full bg-emerald-500" /> 활성
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </template>
       </section>
     </section>
   </div>

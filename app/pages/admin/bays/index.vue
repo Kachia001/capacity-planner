@@ -140,7 +140,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-[100rem] px-8 py-8 xl:px-10 xl:py-10">
+  <div class="mx-auto w-full max-w-[100rem] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-10 xl:py-10">
     <section class="animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div
         class="flex flex-col items-stretch gap-6 xl:flex-row xl:items-end xl:justify-between xl:gap-8"
@@ -149,7 +149,7 @@ onMounted(() => {
           <p class="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-[#718068]">
             Bay registry / live operations
           </p>
-          <h2 class="mt-2 text-[2rem] font-semibold tracking-[-0.045em] text-[#171a17]">
+          <h2 class="mt-2 text-2xl font-semibold tracking-[-0.045em] text-[#171a17] sm:text-[2rem]">
             Bay를 조회하고 운영 상태를 확인합니다.
           </h2>
           <p class="mt-2 max-w-2xl text-sm leading-6 text-[#727970]">
@@ -186,7 +186,7 @@ onMounted(() => {
       </div>
 
       <form
-        class="mt-8 rounded-xl border border-[#d9ddd5] bg-[#fafbf8] p-5 shadow-[0_10px_30px_rgba(24,35,26,0.035)]"
+        class="mt-6 rounded-xl border border-[#d9ddd5] bg-[#fafbf8] p-4 shadow-[0_10px_30px_rgba(24,35,26,0.035)] sm:mt-8 sm:p-5"
         @submit.prevent="applyFilters"
       >
         <div class="flex items-center justify-between border-b border-[#e2e5df] pb-4">
@@ -200,7 +200,7 @@ onMounted(() => {
         </div>
 
         <div
-          class="mt-4 grid grid-cols-2 items-end gap-4 xl:grid-cols-[minmax(18rem,1.4fr)_minmax(11rem,0.7fr)_minmax(11rem,0.7fr)_auto]"
+          class="mt-4 grid grid-cols-1 items-end gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(18rem,1.4fr)_minmax(11rem,0.7fr)_minmax(11rem,0.7fr)_auto]"
         >
           <label class="grid gap-2 text-xs font-semibold text-[#50574f]">
             Bay 코드 / 설명
@@ -243,7 +243,7 @@ onMounted(() => {
             </select>
           </label>
 
-          <div class="col-span-2 flex items-center justify-end gap-2 xl:col-span-1">
+          <div class="grid grid-cols-2 gap-2 sm:col-span-2 xl:col-span-1">
             <button
               type="button"
               class="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#d6dad2] bg-white px-4 text-xs font-semibold text-[#60675f] transition hover:border-[#aeb5ab] hover:text-[#171a17]"
@@ -261,17 +261,17 @@ onMounted(() => {
         </div>
       </form>
 
-      <div class="my-5 flex items-center justify-between">
-        <div class="flex items-center gap-2">
+      <div class="my-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="grid grid-cols-2 gap-2 sm:flex sm:items-center">
           <NuxtLink
             to="/admin/bays/new"
-            class="inline-flex h-10 items-center gap-2 rounded-lg bg-[#bdea70] px-4 text-xs font-bold text-[#172014] shadow-[0_8px_18px_rgba(100,130,61,0.13)] transition hover:bg-[#c8f480]"
+            class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#bdea70] px-3 text-xs font-bold text-[#172014] shadow-[0_8px_18px_rgba(100,130,61,0.13)] transition hover:bg-[#c8f480] sm:h-10 sm:px-4"
           >
             <Plus class="size-4" /> Bay 생성
           </NuxtLink>
           <NuxtLink
             to="/admin/bay-templates/new"
-            class="inline-flex h-10 items-center gap-2 rounded-lg border border-[#cdd2c9] bg-white px-4 text-xs font-semibold text-[#414840] transition hover:border-[#949d91] hover:bg-[#fafbf8]"
+            class="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#cdd2c9] bg-white px-3 text-center text-xs font-semibold text-[#414840] transition hover:border-[#949d91] hover:bg-[#fafbf8] sm:h-10 sm:px-4"
           >
             <FilePlus2 class="size-4" /> Bay Template 생성
           </NuxtLink>
@@ -279,7 +279,7 @@ onMounted(() => {
 
         <button
           type="button"
-          class="inline-flex h-9 items-center gap-2 rounded-md px-3 text-xs font-semibold text-[#697067] transition hover:bg-white hover:text-[#171a17] disabled:opacity-50"
+          class="inline-flex h-10 items-center justify-center gap-2 self-end rounded-md px-3 text-xs font-semibold text-[#697067] transition hover:bg-white hover:text-[#171a17] disabled:opacity-50"
           :disabled="refreshing"
           @click="loadBays(true)"
         >
@@ -348,115 +348,197 @@ onMounted(() => {
           </p>
         </div>
 
-        <div v-else class="overflow-x-auto">
-          <table class="w-full min-w-[64rem] border-collapse text-left">
-            <thead class="bg-[#f7f8f5]">
-              <tr class="border-b border-[#e0e4dd]">
-                <th class="w-[19%] px-5 py-3.5 text-[11px] font-semibold text-[#697067]">
-                  Bay 정보
-                </th>
-                <th class="w-[11%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">
-                  운영 상태
-                </th>
-                <th class="w-[25%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">
-                  작업 진행률
-                </th>
-                <th class="w-[16%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">
-                  작업 현황
-                </th>
-                <th class="w-[9%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">
-                  이슈 / 인원
-                </th>
-                <th class="w-[13%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">
-                  최근 활동
-                </th>
-                <th class="w-[7%] px-5 py-3.5 text-right text-[11px] font-semibold text-[#697067]">
-                  상세
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-[#eceee9]">
-              <tr
-                v-for="bay in filteredBays"
-                :key="bay.id"
-                class="group transition hover:bg-[#fbfcf9]"
-              >
-                <td class="px-5 py-4 align-middle">
-                  <p class="font-mono text-[13px] font-bold tracking-[-0.01em] text-[#1d241c]">
-                    {{ bay.code }}
-                  </p>
-                  <p class="mt-1 max-w-[17rem] truncate text-xs text-[#858c83]">
+        <template v-else>
+          <div class="divide-y divide-[#eceee9] md:hidden">
+            <article v-for="bay in filteredBays" :key="bay.id" class="p-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="break-all font-mono text-sm font-bold text-[#1d241c]">{{ bay.code }}</p>
+                  <p class="mt-1 line-clamp-2 text-xs leading-5 text-[#858c83]">
                     {{ bay.description || '등록된 설명이 없습니다.' }}
                   </p>
-                </td>
-                <td class="px-4 py-4 align-middle">
-                  <span
-                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold"
-                    :class="getBayStateClass(bay)"
-                  >
-                    <span class="size-1.5 rounded-full bg-current opacity-75" />
-                    {{ getBayStateLabel(bay) }}
-                  </span>
-                </td>
-                <td class="px-4 py-4 align-middle">
-                  <div class="flex items-center justify-between gap-3">
-                    <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-[#e9ece6]">
-                      <div
-                        class="h-full rounded-full bg-[#7da554] transition-all duration-500"
-                        :style="{ width: `${bay.completionRate}%` }"
-                      />
-                    </div>
-                    <span
-                      class="w-10 text-right font-mono text-[11px] font-semibold text-[#495147]"
-                    >
-                      {{ bay.completionRate }}%
-                    </span>
-                  </div>
-                  <p class="mt-1.5 text-[10px] text-[#949b92]">
-                    완료 {{ bay.completed }} / 전체 {{ bay.total }}
-                  </p>
-                </td>
-                <td class="px-4 py-4 align-middle">
-                  <div class="flex items-center gap-3 text-[11px]">
-                    <span class="text-[#777e75]"
-                      >대기 <strong class="ml-1 text-[#30362f]">{{ bay.notStarted }}</strong></span
-                    >
-                    <span class="text-amber-700"
-                      >진행 <strong class="ml-1">{{ bay.inProgress }}</strong></span
-                    >
-                    <span class="text-emerald-700"
-                      >완료 <strong class="ml-1">{{ bay.completed }}</strong></span
-                    >
-                  </div>
-                </td>
-                <td class="px-4 py-4 align-middle">
-                  <p class="text-[11px] text-[#737a71]">
+                </div>
+                <span
+                  class="inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold"
+                  :class="getBayStateClass(bay)"
+                >
+                  <span class="size-1.5 rounded-full bg-current opacity-75" />
+                  {{ getBayStateLabel(bay) }}
+                </span>
+              </div>
+
+              <div class="mt-4">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-semibold text-[#495147]">작업 진행률</span>
+                  <strong class="font-mono text-[#293328]">{{ bay.completionRate }}%</strong>
+                </div>
+                <div class="mt-2 h-2 overflow-hidden rounded-full bg-[#e9ece6]">
+                  <div
+                    class="h-full rounded-full bg-[#7da554]"
+                    :style="{ width: `${bay.completionRate}%` }"
+                  />
+                </div>
+                <p class="mt-1.5 text-[10px] text-[#949b92]">
+                  완료 {{ bay.completed }} / 전체 {{ bay.total }}
+                </p>
+              </div>
+
+              <dl class="mt-4 grid grid-cols-3 overflow-hidden rounded-lg border border-[#e0e4dd]">
+                <div class="border-r border-[#e0e4dd] px-3 py-2.5">
+                  <dt class="text-[9px] text-[#8b9289]">대기</dt>
+                  <dd class="mt-1 font-mono text-sm font-bold">{{ bay.notStarted }}</dd>
+                </div>
+                <div class="border-r border-[#e0e4dd] px-3 py-2.5">
+                  <dt class="text-[9px] text-amber-700">진행</dt>
+                  <dd class="mt-1 font-mono text-sm font-bold text-amber-700">
+                    {{ bay.inProgress }}
+                  </dd>
+                </div>
+                <div class="px-3 py-2.5">
+                  <dt class="text-[9px] text-emerald-700">완료</dt>
+                  <dd class="mt-1 font-mono text-sm font-bold text-emerald-700">
+                    {{ bay.completed }}
+                  </dd>
+                </div>
+              </dl>
+
+              <div class="mt-4 flex items-center justify-between gap-3">
+                <div class="min-w-0 text-[10px] leading-5 text-[#737a71]">
+                  <p>
                     이슈
-                    <strong :class="bay.openIssues ? 'text-red-700' : 'text-[#30362f]'">{{
+                    <strong :class="bay.openIssues ? 'text-red-700' : ''">{{
                       bay.openIssues
                     }}</strong>
-                    <span class="mx-1 text-[#c0c5bd]">/</span>
-                    인원 <strong class="text-[#30362f]">{{ bay.activeWorkers }}</strong>
+                    · 작업 인원 <strong>{{ bay.activeWorkers }}</strong>
                   </p>
-                </td>
-                <td class="px-4 py-4 align-middle">
-                  <p class="font-mono text-[10px] text-[#697067]">
-                    {{ formatActivity(bay.lastActivityAt) }}
+                  <p class="truncate font-mono text-[#8b9289]">
+                    최근 활동 {{ formatActivity(bay.lastActivityAt) }}
                   </p>
-                </td>
-                <td class="px-5 py-4 text-right align-middle">
-                  <NuxtLink
-                    :to="{ path: '/bay', query: { targetBay: bay.code } }"
-                    :aria-label="`${bay.code} 상세 운영 보기`"
-                    class="inline-flex size-8 items-center justify-center rounded-md border border-transparent text-[#7a8278] transition group-hover:border-[#d8ddd4] group-hover:bg-white group-hover:text-[#263022]"
+                </div>
+                <NuxtLink
+                  :to="{ path: '/bay', query: { targetBay: bay.code } }"
+                  :aria-label="`${bay.code} 상세 운영 보기`"
+                  class="inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-[#d8ddd4] bg-white text-[#526348]"
+                >
+                  <ArrowUpRight class="size-4" />
+                </NuxtLink>
+              </div>
+            </article>
+          </div>
+
+          <div class="hidden overflow-x-auto md:block">
+            <table class="w-full min-w-[64rem] border-collapse text-left">
+              <thead class="bg-[#f7f8f5]">
+                <tr class="border-b border-[#e0e4dd]">
+                  <th class="w-[19%] px-5 py-3.5 text-[11px] font-semibold text-[#697067]">
+                    Bay 정보
+                  </th>
+                  <th class="w-[11%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">
+                    운영 상태
+                  </th>
+                  <th class="w-[25%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">
+                    작업 진행률
+                  </th>
+                  <th class="w-[16%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">
+                    작업 현황
+                  </th>
+                  <th class="w-[9%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">
+                    이슈 / 인원
+                  </th>
+                  <th class="w-[13%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">
+                    최근 활동
+                  </th>
+                  <th
+                    class="w-[7%] px-5 py-3.5 text-right text-[11px] font-semibold text-[#697067]"
                   >
-                    <ArrowUpRight class="size-4" />
-                  </NuxtLink>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                    상세
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[#eceee9]">
+                <tr
+                  v-for="bay in filteredBays"
+                  :key="bay.id"
+                  class="group transition hover:bg-[#fbfcf9]"
+                >
+                  <td class="px-5 py-4 align-middle">
+                    <p class="font-mono text-[13px] font-bold tracking-[-0.01em] text-[#1d241c]">
+                      {{ bay.code }}
+                    </p>
+                    <p class="mt-1 max-w-[17rem] truncate text-xs text-[#858c83]">
+                      {{ bay.description || '등록된 설명이 없습니다.' }}
+                    </p>
+                  </td>
+                  <td class="px-4 py-4 align-middle">
+                    <span
+                      class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold"
+                      :class="getBayStateClass(bay)"
+                    >
+                      <span class="size-1.5 rounded-full bg-current opacity-75" />
+                      {{ getBayStateLabel(bay) }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-4 align-middle">
+                    <div class="flex items-center justify-between gap-3">
+                      <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-[#e9ece6]">
+                        <div
+                          class="h-full rounded-full bg-[#7da554] transition-all duration-500"
+                          :style="{ width: `${bay.completionRate}%` }"
+                        />
+                      </div>
+                      <span
+                        class="w-10 text-right font-mono text-[11px] font-semibold text-[#495147]"
+                      >
+                        {{ bay.completionRate }}%
+                      </span>
+                    </div>
+                    <p class="mt-1.5 text-[10px] text-[#949b92]">
+                      완료 {{ bay.completed }} / 전체 {{ bay.total }}
+                    </p>
+                  </td>
+                  <td class="px-4 py-4 align-middle">
+                    <div class="flex items-center gap-3 text-[11px]">
+                      <span class="text-[#777e75]"
+                        >대기
+                        <strong class="ml-1 text-[#30362f]">{{ bay.notStarted }}</strong></span
+                      >
+                      <span class="text-amber-700"
+                        >진행 <strong class="ml-1">{{ bay.inProgress }}</strong></span
+                      >
+                      <span class="text-emerald-700"
+                        >완료 <strong class="ml-1">{{ bay.completed }}</strong></span
+                      >
+                    </div>
+                  </td>
+                  <td class="px-4 py-4 align-middle">
+                    <p class="text-[11px] text-[#737a71]">
+                      이슈
+                      <strong :class="bay.openIssues ? 'text-red-700' : 'text-[#30362f]'">{{
+                        bay.openIssues
+                      }}</strong>
+                      <span class="mx-1 text-[#c0c5bd]">/</span>
+                      인원 <strong class="text-[#30362f]">{{ bay.activeWorkers }}</strong>
+                    </p>
+                  </td>
+                  <td class="px-4 py-4 align-middle">
+                    <p class="font-mono text-[10px] text-[#697067]">
+                      {{ formatActivity(bay.lastActivityAt) }}
+                    </p>
+                  </td>
+                  <td class="px-5 py-4 text-right align-middle">
+                    <NuxtLink
+                      :to="{ path: '/bay', query: { targetBay: bay.code } }"
+                      :aria-label="`${bay.code} 상세 운영 보기`"
+                      class="inline-flex size-8 items-center justify-center rounded-md border border-transparent text-[#7a8278] transition group-hover:border-[#d8ddd4] group-hover:bg-white group-hover:text-[#263022]"
+                    >
+                      <ArrowUpRight class="size-4" />
+                    </NuxtLink>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </template>
       </section>
     </section>
   </div>

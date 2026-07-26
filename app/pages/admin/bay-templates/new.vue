@@ -141,7 +141,7 @@ onMounted(loadTemplates)
   <main class="min-h-full bg-[#edf2ee] pb-28 text-zinc-950">
     <header class="border-b border-zinc-300 bg-[#f8faf7]">
       <div class="mx-auto w-full max-w-[92rem] px-4 py-6 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
           <NuxtLink
             to="/admin/bays"
             class="inline-flex items-center gap-2 text-sm font-semibold text-zinc-600 hover:text-zinc-950"

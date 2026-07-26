@@ -68,7 +68,7 @@ async function signOut() {
       </SheetDescription>
 
       <div class="relative shrink-0 border-t border-white/[0.07] px-5 py-4">
-        <div class="flex min-w-0 items-center justify-between gap-3">
+        <div class="flex min-w-0 items-center justify-between gap-3 pr-11">
           <div class="min-w-0">
             <p class="truncate text-xs font-semibold text-zinc-200">{{ loginId }}</p>
             <p class="mt-1 text-[10px] text-zinc-500">{{ roleLabel }}</p>
@@ -87,15 +87,15 @@ async function signOut() {
 
       <AdminNavigationContent />
 
-      <!--      <SheetClose as-child>-->
-      <!--        <button-->
-      <!--          type="button"-->
-      <!--          class="absolute right-4 top-7 z-10 flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.05] text-zinc-300 transition hover:bg-white/10 hover:text-white"-->
-      <!--          aria-label="내비게이션 닫기"-->
-      <!--        >-->
-      <!--          <X class="size-5" />-->
-      <!--        </button>-->
-      <!--      </SheetClose>-->
+      <SheetClose as-child>
+        <button
+          type="button"
+          class="absolute right-4 top-3 z-10 flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.05] text-zinc-300 transition hover:bg-white/10 hover:text-white"
+          aria-label="내비게이션 닫기"
+        >
+          <X class="size-5" />
+        </button>
+      </SheetClose>
     </SheetContent>
   </Sheet>
 </template>

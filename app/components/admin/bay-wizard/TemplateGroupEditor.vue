@@ -12,6 +12,20 @@ import {
   Trash2,
   Wrench,
 } from '@lucide/vue'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import type { TemplateGroupDraft, TemplateItemDraft } from '@/types/template'
 
 const groups = defineModel<TemplateGroupDraft[]>('groups', { required: true })
@@ -198,258 +212,238 @@ function moveItem(group: TemplateGroupDraft, item: TemplateItemDraft, offset: -1
   group.items.splice(nextIndex, 0, moved)
   normalizeOrder()
 }
+
+function updateWorkNo(value: string | null | undefined) {
+  if (!selectedGroup.value) return
+  selectedGroup.value.workNo = value === null || value === '' ? null : Number(value)
+}
+
+function updateHighAltitude(item: TemplateItemDraft, value: boolean | 'indeterminate') {
+  item.isHighAltitude = value === true
+}
 </script>
 
 <template>
   <div
-    class="overflow-hidden rounded-md border border-zinc-300 bg-[#f8faf8] shadow-[0_16px_50px_-36px_rgba(15,23,42,0.55)]"
+    class="flex flex-col gap-3 border-b border-zinc-300 bg-zinc-950 px-4 py-3 text-white sm:flex-row sm:items-center sm:justify-between"
+  >
+    <div>
+      <p class="font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-300">
+        Template workbench
+      </p>
+      <p class="mt-1 text-sm font-medium text-zinc-100">
+        작업 그룹 {{ groups.length }}개 · 상세 작업
+        {{ groups.reduce((total, group) => total + group.items.length, 0) }}개
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <label class="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
+        <Search
+          class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
+        />
+        <span class="sr-only">작업 그룹 검색</span>
+        <Input
+          v-model="searchQuery"
+          type="search"
+          placeholder="작업명, 품번 검색"
+          class="h-10 border-zinc-700 bg-zinc-900 pl-9 text-white placeholder:text-zinc-500"
+        />
+      </label>
+      <Button class="h-10" @click="addGroup">
+        <Plus />
+        그룹 추가
+      </Button>
+    </div>
+  </div>
+
+  <div
+    v-if="groups.length === 0"
+    class="flex min-h-80 flex-col items-center justify-center px-6 py-12 text-center"
   >
     <div
-      class="flex flex-col gap-3 border-b border-zinc-300 bg-zinc-950 px-4 py-3 text-white sm:flex-row sm:items-center sm:justify-between"
+      class="flex size-14 items-center justify-center rounded-full border border-dashed border-emerald-500 bg-emerald-50 text-emerald-700"
     >
-      <div>
-        <p class="font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-300">
-          Template workbench
-        </p>
-        <p class="mt-1 text-sm font-medium text-zinc-100">
-          작업 그룹 {{ groups.length }}개 · 상세 작업
-          {{ groups.reduce((total, group) => total + group.items.length, 0) }}개
-        </p>
-      </div>
+      <Boxes class="size-6" />
+    </div>
+    <h3 class="mt-5 text-lg font-semibold text-zinc-950">아직 작업 그룹이 없습니다.</h3>
+    <p class="mt-2 max-w-sm text-sm leading-6 text-zinc-600">
+      workName을 기준으로 첫 그룹을 추가하고, 그룹 안에 상세 작업을 구성하세요.
+    </p>
+    <Button class="mt-5 h-10" @click="addGroup"> <Plus /> 첫 그룹 추가 </Button>
+  </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <label class="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
-          <Search
-            class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500"
-          />
-          <span class="sr-only">작업 그룹 검색</span>
-          <input
-            v-model="searchQuery"
-            type="search"
-            placeholder="작업명, 품번 검색"
-            class="h-10 w-full rounded-sm border border-zinc-700 bg-zinc-900 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20"
-          />
-        </label>
-        <button
-          type="button"
-          class="inline-flex h-10 items-center justify-center gap-2 rounded-sm bg-emerald-400 px-3 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-          @click="addGroup"
+  <div v-else class="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[17rem_minmax(0,1fr)]">
+    <aside
+      class="flex min-h-0 flex-col border-b border-zinc-300 bg-[#eef2ee] lg:max-h-none lg:border-b-0 lg:border-r"
+    >
+      <div class="flex items-center justify-between border-b border-zinc-300 px-4 py-3">
+        <span
+          class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-600"
         >
-          <Plus class="size-4" />
-          그룹 추가
-        </button>
+          <ListFilter class="size-4" /> Group outline
+        </span>
+        <span class="font-mono text-xs text-zinc-500">
+          {{ filteredGroups.length }}/{{ groups.length }}
+        </span>
       </div>
-    </div>
 
-    <div
-      v-if="groups.length === 0"
-      class="flex min-h-80 flex-col items-center justify-center px-6 py-12 text-center"
-    >
-      <div
-        class="flex size-14 items-center justify-center rounded-full border border-dashed border-emerald-500 bg-emerald-50 text-emerald-700"
-      >
-        <Boxes class="size-6" />
-      </div>
-      <h3 class="mt-5 text-lg font-semibold text-zinc-950">아직 작업 그룹이 없습니다.</h3>
-      <p class="mt-2 max-w-sm text-sm leading-6 text-zinc-600">
-        workName을 기준으로 첫 그룹을 추가하고, 그룹 안에 상세 작업을 구성하세요.
-      </p>
-      <button
-        type="button"
-        class="mt-5 inline-flex h-10 items-center gap-2 rounded-sm bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800"
-        @click="addGroup"
-      >
-        <Plus class="size-4" /> 첫 그룹 추가
-      </button>
-    </div>
-
-    <div v-else class="grid min-h-[34rem] lg:grid-cols-[17rem_minmax(0,1fr)]">
-      <aside class="border-b border-zinc-300 bg-[#eef2ee] lg:border-b-0 lg:border-r">
-        <div class="flex items-center justify-between border-b border-zinc-300 px-4 py-3">
+      <div class="p-2 overflow-y-auto flex-1 min-h-0">
+        <Button
+          v-for="group in filteredGroups"
+          :key="group.clientId"
+          variant="ghost"
+          class="group mb-1 h-auto w-full justify-start gap-3 rounded-sm border px-3 py-3 text-left whitespace-normal"
+          :class="
+            selectedGroup?.clientId === group.clientId
+              ? 'border-zinc-950 bg-zinc-950 text-white shadow-sm'
+              : 'border-transparent bg-transparent text-zinc-800 hover:border-zinc-300 hover:bg-white'
+          "
+          @click="selectGroup(group.clientId)"
+        >
           <span
-            class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-600"
-          >
-            <ListFilter class="size-4" /> Group outline
-          </span>
-          <span class="font-mono text-xs text-zinc-500"
-            >{{ filteredGroups.length }}/{{ groups.length }}</span
-          >
-        </div>
-
-        <div class="max-h-64 overflow-y-auto p-2 lg:max-h-[46rem]">
-          <button
-            v-for="group in filteredGroups"
-            :key="group.clientId"
-            type="button"
-            class="group mb-1 flex w-full items-center gap-3 rounded-sm border px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            class="flex size-8 shrink-0 items-center justify-center rounded-sm border font-mono text-[11px] font-bold"
             :class="
               selectedGroup?.clientId === group.clientId
-                ? 'border-zinc-950 bg-zinc-950 text-white shadow-sm'
-                : 'border-transparent bg-transparent text-zinc-800 hover:border-zinc-300 hover:bg-white'
+                ? 'border-emerald-400 text-emerald-300'
+                : 'border-zinc-300 bg-white text-zinc-600'
             "
-            @click="selectGroup(group.clientId)"
           >
+            G{{ String(group.sortOrder).padStart(2, '0') }}
+          </span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-sm font-semibold">
+              {{ group.workName || (group.kind === 'material' ? '자재 / 기타' : '작업명 미입력') }}
+            </span>
             <span
-              class="flex size-8 shrink-0 items-center justify-center rounded-sm border font-mono text-[11px] font-bold"
+              class="mt-1 block text-[11px]"
               :class="
-                selectedGroup?.clientId === group.clientId
-                  ? 'border-emerald-400 text-emerald-300'
-                  : 'border-zinc-300 bg-white text-zinc-600'
+                selectedGroup?.clientId === group.clientId ? 'text-zinc-400' : 'text-zinc-500'
               "
             >
-              G{{ String(group.sortOrder).padStart(2, '0') }}
+              {{ group.items.length }}개 항목 · No. {{ group.workNo ?? '—' }}
             </span>
-            <span class="min-w-0 flex-1">
-              <span class="block truncate text-sm font-semibold">
-                {{
-                  group.workName || (group.kind === 'material' ? '자재 / 기타' : '작업명 미입력')
-                }}
-              </span>
-              <span
-                class="mt-1 block text-[11px]"
-                :class="
-                  selectedGroup?.clientId === group.clientId ? 'text-zinc-400' : 'text-zinc-500'
-                "
-              >
-                {{ group.items.length }}개 항목 · No. {{ group.workNo ?? '—' }}
-              </span>
-            </span>
-            <ChevronRight
-              class="size-4 shrink-0 opacity-50 transition group-hover:translate-x-0.5"
-            />
-          </button>
+          </span>
+          <ChevronRight class="size-4 shrink-0 opacity-50 transition group-hover:translate-x-0.5" />
+        </Button>
 
-          <div
-            v-if="filteredGroups.length === 0"
-            class="px-3 py-8 text-center text-sm text-zinc-500"
-          >
-            검색 결과가 없습니다.
-          </div>
+        <div v-if="filteredGroups.length === 0" class="px-3 py-8 text-center text-sm text-zinc-500">
+          검색 결과가 없습니다.
         </div>
-      </aside>
+      </div>
+    </aside>
 
-      <section v-if="selectedGroup" class="min-w-0 bg-white">
-        <div
-          class="sticky top-0 z-10 border-b border-zinc-200 bg-white/95 px-4 py-4 backdrop-blur sm:px-5"
-        >
-          <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-            <div class="grid flex-1 gap-3 sm:grid-cols-[8rem_minmax(0,1fr)_10rem]">
-              <label class="grid gap-1.5 text-xs font-semibold text-zinc-600">
-                Work No.
-                <input
-                  v-model.number="selectedGroup.workNo"
-                  type="number"
-                  min="0"
-                  class="h-10 rounded-sm border border-zinc-300 bg-white px-3 font-mono text-sm text-zinc-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                  placeholder="10"
-                />
-              </label>
-              <label class="grid gap-1.5 text-xs font-semibold text-zinc-600">
-                workName
-                <input
-                  v-model="selectedGroup.workName"
-                  type="text"
-                  class="h-10 rounded-sm border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-950 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                  :placeholder="selectedGroup.kind === 'material' ? '선택 입력' : '예: 프레임 조립'"
-                />
-              </label>
-              <label class="grid gap-1.5 text-xs font-semibold text-zinc-600">
-                그룹 유형
-                <select
-                  v-model="selectedGroup.kind"
-                  class="h-10 rounded-sm border border-zinc-300 bg-white px-3 text-sm text-zinc-950 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                >
-                  <option value="work">작업 그룹</option>
-                  <option value="material">자재 / 기타</option>
-                </select>
-              </label>
+    <section v-if="selectedGroup" class="flex min-w-0 flex-col overflow-hidden bg-white">
+      <div
+        class="z-10 shrink-0 border-b border-zinc-200 bg-white/95 px-4 py-4 backdrop-blur sm:px-5"
+      >
+        <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div class="grid flex-1 gap-3 sm:grid-cols-[8rem_minmax(0,1fr)_10rem]">
+            <div class="grid gap-1.5">
+              <Label for="work-no">Work No.</Label>
+              <Input
+                id="work-no"
+                :model-value="selectedGroup.workNo?.toString() ?? ''"
+                type="number"
+                min="0"
+                class="h-10 font-mono"
+                placeholder="10"
+                @update:model-value="updateWorkNo"
+              />
             </div>
-
-            <div class="flex flex-wrap items-center gap-1.5">
-              <button
-                type="button"
-                title="그룹을 위로 이동"
-                :disabled="selectedGroup.sortOrder === 1"
-                class="inline-flex size-10 items-center justify-center rounded-sm border border-zinc-300 text-zinc-700 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-30"
-                aria-label="그룹을 위로 이동"
-                @click="moveGroup(selectedGroup, -1)"
-              >
-                <ArrowUp class="size-4" />
-              </button>
-              <button
-                type="button"
-                title="그룹을 아래로 이동"
-                :disabled="selectedGroup.sortOrder === groups.length"
-                class="inline-flex size-10 items-center justify-center rounded-sm border border-zinc-300 text-zinc-700 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-30"
-                aria-label="그룹을 아래로 이동"
-                @click="moveGroup(selectedGroup, 1)"
-              >
-                <ArrowDown class="size-4" />
-              </button>
-              <button
-                type="button"
-                class="inline-flex h-10 items-center gap-2 rounded-sm border border-zinc-300 px-3 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100"
-                @click="duplicateGroup(selectedGroup)"
-              >
-                <Copy class="size-4" /> 복제
-              </button>
-              <button
-                type="button"
-                class="inline-flex h-10 items-center gap-2 rounded-sm border px-3 text-xs font-semibold transition"
-                :class="
-                  pendingGroupDeleteId === selectedGroup.clientId
-                    ? 'border-red-600 bg-red-600 text-white'
-                    : 'border-red-200 text-red-700 hover:bg-red-50'
-                "
-                @click="requestDeleteGroup(selectedGroup)"
-              >
-                <Trash2 class="size-4" />
-                {{
-                  pendingGroupDeleteId === selectedGroup.clientId
-                    ? '한 번 더 눌러 삭제'
-                    : '그룹 삭제'
-                }}
-              </button>
+            <div class="grid gap-1.5">
+              <Label for="work-name">workName</Label>
+              <Input
+                id="work-name"
+                v-model="selectedGroup.workName"
+                type="text"
+                class="h-10 font-medium"
+                :placeholder="selectedGroup.kind === 'material' ? '선택 입력' : '예: 프레임 조립'"
+              />
+            </div>
+            <div class="grid gap-1.5">
+              <Label>그룹 유형</Label>
+              <Select v-model="selectedGroup.kind">
+                <SelectTrigger class="h-10 w-full">
+                  <SelectValue placeholder="그룹 유형" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="work">작업 그룹</SelectItem>
+                  <SelectItem value="material">자재 / 기타</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        </div>
 
-        <div class="space-y-3 p-4 sm:p-5">
-          <div
-            class="flex flex-col gap-2 border-b border-zinc-200 pb-4 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div>
-              <p
-                class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-700"
-              >
-                G{{ String(selectedGroup.sortOrder).padStart(2, '0') }} / child operations
-              </p>
-              <h3 class="mt-1 text-base font-semibold text-zinc-950">
-                상세 작업 {{ selectedGroup.items.length }}개
-              </h3>
-            </div>
-            <button
-              type="button"
-              class="inline-flex h-10 items-center justify-center gap-2 rounded-sm border border-zinc-950 bg-zinc-950 px-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
-              @click="addItem(selectedGroup)"
+          <div class="flex flex-wrap items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="icon-lg"
+              title="그룹을 위로 이동"
+              :disabled="selectedGroup.sortOrder === 1"
+              aria-label="그룹을 위로 이동"
+              @click="moveGroup(selectedGroup, -1)"
             >
-              <Plus class="size-4" /> 상세 작업 추가
-            </button>
+              <ArrowUp />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon-lg"
+              title="그룹을 아래로 이동"
+              :disabled="selectedGroup.sortOrder === groups.length"
+              aria-label="그룹을 아래로 이동"
+              @click="moveGroup(selectedGroup, 1)"
+            >
+              <ArrowDown />
+            </Button>
+            <Button variant="outline" class="h-10" @click="duplicateGroup(selectedGroup)">
+              <Copy /> 복제
+            </Button>
+            <Button
+              variant="destructive"
+              class="h-10"
+              :class="
+                pendingGroupDeleteId === selectedGroup.clientId
+                  ? 'bg-destructive text-destructive-foreground'
+                  : ''
+              "
+              @click="requestDeleteGroup(selectedGroup)"
+            >
+              <Trash2 />
+              {{
+                pendingGroupDeleteId === selectedGroup.clientId ? '한 번 더 눌러 삭제' : '그룹 삭제'
+              }}
+            </Button>
           </div>
+        </div>
+      </div>
 
-          <article
+      <div class="flex min-h-0 flex-1 flex-col space-y-3 p-4 sm:p-5">
+        <div
+          class="flex shrink-0 flex-col gap-2 border-b border-zinc-200 pb-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <p class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-700">
+              G{{ String(selectedGroup.sortOrder).padStart(2, '0') }} / child operations
+            </p>
+            <h3 class="mt-1 text-base font-semibold text-zinc-950">
+              상세 작업 {{ selectedGroup.items.length }}개
+            </h3>
+          </div>
+          <Button class="h-10" @click="addItem(selectedGroup)"> <Plus /> 상세 작업 추가 </Button>
+        </div>
+        <section class="space-y-3 overflow-y-auto">
+          <Card
             v-for="item in selectedGroup.items"
             :key="item.clientId"
-            class="rounded-sm border border-zinc-200 bg-[#fbfcfa] p-3 transition focus-within:border-emerald-500 focus-within:bg-white focus-within:shadow-[0_10px_30px_-24px_rgba(5,150,105,0.7)]"
+            class="gap-0 rounded-sm p-3 py-3 transition focus-within:ring-2 focus-within:ring-ring"
           >
-            <div class="mb-3 flex items-center justify-between gap-3">
-              <div class="flex items-center gap-2">
-                <span
-                  class="flex size-7 items-center justify-center rounded-sm bg-zinc-900 font-mono text-[10px] font-bold text-white"
-                >
+            <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex flex-wrap items-center gap-2">
+                <Badge class="size-7 rounded-sm p-0 font-mono text-[10px]">
                   {{ String(item.sortOrder).padStart(2, '0') }}
-                </span>
-                <label
+                </Badge>
+                <Label
                   class="inline-flex cursor-pointer items-center gap-2 rounded-sm border px-2.5 py-1 text-[11px] font-bold transition"
                   :class="
                     item.isHighAltitude
@@ -457,127 +451,130 @@ function moveItem(group: TemplateGroupDraft, item: TemplateItemDraft, offset: -1
                       : 'border-zinc-300 bg-white text-zinc-500 hover:border-zinc-400'
                   "
                 >
-                  <input v-model="item.isHighAltitude" type="checkbox" class="sr-only" />
+                  <Checkbox
+                    :model-value="item.isHighAltitude"
+                    @update:model-value="updateHighAltitude(item, $event)"
+                  />
                   <ShieldAlert class="size-3.5" />
                   {{ item.isHighAltitude ? '고소작업' : '일반작업' }}
-                </label>
-                <span v-if="item.legacySourceRow" class="font-mono text-[10px] text-zinc-500">
+                </Label>
+                <Badge v-if="item.legacySourceRow" variant="outline" class="font-mono text-[10px]">
                   LEGACY ROW {{ item.legacySourceRow }}
-                </span>
+                </Badge>
               </div>
-              <div class="flex items-center gap-1">
-                <button
-                  type="button"
+              <div class="flex items-center justify-end gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon-lg"
                   title="상세 작업을 위로 이동"
                   :disabled="item.sortOrder === 1"
-                  class="inline-flex size-9 items-center justify-center rounded-sm text-zinc-500 transition hover:bg-zinc-200 hover:text-zinc-950 disabled:cursor-not-allowed disabled:opacity-25"
                   aria-label="상세 작업을 위로 이동"
                   @click="moveItem(selectedGroup, item, -1)"
                 >
-                  <ArrowUp class="size-4" />
-                </button>
-                <button
-                  type="button"
+                  <ArrowUp />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-lg"
                   title="상세 작업을 아래로 이동"
                   :disabled="item.sortOrder === selectedGroup.items.length"
-                  class="inline-flex size-9 items-center justify-center rounded-sm text-zinc-500 transition hover:bg-zinc-200 hover:text-zinc-950 disabled:cursor-not-allowed disabled:opacity-25"
                   aria-label="상세 작업을 아래로 이동"
                   @click="moveItem(selectedGroup, item, 1)"
                 >
-                  <ArrowDown class="size-4" />
-                </button>
-                <button
-                  type="button"
+                  <ArrowDown />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-lg"
                   title="상세 작업 복제"
-                  class="inline-flex size-9 items-center justify-center rounded-sm text-zinc-500 transition hover:bg-zinc-200 hover:text-zinc-950"
                   aria-label="상세 작업 복제"
                   @click="duplicateItem(selectedGroup, item)"
                 >
-                  <Copy class="size-4" />
-                </button>
-                <button
-                  type="button"
+                  <Copy />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon-lg"
                   title="상세 작업 삭제"
-                  class="inline-flex size-9 items-center justify-center rounded-sm text-red-500 transition hover:bg-red-50 hover:text-red-700"
                   aria-label="상세 작업 삭제"
                   @click="deleteItem(selectedGroup, item)"
                 >
-                  <Trash2 class="size-4" />
-                </button>
+                  <Trash2 />
+                </Button>
               </div>
             </div>
 
             <div
               class="grid gap-3 xl:grid-cols-[minmax(14rem,1.4fr)_minmax(8rem,0.7fr)_minmax(8rem,0.8fr)_minmax(12rem,1fr)_7rem]"
             >
-              <label class="grid gap-1.5 text-[11px] font-semibold text-zinc-600">
-                workDetail
-                <textarea
+              <div class="grid gap-1.5">
+                <Label :for="`work-detail-${item.clientId}`">workDetail</Label>
+                <Textarea
+                  :id="`work-detail-${item.clientId}`"
                   v-model="item.workDetail"
                   rows="2"
-                  class="min-h-20 resize-y rounded-sm border border-zinc-300 bg-white px-3 py-2 text-sm leading-5 text-zinc-950 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                  class="min-h-20 resize-y"
                   placeholder="상세 작업을 입력하세요"
                 />
-              </label>
-              <label class="grid gap-1.5 text-[11px] font-semibold text-zinc-600">
-                vendor
-                <input
-                  v-model="item.vendor"
-                  class="h-10 rounded-sm border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                  placeholder="업체"
-                />
-              </label>
-              <label class="grid gap-1.5 text-[11px] font-semibold text-zinc-600">
-                partNo
-                <input
+              </div>
+              <div class="grid gap-1.5">
+                <Label :for="`vendor-${item.clientId}`">vendor</Label>
+                <Input :id="`vendor-${item.clientId}`" v-model="item.vendor" placeholder="업체" />
+              </div>
+              <div class="grid gap-1.5">
+                <Label :for="`part-no-${item.clientId}`">partNo</Label>
+                <Input
+                  :id="`part-no-${item.clientId}`"
                   v-model="item.partNo"
-                  class="h-10 rounded-sm border border-zinc-300 bg-white px-3 font-mono text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                  class="font-mono"
                   placeholder="품번"
                 />
-              </label>
-              <label class="grid gap-1.5 text-[11px] font-semibold text-zinc-600">
-                itemName
-                <input
+              </div>
+              <div class="grid gap-1.5">
+                <Label :for="`item-name-${item.clientId}`">itemName</Label>
+                <Input
+                  :id="`item-name-${item.clientId}`"
                   v-model="item.itemName"
-                  class="h-10 rounded-sm border border-zinc-300 bg-white px-3 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
                   placeholder="품명"
                 />
-              </label>
-              <label class="grid gap-1.5 text-[11px] font-semibold text-zinc-600">
-                bolt
-                <input
+              </div>
+              <div class="grid gap-1.5">
+                <Label :for="`bolt-${item.clientId}`">bolt</Label>
+                <Input
+                  :id="`bolt-${item.clientId}`"
                   v-model="item.bolt"
-                  class="h-10 rounded-sm border border-zinc-300 bg-white px-3 font-mono text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                  class="font-mono"
                   placeholder="규격"
                 />
-              </label>
+              </div>
             </div>
-            <label
+            <div
               v-if="item.isHighAltitude"
               class="mt-3 grid gap-1.5 rounded-sm border border-amber-200 bg-amber-50 p-3 text-[11px] font-semibold text-amber-950"
             >
-              <span class="flex items-center gap-2">
+              <Label :for="`safety-note-${item.clientId}`" class="flex items-center gap-2">
                 <ShieldAlert class="size-4" /> 고소작업 안전 참고사항
-              </span>
-              <textarea
+              </Label>
+              <Textarea
+                :id="`safety-note-${item.clientId}`"
                 v-model="item.safetyNote"
                 rows="2"
                 maxlength="1000"
-                class="resize-y rounded-sm border border-amber-300 bg-white px-3 py-2 text-sm font-normal leading-5 text-zinc-950 outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-100"
+                class="resize-y bg-white font-normal"
                 placeholder="작업 전 확인할 안전 조치나 현장 참고사항을 입력하세요."
               />
-            </label>
-          </article>
-        </div>
-      </section>
+            </div>
+          </Card>
+        </section>
+      </div>
+    </section>
 
-      <section
-        v-else
-        class="flex min-h-80 flex-col items-center justify-center bg-white px-6 text-center"
-      >
-        <Wrench class="size-7 text-zinc-400" />
-        <p class="mt-3 text-sm font-medium text-zinc-700">편집할 그룹을 선택하세요.</p>
-      </section>
-    </div>
+    <section
+      v-else
+      class="flex min-h-80 flex-col items-center justify-center bg-white px-6 text-center"
+    >
+      <Wrench class="size-7 text-zinc-400" />
+      <p class="mt-3 text-sm font-medium text-zinc-700">편집할 그룹을 선택하세요.</p>
+    </section>
   </div>
 </template>

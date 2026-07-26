@@ -23,6 +23,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     databaseUrl: '',
     supabaseServiceRoleKey: '',
+    telegramEncryptionKey: '',
     public: {
       supabaseUrl: '',
       supabaseAnonKey: '',
@@ -46,7 +47,7 @@ export default defineNuxtConfig({
 
           const filePath = route.file?.replaceAll('\\', '/')
 
-          if (filePath?.includes('/pages/index/components/')) {
+          if (filePath && /\/pages\/.+\/components\//.test(filePath)) {
             routes.splice(index, 1)
             continue
           }
