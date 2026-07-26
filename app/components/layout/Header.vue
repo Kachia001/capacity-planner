@@ -3,8 +3,12 @@ import { LogOut } from '@lucide/vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import HeaderAdminAction from '@/components/layout/HeaderAdminAction.vue'
+import ManagerMobileNavigation from '@/components/layout/ManagerMobileNavigation.vue'
 
 const auth = useAuthStore()
+const route = useRoute()
+
+const homePath = computed(() => (auth.profile?.role === 'manager' ? '/manager/bays' : '/bay'))
 
 const roleLabel = computed(() => {
   if (auth.profile?.role === 'admin') return 'Admin'
@@ -30,7 +34,7 @@ async function signOut() {
     <div
       class="mx-auto flex min-h-14 w-full max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:min-h-0 sm:px-6 sm:py-4 lg:px-8"
     >
-      <NuxtLink to="/bay" class="flex min-w-0 flex-col">
+      <NuxtLink :to="homePath" class="flex min-w-0 flex-col">
         <span class="truncate text-base font-semibold tracking-tight sm:text-lg"
           >Capacity Planner</span
         >
@@ -44,13 +48,35 @@ async function signOut() {
       >
         <ClientOnly>
           <div class="flex items-center gap-2">
+            <div
+              v-if="auth.user && auth.profile?.role === 'manager'"
+              class="hidden items-center gap-4 sm:flex"
+            >
+              <NuxtLink
+                to="/manager/bays"
+                class="transition hover:text-foreground"
+                :class="route.path.startsWith('/manager/bays') ? 'text-foreground' : ''"
+                :aria-current="route.path.startsWith('/manager/bays') ? 'page' : undefined"
+              >
+                Bay 목록
+              </NuxtLink>
+              <NuxtLink
+                to="/bay"
+                class="transition hover:text-foreground"
+                :class="route.path === '/bay' ? 'text-foreground' : ''"
+                :aria-current="route.path === '/bay' ? 'page' : undefined"
+              >
+                작업 운영
+              </NuxtLink>
+            </div>
             <NuxtLink
-              v-if="auth.user"
+              v-else-if="auth.user && auth.profile?.role === 'worker'"
               to="/bay"
               class="hidden transition hover:text-foreground sm:inline"
             >
-              {{ auth.profile?.role === 'worker' ? '작업 실행' : '운영 현황' }}
+              작업 실행
             </NuxtLink>
+            <ManagerMobileNavigation v-if="auth.user && auth.profile?.role === 'manager'" />
             <Badge
               v-if="roleLabel"
               variant="outline"

@@ -115,7 +115,7 @@ export default defineEventHandler(async event => {
     })
     .from(workItems)
     .innerJoin(bays, eq(workItems.bayId, bays.id))
-    .leftJoin(appUsers, eq(workItems.startedBy, appUsers.authUserId))
+    .leftJoin(appUsers, eq(workItems.issueCreatedBy, appUsers.authUserId))
     .where(
       and(
         isNull(workItems.voidedAt),

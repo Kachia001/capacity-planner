@@ -29,7 +29,11 @@ async function submit() {
   try {
     await auth.signIn(loginId.value, password.value)
 
-    const defaultDestination = auth.isAdmin ? '/admin' : '/bay'
+    const defaultDestination = auth.isAdmin
+      ? '/admin'
+      : auth.profile?.role === 'manager'
+        ? '/manager/bays'
+        : '/bay'
     await router.push(
       typeof route.query.redirect === 'string' ? route.query.redirect : defaultDestination,
     )
