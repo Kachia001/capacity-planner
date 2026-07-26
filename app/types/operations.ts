@@ -70,8 +70,13 @@ export interface WorkItemSearchResponse {
 }
 
 export type TelegramDeliveryResult =
-  | { status: 'sent' }
-  | { status: 'skipped'; reason: 'not_configured' | 'disabled' }
+  | { status: 'queued'; deliveryId: number }
+  | { status: 'sent'; messageId: number }
+  | {
+      status: 'skipped'
+      reason: 'not_configured' | 'disabled'
+      deliveryId?: number
+    }
   | { status: 'failed'; message: string }
 
 export interface WorkItemIssueResponse {

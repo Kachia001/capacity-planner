@@ -1,8 +1,10 @@
 import {
   boolean,
+  check,
   date,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   serial,
@@ -11,6 +13,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 export const appRole = pgEnum('app_role', ['admin', 'manager', 'worker'])
 export const workStatus = pgEnum('work_status', ['not_started', 'in_progress', 'completed'])
@@ -23,6 +26,13 @@ export const workItemEventAction = pgEnum('work_item_event_action', [
 ])
 export const issueStatus = pgEnum('issue_status', ['open', 'resolved'])
 export const issueSeverity = pgEnum('issue_severity', ['low', 'medium', 'high', 'critical'])
+export const telegramDeliveryStatus = pgEnum('telegram_delivery_status', [
+  'pending',
+  'processing',
+  'sent',
+  'failed',
+  'skipped',
+])
 
 export const appUsers = pgTable('app_users', {
   authUserId: uuid('auth_user_id').primaryKey(),
@@ -82,27 +92,35 @@ export const bays = pgTable('bays', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-export const operationControl = pgTable('operation_control', {
-  id: integer('id').primaryKey().default(1),
-  manualClosedUntil: timestamp('manual_closed_until', { withTimezone: true }),
-  extensionUntil: timestamp('extension_until', { withTimezone: true }),
-  updatedBy: uuid('updated_by').references(() => appUsers.authUserId, {
-    onDelete: 'set null',
-  }),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const operationControl = pgTable(
+  'operation_control',
+  {
+    id: integer('id').primaryKey().default(1),
+    manualClosedUntil: timestamp('manual_closed_until', { withTimezone: true }),
+    extensionUntil: timestamp('extension_until', { withTimezone: true }),
+    updatedBy: uuid('updated_by').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => [check('operation_control_singleton', sql`${table.id} = 1`)],
+)
 
-export const telegramSettings = pgTable('telegram_settings', {
-  id: integer('id').primaryKey().default(1),
-  botTokenEncrypted: text('bot_token_encrypted').notNull(),
-  botTokenLastFour: text('bot_token_last_four').notNull(),
-  chatId: text('chat_id').notNull(),
-  isEnabled: boolean('is_enabled').notNull().default(true),
-  updatedBy: uuid('updated_by').references(() => appUsers.authUserId, {
-    onDelete: 'set null',
-  }),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const telegramSettings = pgTable(
+  'telegram_settings',
+  {
+    id: integer('id').primaryKey().default(1),
+    botTokenEncrypted: text('bot_token_encrypted').notNull(),
+    botTokenLastFour: text('bot_token_last_four').notNull(),
+    chatId: text('chat_id').notNull(),
+    isEnabled: boolean('is_enabled').notNull().default(true),
+    updatedBy: uuid('updated_by').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => [check('telegram_settings_singleton', sql`${table.id} = 1`)],
+)
 
 export const workItems = pgTable(
   'work_items',
@@ -200,6 +218,46 @@ export const workItemStatusEvents = pgTable(
   }),
 )
 
+export const telegramDeliveryOutbox = pgTable(
+  'telegram_delivery_outbox',
+  {
+    id: serial('id').primaryKey(),
+    workItemId: integer('work_item_id')
+      .notNull()
+      .references(() => workItems.id, { onDelete: 'restrict' }),
+    issueVersion: integer('issue_version').notNull(),
+    requestedBy: uuid('requested_by').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
+    payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+    status: telegramDeliveryStatus('status').notNull().default('pending'),
+    attemptCount: integer('attempt_count').notNull().default(0),
+    nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),
+    lockedAt: timestamp('locked_at', { withTimezone: true }),
+    lastAttemptAt: timestamp('last_attempt_at', { withTimezone: true }),
+    lastErrorCode: text('last_error_code'),
+    lastErrorMessage: text('last_error_message'),
+    telegramMessageId: text('telegram_message_id'),
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => ({
+    itemVersionUnique: uniqueIndex('telegram_delivery_outbox_item_version_idx').on(
+      table.workItemId,
+      table.issueVersion,
+    ),
+    dispatchIndex: index('telegram_delivery_outbox_dispatch_idx').on(
+      table.status,
+      table.nextAttemptAt,
+    ),
+    requestedByCreatedIndex: index('telegram_delivery_outbox_requested_by_created_idx').on(
+      table.requestedBy,
+      table.createdAt,
+    ),
+  }),
+)
+
 export type WorkItem = typeof workItems.$inferSelect
 export type NewWorkItem = typeof workItems.$inferInsert
 export type WorkItemStatusEvent = typeof workItemStatusEvents.$inferSelect
@@ -210,6 +268,7 @@ export type Bay = typeof bays.$inferSelect
 export type NewBay = typeof bays.$inferInsert
 export type OperationControl = typeof operationControl.$inferSelect
 export type TelegramSettings = typeof telegramSettings.$inferSelect
+export type TelegramDeliveryOutbox = typeof telegramDeliveryOutbox.$inferSelect
 export type BayTemplate = typeof bayTemplates.$inferSelect
 export type NewBayTemplate = typeof bayTemplates.$inferInsert
 export type BayTemplateRow = typeof bayTemplateRows.$inferSelect

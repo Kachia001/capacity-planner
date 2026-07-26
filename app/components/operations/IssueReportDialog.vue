@@ -86,7 +86,7 @@ onBeforeUnmount(() => {
                 작업 이슈 등록
               </h2>
               <p id="issue-report-description" class="mt-1 text-sm leading-6 text-zinc-600">
-                저장된 이슈는 운영 현황에 반영되고 설정된 Telegram 채널로 전송됩니다.
+                저장된 이슈는 운영 현황에 반영되고 Telegram 전송 대기열에 안전하게 등록됩니다.
               </p>
             </div>
           </div>
@@ -165,7 +165,7 @@ onBeforeUnmount(() => {
             >
               <Loader2 v-if="props.pending" class="size-4 animate-spin" />
               <Send v-else class="size-4" />
-              {{ props.pending ? '등록 중' : '이슈 등록 및 전송' }}
+              {{ props.pending ? '등록 중' : '이슈 등록 및 전송 예약' }}
             </Button>
           </div>
         </form>

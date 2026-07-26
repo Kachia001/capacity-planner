@@ -24,6 +24,7 @@ export default defineNuxtConfig({
     databaseUrl: '',
     supabaseServiceRoleKey: '',
     telegramEncryptionKey: '',
+    telegramApiBaseUrl: 'https://api.telegram.org',
     public: {
       supabaseUrl: '',
       supabaseAnonKey: '',
@@ -34,6 +35,14 @@ export default defineNuxtConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+  },
+  nitro: {
+    experimental: {
+      tasks: true,
+    },
+    scheduledTasks: {
+      '* * * * *': ['telegram:deliver'],
+    },
   },
   hooks: {
     'pages:extend'(pages) {

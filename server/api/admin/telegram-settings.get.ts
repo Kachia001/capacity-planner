@@ -1,15 +1,19 @@
 import { eq } from 'drizzle-orm'
 import { telegramSettings } from '#server/db/schema'
-import { maskTelegramToken } from '#server/utils/telegram-crypto'
+import { decryptTelegramToken, maskTelegramToken } from '#server/utils/telegram-crypto'
+
+type ConfigurationStatus =
+  'not_configured' | 'disabled' | 'ready' | 'encryption_key_missing' | 'encryption_key_mismatch'
 
 export default defineEventHandler(async event => {
   await requireAppUser(event, ['admin'])
-  const encryptionReady = useRuntimeConfig().telegramEncryptionKey.length >= 32
+  const { telegramEncryptionKey } = useRuntimeConfig()
   const db = useDb()
   const [settings] = await db
     .select({
       chatId: telegramSettings.chatId,
       isEnabled: telegramSettings.isEnabled,
+      botTokenEncrypted: telegramSettings.botTokenEncrypted,
       botTokenLastFour: telegramSettings.botTokenLastFour,
       updatedAt: telegramSettings.updatedAt,
     })
@@ -20,7 +24,8 @@ export default defineEventHandler(async event => {
   if (!settings) {
     return {
       configured: false,
-      encryptionReady,
+      encryptionReady: telegramEncryptionKey.length >= 32,
+      configurationStatus: 'not_configured' satisfies ConfigurationStatus,
       chatId: '',
       isEnabled: false,
       botTokenMasked: null,
@@ -28,9 +33,23 @@ export default defineEventHandler(async event => {
     }
   }
 
+  let configurationStatus: ConfigurationStatus
+
+  if (telegramEncryptionKey.length < 32) {
+    configurationStatus = 'encryption_key_missing'
+  } else {
+    try {
+      await decryptTelegramToken(settings.botTokenEncrypted, telegramEncryptionKey)
+      configurationStatus = settings.isEnabled ? 'ready' : 'disabled'
+    } catch {
+      configurationStatus = 'encryption_key_mismatch'
+    }
+  }
+
   return {
     configured: true,
-    encryptionReady,
+    encryptionReady: configurationStatus === 'ready' || configurationStatus === 'disabled',
+    configurationStatus,
     chatId: settings.chatId,
     isEnabled: settings.isEnabled,
     botTokenMasked: maskTelegramToken(settings.botTokenLastFour),

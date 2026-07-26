@@ -620,7 +620,9 @@ async function submitIssueReport(severity: IssueSeverity, note: string) {
     const response = await reportWorkItemIssue(accessToken, item.id, severity, note)
     issueReportItem.value = null
 
-    if (response.telegram.status === 'sent') {
+    if (response.telegram.status === 'queued') {
+      showNotice('이슈를 등록했습니다. Telegram 알림이 전송 대기열에 추가되었습니다.', 'success')
+    } else if (response.telegram.status === 'sent') {
       showNotice('이슈를 등록하고 Telegram으로 전송했습니다.', 'success')
     } else if (response.telegram.status === 'failed') {
       showNotice('이슈는 등록했지만 Telegram 전송에 실패했습니다. 관리자에게 알려주세요.', 'error')

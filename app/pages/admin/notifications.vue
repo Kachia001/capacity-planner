@@ -4,16 +4,24 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
+  History,
   KeyRound,
   Loader2,
   MessageCircleMore,
+  RefreshCw,
+  RotateCw,
   Send,
   ShieldCheck,
   Trash2,
   TriangleAlert,
 } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
-import type { TelegramSettingsResponse } from '@/types/telegram'
+import type {
+  TelegramDeliveriesResponse,
+  TelegramDeliveryListItem,
+  TelegramDeliveryStatus,
+  TelegramSettingsResponse,
+} from '@/types/telegram'
 import { getRequestErrorMessage } from '@/composables/useOperationsApi'
 
 definePageMeta({
@@ -29,9 +37,13 @@ const loading = ref(true)
 const saving = ref(false)
 const testing = ref(false)
 const deleting = ref(false)
+const deliveriesLoading = ref(true)
+const processingDeliveries = ref(false)
+const retryingDeliveryId = ref<number | null>(null)
 const errorMessage = ref<string | null>(null)
 const noticeMessage = ref<string | null>(null)
 const settings = ref<TelegramSettingsResponse | null>(null)
+const deliveryState = ref<TelegramDeliveriesResponse | null>(null)
 const botToken = ref('')
 const chatId = ref('')
 const isEnabled = ref(true)
@@ -39,9 +51,11 @@ const showToken = ref(false)
 
 const canSave = computed(
   () =>
-    settings.value?.encryptionReady === true &&
+    settings.value?.configurationStatus !== 'encryption_key_missing' &&
     chatId.value.trim().length > 0 &&
-    (settings.value?.configured || botToken.value.trim().length >= 30) &&
+    (settings.value?.configurationStatus === 'encryption_key_mismatch'
+      ? botToken.value.trim().length >= 30
+      : settings.value?.configured || botToken.value.trim().length >= 30) &&
     !saving.value,
 )
 
@@ -77,6 +91,24 @@ async function loadSettings() {
     errorMessage.value = getRequestErrorMessage(error, 'Telegram 설정을 불러오지 못했습니다.')
   } finally {
     loading.value = false
+  }
+}
+
+async function loadDeliveries() {
+  deliveriesLoading.value = true
+
+  try {
+    const accessToken = await requireAccessToken()
+    deliveryState.value = await $fetch<TelegramDeliveriesResponse>(
+      '/api/admin/telegram-deliveries',
+      {
+        headers: authorizationHeaders(accessToken),
+      },
+    )
+  } catch (error) {
+    errorMessage.value = getRequestErrorMessage(error, 'Telegram 전송 내역을 불러오지 못했습니다.')
+  } finally {
+    deliveriesLoading.value = false
   }
 }
 
@@ -151,6 +183,7 @@ async function deleteSettings() {
     applySettings({
       configured: false,
       encryptionReady: settings.value?.encryptionReady ?? false,
+      configurationStatus: 'not_configured',
       chatId: '',
       isEnabled: false,
       botTokenMasked: null,
@@ -164,6 +197,55 @@ async function deleteSettings() {
   }
 }
 
+async function processPendingDeliveries() {
+  processingDeliveries.value = true
+  errorMessage.value = null
+  noticeMessage.value = null
+
+  try {
+    const accessToken = await requireAccessToken()
+    const result = await $fetch<{
+      claimed: number
+      sent: number
+      retried: number
+      failed: number
+      skipped: number
+    }>('/api/admin/telegram-deliveries/process', {
+      method: 'POST',
+      headers: authorizationHeaders(accessToken),
+    })
+    noticeMessage.value =
+      result.claimed === 0
+        ? '현재 처리할 Telegram 알림이 없습니다.'
+        : `전송 ${result.sent}건, 재시도 예약 ${result.retried}건, 실패 ${result.failed}건을 처리했습니다.`
+    await loadDeliveries()
+  } catch (error) {
+    errorMessage.value = getRequestErrorMessage(error, '전송 대기열을 처리하지 못했습니다.')
+  } finally {
+    processingDeliveries.value = false
+  }
+}
+
+async function retryDelivery(delivery: TelegramDeliveryListItem) {
+  retryingDeliveryId.value = delivery.id
+  errorMessage.value = null
+  noticeMessage.value = null
+
+  try {
+    const accessToken = await requireAccessToken()
+    await $fetch(`/api/admin/telegram-deliveries/${delivery.id}/retry`, {
+      method: 'POST',
+      headers: authorizationHeaders(accessToken),
+    })
+    noticeMessage.value = `전송 #${delivery.id}을 다시 처리했습니다.`
+    await loadDeliveries()
+  } catch (error) {
+    errorMessage.value = getRequestErrorMessage(error, 'Telegram 알림을 다시 보내지 못했습니다.')
+  } finally {
+    retryingDeliveryId.value = null
+  }
+}
+
 function formatUpdatedAt(value: string | null | undefined) {
   if (!value) return '아직 저장되지 않음'
   return new Intl.DateTimeFormat('ko-KR', {
@@ -173,7 +255,29 @@ function formatUpdatedAt(value: string | null | undefined) {
   }).format(new Date(value))
 }
 
-onMounted(loadSettings)
+function deliveryStatusLabel(status: TelegramDeliveryStatus) {
+  return {
+    pending: '전송 대기',
+    processing: '처리 중',
+    sent: '전송 완료',
+    failed: '최종 실패',
+    skipped: '전송 제외',
+  }[status]
+}
+
+function deliveryStatusClass(status: TelegramDeliveryStatus) {
+  return {
+    pending: 'border-amber-200 bg-amber-50 text-amber-800',
+    processing: 'border-sky-200 bg-sky-50 text-sky-800',
+    sent: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+    failed: 'border-red-200 bg-red-50 text-red-800',
+    skipped: 'border-zinc-200 bg-zinc-100 text-zinc-700',
+  }[status]
+}
+
+onMounted(() => {
+  void Promise.all([loadSettings(), loadDeliveries()])
+})
 </script>
 
 <template>
@@ -230,13 +334,22 @@ onMounted(loadSettings)
         <TriangleAlert class="size-4 shrink-0" /> {{ errorMessage }}
       </p>
       <p
-        v-if="settings && !settings.encryptionReady"
+        v-if="settings?.configurationStatus === 'encryption_key_missing'"
         role="alert"
         class="mt-6 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold leading-6 text-amber-900"
       >
         <TriangleAlert class="mt-1 size-4 shrink-0" />
         서버 환경변수 NUXT_TELEGRAM_ENCRYPTION_KEY를 32자 이상으로 설정해야 Bot Token을 안전하게
         저장하고 사용할 수 있습니다.
+      </p>
+      <p
+        v-if="settings?.configurationStatus === 'encryption_key_mismatch'"
+        role="alert"
+        class="mt-6 flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold leading-6 text-red-900"
+      >
+        <TriangleAlert class="mt-1 size-4 shrink-0" />
+        현재 서버 키로 저장된 Bot Token을 복호화할 수 없습니다. 새 Bot Token을 입력해 설정을 다시
+        저장해 주세요.
       </p>
 
       <section
@@ -346,6 +459,150 @@ onMounted(loadSettings)
             </div>
           </div>
         </form>
+      </section>
+
+      <section
+        class="mt-6 overflow-hidden rounded-xl border border-[#d9ddd5] bg-white shadow-[0_16px_48px_-40px_rgba(15,23,42,0.55)]"
+      >
+        <div
+          class="flex flex-col gap-3 border-b border-[#e0e4dd] bg-[#f9faf8] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+        >
+          <div class="flex items-start gap-3">
+            <span
+              class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#eaf2e4] text-[#526348]"
+            >
+              <History class="size-5" />
+            </span>
+            <div>
+              <h3 class="font-semibold text-[#1d241c]">알림 전송 상태</h3>
+              <p class="mt-1 text-xs leading-5 text-[#7b8378]">
+                실패한 알림은 자동 재시도되며 최종 실패 건은 직접 다시 보낼 수 있습니다.
+              </p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 sm:flex">
+            <Button
+              type="button"
+              variant="outline"
+              class="h-10 gap-2"
+              :disabled="deliveriesLoading"
+              @click="loadDeliveries"
+            >
+              <RefreshCw :class="['size-4', deliveriesLoading ? 'animate-spin' : '']" />
+              새로고침
+            </Button>
+            <Button
+              type="button"
+              class="h-10 gap-2"
+              :disabled="
+                processingDeliveries ||
+                !deliveryState ||
+                deliveryState.summary.pending + deliveryState.summary.processing === 0
+              "
+              @click="processPendingDeliveries"
+            >
+              <Loader2 v-if="processingDeliveries" class="size-4 animate-spin" />
+              <Send v-else class="size-4" /> 지금 처리
+            </Button>
+          </div>
+        </div>
+
+        <div
+          v-if="deliveriesLoading && !deliveryState"
+          class="p-8 text-center text-sm text-[#777f76]"
+        >
+          <Loader2 class="mr-2 inline size-4 animate-spin" /> 전송 내역을 불러오는 중입니다.
+        </div>
+
+        <template v-else-if="deliveryState">
+          <dl class="grid grid-cols-2 gap-px bg-[#e4e8e1] sm:grid-cols-5">
+            <div class="bg-white px-4 py-3">
+              <dt class="text-[10px] text-[#858c83]">전송 대기</dt>
+              <dd class="mt-1 font-mono text-lg font-bold text-amber-700">
+                {{ deliveryState.summary.pending }}
+              </dd>
+            </div>
+            <div class="bg-white px-4 py-3">
+              <dt class="text-[10px] text-[#858c83]">처리 중</dt>
+              <dd class="mt-1 font-mono text-lg font-bold text-sky-700">
+                {{ deliveryState.summary.processing }}
+              </dd>
+            </div>
+            <div class="bg-white px-4 py-3">
+              <dt class="text-[10px] text-[#858c83]">전송 완료</dt>
+              <dd class="mt-1 font-mono text-lg font-bold text-emerald-700">
+                {{ deliveryState.summary.sent }}
+              </dd>
+            </div>
+            <div class="bg-white px-4 py-3">
+              <dt class="text-[10px] text-[#858c83]">최종 실패</dt>
+              <dd class="mt-1 font-mono text-lg font-bold text-red-700">
+                {{ deliveryState.summary.failed }}
+              </dd>
+            </div>
+            <div class="col-span-2 bg-white px-4 py-3 sm:col-span-1">
+              <dt class="text-[10px] text-[#858c83]">전송 제외</dt>
+              <dd class="mt-1 font-mono text-lg font-bold text-zinc-600">
+                {{ deliveryState.summary.skipped }}
+              </dd>
+            </div>
+          </dl>
+
+          <div
+            v-if="deliveryState.deliveries.length === 0"
+            class="px-5 py-10 text-center text-sm text-[#858c83]"
+          >
+            아직 Telegram 알림 전송 기록이 없습니다.
+          </div>
+
+          <div v-else class="divide-y divide-[#e8ebe5]">
+            <article
+              v-for="delivery in deliveryState.deliveries"
+              :key="delivery.id"
+              class="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+            >
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <strong class="font-mono text-xs text-[#283027]">
+                    전송 #{{ delivery.id }} · 작업 #{{ delivery.workItemId }}
+                  </strong>
+                  <span
+                    class="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold"
+                    :class="deliveryStatusClass(delivery.status)"
+                  >
+                    {{ deliveryStatusLabel(delivery.status) }}
+                  </span>
+                </div>
+                <p class="mt-1 text-[11px] text-[#7b8378]">
+                  생성 {{ formatUpdatedAt(delivery.createdAt) }} · 시도
+                  {{ delivery.attemptCount }}회
+                  <template v-if="delivery.sentAt">
+                    · 완료 {{ formatUpdatedAt(delivery.sentAt) }}
+                  </template>
+                </p>
+                <p
+                  v-if="delivery.lastErrorMessage"
+                  class="mt-1 break-words text-xs leading-5 text-red-700"
+                >
+                  {{ delivery.lastErrorCode }} · {{ delivery.lastErrorMessage }}
+                </p>
+              </div>
+
+              <Button
+                v-if="delivery.status === 'failed' || delivery.status === 'skipped'"
+                type="button"
+                variant="outline"
+                class="h-10 shrink-0 gap-2"
+                :disabled="retryingDeliveryId !== null"
+                @click="retryDelivery(delivery)"
+              >
+                <Loader2 v-if="retryingDeliveryId === delivery.id" class="size-4 animate-spin" />
+                <RotateCw v-else class="size-4" /> 다시 전송
+              </Button>
+            </article>
+          </div>
+        </template>
       </section>
 
       <section

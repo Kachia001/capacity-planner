@@ -1,11 +1,12 @@
 import { eq } from 'drizzle-orm'
 import { telegramSettings } from '../db/schema'
 import { decryptTelegramToken } from './telegram-crypto'
+import { getTelegramFailure, sendTelegramApiMessage, type TelegramFailure } from './telegram-client'
 
 export type TelegramDeliveryResult =
-  | { status: 'sent' }
+  | { status: 'sent'; messageId: number }
   | { status: 'skipped'; reason: 'not_configured' | 'disabled' }
-  | { status: 'failed'; message: string }
+  | ({ status: 'failed' } & TelegramFailure)
 
 export interface TelegramIssueMessage {
   bayCode: string
@@ -74,17 +75,6 @@ export function formatTelegramIssueMessage(issue: TelegramIssueMessage) {
     : `${message.slice(0, TELEGRAM_MESSAGE_LIMIT - 1)}…`
 }
 
-async function sendTelegramMessage(botToken: string, chatId: string, text: string) {
-  await $fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-    method: 'POST',
-    body: {
-      chat_id: chatId,
-      text,
-    },
-    timeout: 10_000,
-  })
-}
-
 export async function sendConfiguredTelegramMessage(text: string): Promise<TelegramDeliveryResult> {
   const db = useDb()
   const [settings] = await db
@@ -101,15 +91,28 @@ export async function sendConfiguredTelegramMessage(text: string): Promise<Teleg
     return { status: 'skipped', reason: 'disabled' }
   }
 
+  const { telegramEncryptionKey } = useRuntimeConfig()
+  let botToken: string
+
   try {
-    const { telegramEncryptionKey } = useRuntimeConfig()
-    const botToken = await decryptTelegramToken(settings.botTokenEncrypted, telegramEncryptionKey)
-    await sendTelegramMessage(botToken, settings.chatId, text)
-    return { status: 'sent' }
+    botToken = await decryptTelegramToken(settings.botTokenEncrypted, telegramEncryptionKey)
   } catch {
     return {
       status: 'failed',
-      message: 'Telegram 메시지를 전송하지 못했습니다. 관리자 설정을 확인해 주세요.',
+      code: 'encryption_key_mismatch',
+      message: '저장된 Telegram Bot Token을 복호화하지 못했습니다.',
+      retryable: false,
+      retryAfterSeconds: null,
+    }
+  }
+
+  try {
+    const { messageId } = await sendTelegramApiMessage(botToken, settings.chatId, text)
+    return { status: 'sent', messageId }
+  } catch (error) {
+    return {
+      status: 'failed',
+      ...getTelegramFailure(error),
     }
   }
 }
