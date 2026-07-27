@@ -1,9 +1,14 @@
 import type { AppRole } from '@/stores/auth'
+import type {
+  IssueSeverity as ApiIssueSeverity,
+  WorkItemRestoreTarget,
+  WorkItemStatus as ApiWorkItemStatus,
+} from '#shared/api/work-items/work-item.contract'
 
-export type WorkItemStatus = 'not_started' | 'in_progress' | 'completed'
-export type CompletedWorkItemRestoreTarget = Exclude<WorkItemStatus, 'completed'>
+export type WorkItemStatus = ApiWorkItemStatus
+export type CompletedWorkItemRestoreTarget = WorkItemRestoreTarget
 export type IssueStatus = 'open' | 'resolved'
-export type IssueSeverity = 'low' | 'medium' | 'high' | 'critical'
+export type IssueSeverity = ApiIssueSeverity
 export type WorkItemEventAction = 'start' | 'complete' | 'cancel_start' | 'restore' | 'void'
 export type OperationMode = 'regular' | 'extension' | 'closed'
 
@@ -67,29 +72,6 @@ export interface WorkItemSearchResponse {
   items: OperationWorkItem[]
   total: number
   nextCursor: string | null
-}
-
-export type TelegramDeliveryResult =
-  | { status: 'queued'; deliveryId: number }
-  | { status: 'sent'; messageId: number }
-  | {
-      status: 'skipped'
-      reason: 'not_configured' | 'disabled'
-      deliveryId?: number
-    }
-  | { status: 'failed'; message: string }
-
-export interface WorkItemIssueResponse {
-  item: {
-    id: number
-    hasIssue: boolean
-    issueStatus: IssueStatus | null
-    issueSeverity: IssueSeverity | null
-    issueNote: string | null
-    issueCreatedAt: string | null
-    version: number
-  }
-  telegram: TelegramDeliveryResult
 }
 
 export interface DashboardBaySummary extends BayOption {

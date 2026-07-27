@@ -4,10 +4,27 @@ import type {
   IssueSeverity,
   OperationStatus,
   OperationsDashboardResponse,
-  WorkItemIssueResponse,
   WorkItemSearchFilters,
   WorkItemSearchResponse,
 } from '@/types/operations'
+import type {
+  CancelWorkItemStartRequest,
+  CancelWorkItemStartResponse,
+} from '#shared/api/work-items/cancel-work-item-start.contract'
+import type { CompleteWorkItemResponse } from '#shared/api/work-items/complete-work-item.contract'
+import type {
+  ReportWorkItemIssueRequest,
+  ReportWorkItemIssueResponse,
+} from '#shared/api/work-items/report-work-item-issue.contract'
+import type {
+  RestoreCompletedWorkItemRequest,
+  RestoreCompletedWorkItemResponse,
+} from '#shared/api/work-items/restore-completed-work-item.contract'
+import type { StartWorkItemResponse } from '#shared/api/work-items/start-work-item.contract'
+import type {
+  VoidWorkItemRequest,
+  VoidWorkItemResponse,
+} from '#shared/api/work-items/void-work-item.contract'
 
 function authorizationHeaders(accessToken: string) {
   return { Authorization: `Bearer ${accessToken}` }
@@ -87,24 +104,26 @@ export async function fetchBayWorkItems(
 }
 
 export async function startWorkItem(accessToken: string, workItemId: number) {
-  return await $fetch(`/api/work-items/${workItemId}/start`, {
+  return await $fetch<StartWorkItemResponse>(`/api/work-items/${workItemId}/start`, {
     method: 'POST',
     headers: authorizationHeaders(accessToken),
   })
 }
 
 export async function completeWorkItem(accessToken: string, workItemId: number) {
-  return await $fetch(`/api/work-items/${workItemId}/complete`, {
+  return await $fetch<CompleteWorkItemResponse>(`/api/work-items/${workItemId}/complete`, {
     method: 'POST',
     headers: authorizationHeaders(accessToken),
   })
 }
 
 export async function cancelWorkItemStart(accessToken: string, workItemId: number, reason: string) {
-  return await $fetch(`/api/work-items/${workItemId}/cancel-start`, {
+  const body: CancelWorkItemStartRequest = { reason }
+
+  return await $fetch<CancelWorkItemStartResponse>(`/api/work-items/${workItemId}/cancel-start`, {
     method: 'POST',
     headers: authorizationHeaders(accessToken),
-    body: { reason },
+    body,
   })
 }
 
@@ -114,18 +133,25 @@ export async function restoreCompletedWorkItem(
   targetStatus: CompletedWorkItemRestoreTarget,
   reason: string,
 ) {
-  return await $fetch(`/api/work-items/${workItemId}/restore-completed`, {
-    method: 'POST',
-    headers: authorizationHeaders(accessToken),
-    body: { targetStatus, reason },
-  })
+  const body: RestoreCompletedWorkItemRequest = { targetStatus, reason }
+
+  return await $fetch<RestoreCompletedWorkItemResponse>(
+    `/api/work-items/${workItemId}/restore-completed`,
+    {
+      method: 'POST',
+      headers: authorizationHeaders(accessToken),
+      body,
+    },
+  )
 }
 
 export async function voidWorkItem(accessToken: string, workItemId: number, reason: string) {
-  return await $fetch(`/api/work-items/${workItemId}/void`, {
+  const body: VoidWorkItemRequest = { reason }
+
+  return await $fetch<VoidWorkItemResponse>(`/api/work-items/${workItemId}/void`, {
     method: 'POST',
     headers: authorizationHeaders(accessToken),
-    body: { reason },
+    body,
   })
 }
 
@@ -135,9 +161,11 @@ export async function reportWorkItemIssue(
   severity: IssueSeverity,
   note: string,
 ) {
-  return await $fetch<WorkItemIssueResponse>(`/api/work-items/${workItemId}/issue`, {
+  const body: ReportWorkItemIssueRequest = { severity, note }
+
+  return await $fetch<ReportWorkItemIssueResponse>(`/api/work-items/${workItemId}/issue`, {
     method: 'POST',
     headers: authorizationHeaders(accessToken),
-    body: { severity, note },
+    body,
   })
 }
