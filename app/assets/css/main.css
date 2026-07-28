@@ -46,6 +46,17 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-action-neutral: var(--action-neutral);
+  --color-action-neutral-foreground: var(--action-neutral-foreground);
+  --color-action-brand: var(--action-brand);
+  --color-action-brand-foreground: var(--action-brand-foreground);
+  --color-action-success: var(--action-success);
+  --color-action-success-foreground: var(--action-success-foreground);
+  --color-action-warning: var(--action-warning);
+  --color-action-warning-foreground: var(--action-warning-foreground);
+  --color-action-danger: var(--action-danger);
+  --color-action-danger-foreground: var(--action-danger-foreground);
 }
 
 :root {
@@ -82,6 +93,47 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Semantic action tokens. Components consume these instead of palette classes. */
+  --action-neutral: #171b18;
+  --action-neutral-hover: #2d352e;
+  --action-neutral-foreground: #ffffff;
+  --action-neutral-soft: #f1f3ee;
+  --action-neutral-soft-hover: #e4e7e1;
+  --action-neutral-border: #d6dad2;
+  --action-neutral-outline: #50574f;
+
+  --action-brand: #bdea70;
+  --action-brand-hover: #c8f480;
+  --action-brand-foreground: #172014;
+  --action-brand-soft: #eef8dc;
+  --action-brand-soft-hover: #e2f2c7;
+  --action-brand-border: #bdd49d;
+  --action-brand-outline: #526348;
+
+  --action-success: #047857;
+  --action-success-hover: #059669;
+  --action-success-foreground: #ffffff;
+  --action-success-soft: #d1fae5;
+  --action-success-soft-hover: #a7f3d0;
+  --action-success-border: #6ee7b7;
+  --action-success-outline: #047857;
+
+  --action-warning: #b45309;
+  --action-warning-hover: #d97706;
+  --action-warning-foreground: #ffffff;
+  --action-warning-soft: #fef3c7;
+  --action-warning-soft-hover: #fde68a;
+  --action-warning-border: #fcd34d;
+  --action-warning-outline: #92400e;
+
+  --action-danger: #dc2626;
+  --action-danger-hover: #ef4444;
+  --action-danger-foreground: #ffffff;
+  --action-danger-soft: #fee2e2;
+  --action-danger-soft-hover: #fecaca;
+  --action-danger-border: #fca5a5;
+  --action-danger-outline: #b91c1c;
 }
 
 .dark {
@@ -117,6 +169,46 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  --action-neutral: #f4f4f5;
+  --action-neutral-hover: #e4e4e7;
+  --action-neutral-foreground: #18181b;
+  --action-neutral-soft: #27272a;
+  --action-neutral-soft-hover: #3f3f46;
+  --action-neutral-border: #52525b;
+  --action-neutral-outline: #e4e4e7;
+
+  --action-brand: #c5f277;
+  --action-brand-hover: #d2f59a;
+  --action-brand-foreground: #172014;
+  --action-brand-soft: #29351f;
+  --action-brand-soft-hover: #354526;
+  --action-brand-border: #71865e;
+  --action-brand-outline: #dff8b4;
+
+  --action-success: #34d399;
+  --action-success-hover: #6ee7b7;
+  --action-success-foreground: #052e22;
+  --action-success-soft: #064e3b;
+  --action-success-soft-hover: #065f46;
+  --action-success-border: #047857;
+  --action-success-outline: #6ee7b7;
+
+  --action-warning: #fbbf24;
+  --action-warning-hover: #fcd34d;
+  --action-warning-foreground: #451a03;
+  --action-warning-soft: #78350f;
+  --action-warning-soft-hover: #92400e;
+  --action-warning-border: #b45309;
+  --action-warning-outline: #fcd34d;
+
+  --action-danger: #f87171;
+  --action-danger-hover: #fca5a5;
+  --action-danger-foreground: #450a0a;
+  --action-danger-soft: #7f1d1d;
+  --action-danger-soft-hover: #991b1b;
+  --action-danger-border: #b91c1c;
+  --action-danger-outline: #fca5a5;
 }
 
 @layer base {

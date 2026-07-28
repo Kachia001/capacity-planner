@@ -42,8 +42,11 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vue/test-utils": "^2.4.11",
     "drizzle-kit": "^0.31.10",
     "eslint": "^10.7.0",
+    "happy-dom": "^20.11.1",
     "prettier": "^3.9.5",
     "tailwindcss": "4.3.3",
     "typescript": "^5.9.3",
