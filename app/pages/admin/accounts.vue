@@ -10,6 +10,9 @@ import {
   UsersRound,
   X,
 } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
+import { DataTable } from '@/components/ui/table'
+import type { DataTableColumn, DataTableOptions } from '@/components/ui/table'
 import { getRequestErrorMessage } from '@/composables/useOperationsApi'
 import type { AppRole } from '@/stores/auth'
 
@@ -110,6 +113,60 @@ function formatCreatedAt(value: string) {
     day: '2-digit',
     timeZone: 'Asia/Seoul',
   }).format(new Date(value))
+}
+
+const accountTableColumns: DataTableColumn<AccountRow>[] = [
+  {
+    key: 'login',
+    header: '로그인 ID',
+    accessor: account => getLoginId(account.email),
+    width: '25%',
+    headerClass: 'px-5 py-3.5 text-[11px] font-semibold text-[#697067]',
+    cellClass: 'px-5 py-4',
+  },
+  {
+    key: 'displayName',
+    header: '이름',
+    accessor: 'displayName',
+    format: value => value || '이름 미등록',
+    width: '23%',
+    headerClass: 'px-4 py-3.5 text-[11px] font-semibold text-[#697067]',
+    cellClass: 'px-4 py-4 text-sm font-medium text-[#353b34]',
+  },
+  {
+    key: 'role',
+    header: '직책',
+    accessor: 'role',
+    width: '18%',
+    headerClass: 'px-4 py-3.5 text-[11px] font-semibold text-[#697067]',
+    cellClass: 'px-4 py-4',
+  },
+  {
+    key: 'createdAt',
+    header: '등록일',
+    accessor: 'createdAt',
+    format: value => formatCreatedAt(String(value)),
+    width: '18%',
+    headerClass: 'px-4 py-3.5 text-[11px] font-semibold text-[#697067]',
+    cellClass: 'px-4 py-4 font-mono text-[11px] text-[#6f766d]',
+  },
+  {
+    key: 'status',
+    header: '상태',
+    accessor: () => 'active',
+    align: 'right',
+    width: '16%',
+    headerClass: 'px-5 py-3.5 text-[11px] font-semibold text-[#697067]',
+    cellClass: 'px-5 py-4',
+  },
+]
+
+const accountTableOptions: DataTableOptions<AccountRow> = {
+  tableClass: 'min-w-[48rem] border-collapse text-left',
+  headerClass: 'bg-[#f7f8f5]',
+  headerRowClass: 'border-b border-[#e0e4dd]',
+  bodyClass: 'divide-y divide-[#eceee9]',
+  rowClass: 'transition hover:bg-[#fbfcf9]',
 }
 
 function applyFilters() {
@@ -282,39 +339,46 @@ onMounted(() => {
             </select>
           </label>
           <div class="grid grid-cols-2 gap-2 sm:col-span-2 xl:col-span-1">
-            <button
+            <Button
               type="button"
-              class="inline-flex h-11 items-center gap-2 rounded-lg border border-[#d6dad2] bg-white px-4 text-xs font-semibold text-[#60675f] transition hover:border-[#aeb5ab] hover:text-[#171a17]"
+              variant="outline"
+              tone="neutral"
+              size="lg"
+              class="border-[#d6dad2] bg-white text-xs text-[#60675f] hover:border-[#aeb5ab] hover:text-[#171a17]"
               @click="resetFilters"
             >
               <RotateCcw class="size-3.5" /> 초기화
-            </button>
-            <button
-              type="submit"
-              class="inline-flex h-11 items-center gap-2 rounded-lg bg-[#171b18] px-5 text-xs font-semibold text-white transition hover:bg-[#2d352e]"
-            >
+            </Button>
+            <Button type="submit" variant="solid" tone="neutral" size="lg" class="text-xs">
               <Search class="size-3.5" /> 조회
-            </button>
+            </Button>
           </div>
         </div>
       </form>
 
       <div class="my-5 flex items-center justify-between">
-        <button
+        <Button
           type="button"
-          class="inline-flex h-10 items-center gap-2 rounded-lg bg-[#bdea70] px-4 text-xs font-bold text-[#172014] shadow-[0_8px_18px_rgba(100,130,61,0.13)] transition hover:bg-[#c8f480]"
+          variant="solid"
+          tone="success"
+          size="md"
+          class="text-xs font-bold shadow-[0_8px_18px_rgba(100,130,61,0.13)]"
           @click="showCreatePanel = true"
         >
           <UserPlus class="size-4" /> 계정 생성
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          class="inline-flex h-9 items-center gap-2 rounded-md px-3 text-xs font-semibold text-[#697067] transition hover:bg-white hover:text-[#171a17] disabled:opacity-50"
-          :disabled="refreshing"
+          variant="ghost"
+          tone="neutral"
+          size="sm"
+          :loading="refreshing"
+          loading-text="동기화 중"
+          class="text-xs text-[#697067] hover:bg-white hover:text-[#171a17]"
           @click="loadAccounts(true)"
         >
-          <RefreshCw class="size-3.5" :class="refreshing ? 'animate-spin' : ''" /> 최신 정보
-        </button>
+          <RefreshCw class="size-3.5" /> 최신 정보
+        </Button>
       </div>
 
       <p
@@ -336,14 +400,17 @@ onMounted(() => {
             </p>
             <h3 class="mt-1 text-base font-semibold">신규 접속 계정</h3>
           </div>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            tone="neutral"
+            size="icon"
             aria-label="계정 생성 닫기"
-            class="flex size-8 items-center justify-center rounded-md text-[#838b81] transition hover:bg-[#f1f3ef] hover:text-[#222721]"
+            class="text-[#838b81] hover:bg-[#f1f3ef] hover:text-[#222721]"
             @click="closeCreatePanel"
           >
             <X class="size-4" />
-          </button>
+          </Button>
         </div>
 
         <form
@@ -389,14 +456,18 @@ onMounted(() => {
               placeholder="6자 이상"
             />
           </label>
-          <button
+          <Button
             type="submit"
             :disabled="!canCreate"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#171b18] px-5 text-xs font-semibold text-white transition hover:bg-[#2d352e] disabled:cursor-not-allowed disabled:opacity-40 sm:col-span-2 xl:col-span-1"
+            :loading="createPending"
+            loading-text="생성 중"
+            variant="solid"
+            tone="neutral"
+            size="lg"
+            class="text-xs sm:col-span-2 xl:col-span-1"
           >
-            <Loader2 v-if="createPending" class="size-3.5 animate-spin" />
-            <UserPlus v-else class="size-3.5" /> 생성
-          </button>
+            <UserPlus class="size-3.5" /> 생성
+          </Button>
         </form>
         <p
           v-if="createError"
@@ -440,13 +511,16 @@ onMounted(() => {
         >
           <TriangleAlert class="size-8 text-red-600" />
           <p class="mt-3 text-sm font-semibold text-red-800">{{ errorMessage }}</p>
-          <button
+          <Button
             type="button"
-            class="mt-4 inline-flex h-9 items-center gap-2 rounded-md border border-red-200 px-3 text-xs font-semibold text-red-700 hover:bg-red-50"
+            variant="outline"
+            tone="danger"
+            size="sm"
+            class="mt-4 border-red-200 text-xs text-red-700 hover:bg-red-50"
             @click="loadAccounts()"
           >
             <RefreshCw class="size-3.5" /> 다시 시도
-          </button>
+          </Button>
         </div>
         <div
           v-else-if="filteredAccounts.length === 0"
@@ -456,7 +530,7 @@ onMounted(() => {
           <p class="mt-3 text-sm font-semibold">조건에 맞는 계정이 없습니다.</p>
         </div>
         <template v-else>
-          <div class="divide-y divide-[#eceee9] md:hidden">
+          <section data-layout="mobile" class="divide-y divide-[#eceee9] md:hidden">
             <article v-for="account in filteredAccounts" :key="account.id" class="p-4">
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
@@ -494,64 +568,40 @@ onMounted(() => {
                 <span class="size-1.5 rounded-full bg-emerald-500" /> 활성
               </p>
             </article>
-          </div>
+          </section>
 
-          <div class="hidden overflow-x-auto md:block">
-            <table class="w-full min-w-[48rem] border-collapse text-left">
-              <thead class="bg-[#f7f8f5]">
-                <tr class="border-b border-[#e0e4dd]">
-                  <th class="w-[25%] px-5 py-3.5 text-[11px] font-semibold text-[#697067]">
-                    로그인 ID
-                  </th>
-                  <th class="w-[23%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">이름</th>
-                  <th class="w-[18%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">직책</th>
-                  <th class="w-[18%] px-4 py-3.5 text-[11px] font-semibold text-[#697067]">
-                    등록일
-                  </th>
-                  <th
-                    class="w-[16%] px-5 py-3.5 text-right text-[11px] font-semibold text-[#697067]"
-                  >
-                    상태
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-[#eceee9]">
-                <tr
-                  v-for="account in filteredAccounts"
-                  :key="account.id"
-                  class="transition hover:bg-[#fbfcf9]"
+          <section data-layout="desktop" class="hidden md:block">
+            <DataTable
+              :data="filteredAccounts"
+              :columns="accountTableColumns"
+              :options="accountTableOptions"
+              row-key="id"
+            >
+              <template #cell-login="{ row }">
+                <p class="font-mono text-xs font-bold text-[#20251f]">
+                  {{ getLoginId(row.email) }}
+                </p>
+                <p class="mt-1 text-[10px] text-[#969d94]">{{ row.email }}</p>
+              </template>
+
+              <template #cell-role="{ row }">
+                <span
+                  class="inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold"
+                  :class="getRoleClass(row.role)"
                 >
-                  <td class="px-5 py-4">
-                    <p class="font-mono text-xs font-bold text-[#20251f]">
-                      {{ getLoginId(account.email) }}
-                    </p>
-                    <p class="mt-1 text-[10px] text-[#969d94]">{{ account.email }}</p>
-                  </td>
-                  <td class="px-4 py-4 text-sm font-medium text-[#353b34]">
-                    {{ account.displayName || '이름 미등록' }}
-                  </td>
-                  <td class="px-4 py-4">
-                    <span
-                      class="inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold"
-                      :class="getRoleClass(account.role)"
-                    >
-                      {{ getRoleLabel(account.role) }}
-                    </span>
-                  </td>
-                  <td class="px-4 py-4 font-mono text-[11px] text-[#6f766d]">
-                    {{ formatCreatedAt(account.createdAt) }}
-                  </td>
-                  <td class="px-5 py-4 text-right">
-                    <span
-                      class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700"
-                    >
-                      <span class="size-1.5 rounded-full bg-emerald-500" /> 활성
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                  {{ getRoleLabel(row.role) }}
+                </span>
+              </template>
+
+              <template #cell-status>
+                <span
+                  class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700"
+                >
+                  <span class="size-1.5 rounded-full bg-emerald-500" /> 활성
+                </span>
+              </template>
+            </DataTable>
+          </section>
         </template>
       </section>
     </section>
