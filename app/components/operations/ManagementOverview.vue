@@ -187,14 +187,30 @@ function eventActor(event: DashboardEvent) {
               </p>
             </div>
             <Button
+              data-layout="mobile"
               variant="outline"
-              class="h-auto min-h-12 rounded-xl border-zinc-700 bg-zinc-900 px-3 text-white hover:bg-zinc-800 hover:text-white sm:h-11 sm:min-h-0 sm:rounded-md sm:px-4"
-              :disabled="props.pending"
+              tone="neutral"
+              size="touch"
+              :loading="props.pending"
+              loading-text="동기화 중"
+              class="rounded-xl border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white sm:hidden"
               @click="refreshDashboard"
             >
-              <RefreshCw class="size-4" :class="props.pending ? 'animate-spin' : ''" />
-              <span class="hidden sm:inline">{{ props.pending ? '동기화 중' : '새로고침' }}</span>
-              <span class="sm:hidden">동기화</span>
+              <RefreshCw class="size-4" />
+              동기화
+            </Button>
+            <Button
+              data-layout="desktop"
+              variant="outline"
+              tone="neutral"
+              size="lg"
+              :loading="props.pending"
+              loading-text="동기화 중"
+              class="hidden border-zinc-700 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white sm:inline-flex"
+              @click="refreshDashboard"
+            >
+              <RefreshCw class="size-4" />
+              새로고침
             </Button>
           </div>
         </div>
@@ -224,7 +240,15 @@ function eventActor(event: DashboardEvent) {
               </p>
             </div>
             <span
-              class="flex size-8 items-center justify-center rounded-md sm:size-9"
+              data-layout="mobile"
+              class="flex size-8 items-center justify-center rounded-md sm:hidden"
+              :class="kpi.iconClass"
+            >
+              <component :is="kpi.icon" class="size-4" />
+            </span>
+            <span
+              data-layout="desktop"
+              class="hidden size-9 items-center justify-center rounded-md sm:flex"
               :class="kpi.iconClass"
             >
               <component :is="kpi.icon" class="size-4" />
@@ -236,9 +260,12 @@ function eventActor(event: DashboardEvent) {
         </article>
       </div>
 
-      <button
+      <Button
         type="button"
-        class="mt-3 flex min-h-12 w-full items-center justify-between rounded-xl border border-zinc-300 bg-white px-4 text-left text-sm font-semibold text-zinc-800 shadow-sm transition active:bg-zinc-50 sm:mt-5"
+        variant="outline"
+        tone="neutral"
+        size="touch"
+        class="mt-3 w-full justify-between border-zinc-300 bg-white text-left text-zinc-800 shadow-sm active:bg-zinc-50 sm:mt-5"
         :aria-expanded="detailsExpanded"
         @click="toggleDetailsExpanded"
       >
@@ -258,7 +285,7 @@ function eventActor(event: DashboardEvent) {
             :class="detailsExpanded ? 'rotate-180' : ''"
           />
         </span>
-      </button>
+      </Button>
 
       <div
         v-if="detailsExpanded"
@@ -284,8 +311,8 @@ function eventActor(event: DashboardEvent) {
               <Button
                 v-if="issueTotal > 12"
                 variant="ghost"
-                size="sm"
-                class="h-8 gap-1 px-2 text-xs text-zinc-600 hover:bg-zinc-100"
+                size="default"
+                class="px-2 text-xs text-zinc-600 hover:bg-zinc-100"
                 :aria-expanded="issuesExpanded"
                 @click="toggleIssuesExpanded"
               >
@@ -303,11 +330,14 @@ function eventActor(event: DashboardEvent) {
             열린 이슈가 없습니다.
           </div>
           <div v-else class="max-h-[34rem] divide-y divide-zinc-100 overflow-y-auto">
-            <button
+            <Button
               v-for="issue in visibleIssues"
               :key="issue.id"
               type="button"
-              class="flex w-full items-start gap-3 px-5 py-4 text-left transition hover:bg-red-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-red-500"
+              variant="ghost"
+              tone="danger"
+              size="content"
+              class="w-full items-start justify-start gap-3 whitespace-normal rounded-none px-5 py-4 text-left hover:bg-red-50/60"
               :aria-label="`${issue.bayCode} ${issue.workName || '작업명 없음'} 이슈 작업으로 이동`"
               @click="selectWorkItem(issue.bayId, issue.id)"
             >
@@ -330,7 +360,7 @@ function eventActor(event: DashboardEvent) {
                 }}</span>
               </span>
               <ArrowUpRight class="mt-1 size-4 shrink-0 text-zinc-400" />
-            </button>
+            </Button>
           </div>
         </section>
 
@@ -355,11 +385,14 @@ function eventActor(event: DashboardEvent) {
             기록된 상태 변경이 없습니다.
           </div>
           <div v-else class="max-h-[31rem] divide-y divide-zinc-100 overflow-y-auto">
-            <button
+            <Button
               v-for="event in props.dashboard.recentEvents"
               :key="event.id"
               type="button"
-              class="flex w-full items-start gap-3 px-5 py-3.5 text-left transition hover:bg-zinc-50"
+              variant="ghost"
+              tone="neutral"
+              size="content"
+              class="w-full items-start justify-start gap-3 whitespace-normal rounded-none px-5 py-3.5 text-left hover:bg-zinc-50"
               @click="selectWorkItem(event.bayId, event.workItemId)"
             >
               <span
@@ -380,7 +413,7 @@ function eventActor(event: DashboardEvent) {
                   >사유: {{ event.reason }}</span
                 >
               </span>
-            </button>
+            </Button>
           </div>
         </section>
       </div>

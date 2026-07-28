@@ -199,10 +199,13 @@ function requestReportIssue(item: OperationWorkItem) {
         isExpanded(group.key) ? 'ring-2 ring-[#dcebcf]' : '',
       ]"
     >
-      <button
+      <Button
         :id="`${group.domId}-trigger`"
         type="button"
-        class="w-full px-4 py-4 text-left outline-none transition active:bg-[#f4f7f1] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#739354]"
+        variant="ghost"
+        tone="neutral"
+        size="content"
+        class="w-full flex-col items-stretch justify-start whitespace-normal rounded-none px-4 py-4 text-left active:bg-[#f4f7f1]"
         :aria-expanded="isExpanded(group.key)"
         :aria-controls="group.domId"
         @click="toggleGroup(group.key)"
@@ -289,7 +292,7 @@ function requestReportIssue(item: OperationWorkItem) {
             <span class="ml-auto">{{ isExpanded(group.key) ? '접기' : '세부 작업 보기' }}</span>
           </span>
         </span>
-      </button>
+      </Button>
 
       <Transition name="work-accordion">
         <div
@@ -412,7 +415,8 @@ function requestReportIssue(item: OperationWorkItem) {
                 <Button
                   v-if="!item.hasIssue || item.issueStatus === 'resolved'"
                   variant="outline"
-                  class="h-12 min-w-28 flex-1 border-red-200 bg-white px-3 text-red-700 hover:bg-red-50"
+                  size="touch"
+                  class="min-w-28 flex-1 border-red-200 bg-white text-red-700 hover:bg-red-50"
                   :disabled="props.mutationItemId !== null"
                   @click="requestReportIssue(item)"
                 >
@@ -421,7 +425,8 @@ function requestReportIssue(item: OperationWorkItem) {
                 <Button
                   v-if="props.role === 'admin'"
                   variant="destructive"
-                  class="h-12 min-w-24 flex-1 px-3"
+                  size="touch"
+                  class="min-w-24 flex-1"
                   :disabled="props.mutationItemId !== null"
                   @click="requestVoid(item)"
                 >
@@ -430,7 +435,8 @@ function requestReportIssue(item: OperationWorkItem) {
                 <Button
                   v-if="isSupervisor && item.status === 'in_progress'"
                   variant="outline"
-                  class="h-12 min-w-28 flex-1 border-amber-300 bg-white px-3 text-amber-800 hover:bg-amber-50"
+                  size="touch"
+                  class="min-w-28 flex-1 border-amber-300 bg-white text-amber-800 hover:bg-amber-50"
                   :disabled="props.mutationItemId !== null"
                   @click="requestCancelStart(item)"
                 >
@@ -458,7 +464,8 @@ function requestReportIssue(item: OperationWorkItem) {
                   <div class="mt-3 grid grid-cols-2 gap-2">
                     <Button
                       variant="outline"
-                      class="h-11 border-amber-300 bg-white px-2 text-xs font-bold text-amber-800 hover:bg-amber-50"
+                      size="lg"
+                      class="border-amber-300 bg-white px-2 text-xs font-bold text-amber-800 hover:bg-amber-50"
                       :disabled="props.mutationItemId !== null"
                       @click="requestRestoreCompleted(item, 'in_progress')"
                     >
@@ -466,7 +473,8 @@ function requestReportIssue(item: OperationWorkItem) {
                     </Button>
                     <Button
                       variant="outline"
-                      class="h-11 border-zinc-300 bg-white px-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50"
+                      size="lg"
+                      class="border-zinc-300 bg-white px-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50"
                       :disabled="props.mutationItemId !== null"
                       @click="requestRestoreCompleted(item, 'not_started')"
                     >
@@ -476,7 +484,9 @@ function requestReportIssue(item: OperationWorkItem) {
                 </div>
                 <Button
                   v-if="item.status === 'not_started'"
-                  class="h-12 min-w-32 flex-1 bg-emerald-700 px-4 text-white hover:bg-emerald-600"
+                  size="touch"
+                  tone="success"
+                  class="min-w-32 flex-1"
                   :disabled="props.mutationItemId !== null || !props.operationOpen"
                   @click="requestStart(item)"
                 >
@@ -485,7 +495,9 @@ function requestReportIssue(item: OperationWorkItem) {
                 </Button>
                 <Button
                   v-else-if="item.status === 'in_progress' && canComplete(item)"
-                  class="h-12 min-w-32 flex-1 bg-[#171b18] px-4 text-white hover:bg-[#2d352e]"
+                  size="touch"
+                  tone="neutral"
+                  class="min-w-32 flex-1"
                   :disabled="props.mutationItemId !== null || !props.operationOpen"
                   @click="requestComplete(item)"
                 >

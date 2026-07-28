@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button'
             이 Bay만의 독립적인 작업 목록으로 저장됩니다.
           </p>
         </div>
-        <Button as-child variant="outline" size="lg" class="h-11 bg-card">
+        <Button as-child variant="outline" size="lg" class="bg-card">
           <NuxtLink to="/admin/bay-templates/new"> <Plus /> 새 템플릿 만들기 </NuxtLink>
         </Button>
       </div>

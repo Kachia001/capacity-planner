@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Boxes, LogOut } from '@lucide/vue'
 import AdminMobileNavigation from '@/components/admin/navigation/AdminMobileNavigation.vue'
+import { Button } from '@/components/ui/button'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -70,7 +71,14 @@ onMounted(() => {
       class="relative flex min-w-0 shrink items-center gap-2.5 sm:shrink-0 sm:gap-3"
     >
       <span
-        class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#c5f277] text-[#111512] shadow-[0_0_32px_rgba(197,242,119,0.16)] sm:size-10"
+        data-layout="mobile"
+        class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#c5f277] text-[#111512] shadow-[0_0_32px_rgba(197,242,119,0.16)] sm:hidden"
+      >
+        <Boxes class="size-5" stroke-width="2.2" />
+      </span>
+      <span
+        data-layout="desktop"
+        class="hidden size-10 shrink-0 items-center justify-center rounded-lg bg-[#c5f277] text-[#111512] shadow-[0_0_32px_rgba(197,242,119,0.16)] sm:flex"
       >
         <Boxes class="size-5" stroke-width="2.2" />
       </span>
@@ -114,14 +122,17 @@ onMounted(() => {
           <p class="font-mono text-[8px] uppercase tracking-[0.16em] text-[#90978e]">직책</p>
           <p class="mt-1.5 text-xs font-semibold">{{ roleLabel }}</p>
         </div>
-        <button
+        <Button
           type="button"
-          class="flex h-full items-center gap-2 rounded-r-lg px-4 text-xs font-semibold text-[#6e756d] transition hover:bg-[#f1f3ee] hover:text-[#171a17] disabled:cursor-not-allowed disabled:opacity-50"
+          variant="ghost"
+          tone="neutral"
+          size="content"
+          class="h-full rounded-l-none rounded-r-lg px-4 text-xs text-[#6e756d] hover:bg-[#f1f3ee] hover:text-[#171a17]"
           :disabled="auth.pending"
           @click="signOut"
         >
           <LogOut class="size-3.5" /> 로그아웃
-        </button>
+        </Button>
       </div>
 
       <AdminMobileNavigation />

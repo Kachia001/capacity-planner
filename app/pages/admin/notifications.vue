@@ -389,15 +389,18 @@ onMounted(() => {
                     : 'BotFather에서 발급받은 Bot Token'
                 "
               />
-              <button
+              <Button
                 type="button"
-                class="absolute right-1 top-1 flex size-10 items-center justify-center rounded-md text-[#7b8378] hover:bg-[#f1f3ef]"
+                variant="ghost"
+                tone="neutral"
+                size="icon-md"
+                class="absolute right-1 top-1 text-[#7b8378] hover:bg-[#f1f3ef]"
                 :aria-label="showToken ? 'Bot Token 숨기기' : 'Bot Token 보기'"
                 @click="showToken = !showToken"
               >
                 <EyeOff v-if="showToken" class="size-4" />
                 <Eye v-else class="size-4" />
-              </button>
+              </Button>
             </span>
             <span class="text-xs font-normal leading-5 text-[#858c83]">
               기존 토큰을 유지하려면 비워 두세요. 토큰은 서버에서만 복호화됩니다.
@@ -444,14 +447,14 @@ onMounted(() => {
                 v-if="settings?.configured"
                 type="button"
                 variant="outline"
-                class="h-11 gap-2"
+                size="lg"
                 :disabled="testing || saving || !settings.isEnabled || !settings.encryptionReady"
                 @click="sendTestMessage"
               >
                 <Loader2 v-if="testing" class="size-4 animate-spin" />
                 <Send v-else class="size-4" /> 테스트 전송
               </Button>
-              <Button type="submit" class="h-11 gap-2" :disabled="!canSave">
+              <Button type="submit" size="lg" :disabled="!canSave">
                 <Loader2 v-if="saving" class="size-4 animate-spin" />
                 <ShieldCheck v-else class="size-4" />
                 {{ saving ? '저장 중' : '설정 저장' }}
@@ -485,7 +488,7 @@ onMounted(() => {
             <Button
               type="button"
               variant="outline"
-              class="h-10 gap-2"
+              size="md"
               :disabled="deliveriesLoading"
               @click="loadDeliveries"
             >
@@ -494,7 +497,7 @@ onMounted(() => {
             </Button>
             <Button
               type="button"
-              class="h-10 gap-2"
+              size="md"
               :disabled="
                 processingDeliveries ||
                 !deliveryState ||
@@ -593,7 +596,8 @@ onMounted(() => {
                 v-if="delivery.status === 'failed' || delivery.status === 'skipped'"
                 type="button"
                 variant="outline"
-                class="h-10 shrink-0 gap-2"
+                size="md"
+                class="shrink-0"
                 :disabled="retryingDeliveryId !== null"
                 @click="retryDelivery(delivery)"
               >
@@ -618,7 +622,8 @@ onMounted(() => {
         <Button
           type="button"
           variant="destructive"
-          class="h-11 shrink-0 gap-2"
+          size="lg"
+          class="shrink-0"
           :disabled="deleting"
           @click="deleteSettings"
         >

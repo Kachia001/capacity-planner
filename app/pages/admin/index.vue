@@ -2,6 +2,7 @@
 import { ArrowUpRight, RefreshCw, TriangleAlert } from '@lucide/vue'
 import BayStatusMatrix from '@/components/operations/BayStatusMatrix.vue'
 import OperationControlPanel from '@/components/operations/OperationControlPanel.vue'
+import { Button } from '@/components/ui/button'
 import {
   closeOperation,
   fetchOperationStatus,
@@ -139,21 +140,28 @@ onMounted(() => {
         </div>
 
         <div class="grid w-full shrink-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
-          <NuxtLink
-            to="/admin/bays"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#cdd2c9] bg-white px-3 text-xs font-semibold text-[#414840] transition hover:border-[#949d91] hover:bg-[#fafbf8] sm:h-10 sm:px-4"
+          <Button
+            as-child
+            variant="outline"
+            tone="neutral"
+            size="md"
+            class="border-[#cdd2c9] bg-white text-xs text-[#414840] hover:border-[#949d91] hover:bg-[#fafbf8]"
           >
-            Bay 목록 열기 <ArrowUpRight class="size-3.5" />
-          </NuxtLink>
-          <button
+            <NuxtLink to="/admin/bays"> Bay 목록 열기 <ArrowUpRight class="size-3.5" /> </NuxtLink>
+          </Button>
+          <Button
             type="button"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#171b18] px-3 text-xs font-semibold text-white shadow-[0_8px_20px_rgba(23,27,24,0.14)] transition hover:bg-[#2d352e] disabled:opacity-50 sm:h-10 sm:px-4"
-            :disabled="loading || refreshing"
+            variant="solid"
+            tone="neutral"
+            size="md"
+            :loading="loading || refreshing"
+            loading-text="동기화 중"
+            class="text-xs shadow-[0_8px_20px_rgba(23,27,24,0.14)]"
             @click="loadOverview(true)"
           >
-            <RefreshCw class="size-3.5" :class="refreshing ? 'animate-spin' : ''" />
+            <RefreshCw class="size-3.5" />
             최신 정보
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -176,13 +184,16 @@ onMounted(() => {
       >
         <TriangleAlert class="size-8 text-red-600" />
         <p class="mt-3 text-sm font-semibold text-red-800">{{ errorMessage }}</p>
-        <button
+        <Button
           type="button"
-          class="mt-4 inline-flex h-9 items-center gap-2 rounded-md border border-red-200 bg-white px-3 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+          variant="outline"
+          tone="danger"
+          size="sm"
+          class="mt-4 border-red-200 bg-white text-xs text-red-700 hover:bg-red-100"
           @click="loadOverview()"
         >
           <RefreshCw class="size-3.5" /> 다시 시도
-        </button>
+        </Button>
       </div>
 
       <BayStatusMatrix

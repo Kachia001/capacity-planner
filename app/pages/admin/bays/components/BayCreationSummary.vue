@@ -64,7 +64,7 @@ function handleCreate() {
         <TriangleAlert />
         <AlertDescription>{{ props.submitError }}</AlertDescription>
       </Alert>
-      <Button :disabled="!props.canSubmit" size="lg" class="mt-5 h-11 w-full" @click="handleCreate">
+      <Button :disabled="!props.canSubmit" size="lg" class="mt-5 w-full" @click="handleCreate">
         <Loader2 v-if="props.submitPending" class="animate-spin" />
         {{ props.submitPending ? '생성 중' : 'BAY 생성' }}
       </Button>

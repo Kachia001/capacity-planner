@@ -9,10 +9,11 @@ export interface AdminBayGridProps {
 
 <script setup lang="ts">
 import { AlertTriangle, CheckCircle2, Clock3, Loader2 } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
 
-defineProps<AdminBayGridProps>()
+const props = defineProps<AdminBayGridProps>()
 
-defineEmits<{
+const emit = defineEmits<{
   select: [bay: string]
 }>()
 
@@ -30,7 +31,8 @@ function bayState(bay: BaySelectorBay) {
     return {
       label: '완료',
       icon: CheckCircle2,
-      class: 'border-emerald-200 bg-emerald-50/90 text-emerald-800 hover:border-emerald-300 hover:bg-emerald-50',
+      class:
+        'border-emerald-200 bg-emerald-50/90 text-emerald-800 hover:border-emerald-300 hover:bg-emerald-50',
       meter: 'bg-emerald-500',
     }
   }
@@ -38,16 +40,21 @@ function bayState(bay: BaySelectorBay) {
   return {
     label: '진행 중',
     icon: Clock3,
-    class: 'border-amber-200 bg-amber-50/90 text-amber-800 hover:border-amber-300 hover:bg-amber-50',
+    class:
+      'border-amber-200 bg-amber-50/90 text-amber-800 hover:border-amber-300 hover:bg-amber-50',
     meter: 'bg-amber-400',
   }
+}
+
+function handleSelect(bay: string) {
+  emit('select', bay)
 }
 </script>
 
 <template>
   <div class="w-full">
     <div
-      v-if="pending && bays.length === 0"
+      v-if="props.pending && props.bays.length === 0"
       class="flex min-h-56 items-center justify-center rounded-md border border-dashed border-emerald-200 bg-white/70 text-sm text-muted-foreground"
     >
       <Loader2 class="mr-2 size-4 animate-spin" />
@@ -55,38 +62,39 @@ function bayState(bay: BaySelectorBay) {
     </div>
 
     <div
-      v-else-if="bays.length === 0"
+      v-else-if="props.bays.length === 0"
       class="flex min-h-56 items-center justify-center rounded-md border border-dashed border-emerald-200 bg-white/70 text-sm text-muted-foreground"
     >
       저장된 bay 데이터가 없습니다.
     </div>
 
-    <div
-      v-else
-      class="grid w-full grid-cols-[repeat(auto-fit,minmax(12rem,1fr))] gap-3 sm:gap-4"
-    >
-      <button
-        v-for="bay in bays"
+    <div v-else class="grid w-full grid-cols-[repeat(auto-fit,minmax(12rem,1fr))] gap-3 sm:gap-4">
+      <Button
+        v-for="bay in props.bays"
         :key="bay.bay"
         type="button"
-        class="group relative min-h-36 overflow-hidden rounded-md border p-4 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+        variant="outline"
+        size="content"
+        class="group relative min-h-36 flex-col items-stretch justify-start overflow-hidden whitespace-normal rounded-md border p-4 text-left shadow-sm hover:-translate-y-0.5 hover:shadow-md"
         :class="bayState(bay).class"
-        @click="$emit('select', bay.bay)"
+        @click="handleSelect(bay.bay)"
       >
         <div class="relative min-h-8 pr-8">
-          <span class="block min-w-0 break-all text-xl font-semibold leading-tight tracking-tight text-zinc-950">
+          <span
+            class="block min-w-0 break-all text-xl font-semibold leading-tight tracking-tight text-zinc-950"
+          >
             {{ bay.bay }}
           </span>
-          <span class="absolute right-0 top-0 flex size-6 items-center justify-center rounded-full bg-white/70 shadow-sm ring-1 ring-current/10">
+          <span
+            class="absolute right-0 top-0 flex size-6 items-center justify-center rounded-full bg-white/70 shadow-sm ring-1 ring-current/10"
+          >
             <component :is="bayState(bay).icon" class="size-4 shrink-0 overflow-visible" />
           </span>
         </div>
 
         <div class="mt-7 flex items-end justify-between gap-3">
           <div>
-            <div class="text-xs font-medium tracking-[0.18em] text-zinc-500">
-              진행률
-            </div>
+            <div class="text-xs font-medium tracking-[0.18em] text-zinc-500">진행률</div>
             <div class="mt-1 text-sm font-semibold text-zinc-950">
               {{ bay.completed }}/{{ bay.total }}
             </div>
@@ -107,7 +115,7 @@ function bayState(bay: BaySelectorBay) {
         <div class="mt-3 text-xs font-semibold">
           {{ bayState(bay).label }}
         </div>
-      </button>
+      </Button>
     </div>
   </div>
 </template>

@@ -58,15 +58,18 @@ onBeforeUnmount(() => {
         @click.stop
       >
         <div class="h-1.5 bg-red-500" />
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          tone="neutral"
+          size="icon-md"
           aria-label="이슈 등록 닫기"
-          class="absolute right-4 top-5 flex size-10 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-800"
+          class="absolute right-4 top-5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-800"
           :disabled="props.pending"
           @click="close"
         >
           <X class="size-5" />
-        </button>
+        </Button>
 
         <form
           class="p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:p-6"
@@ -152,17 +155,13 @@ onBeforeUnmount(() => {
             <Button
               type="button"
               variant="outline"
-              class="h-12"
+              size="touch"
               :disabled="props.pending"
               @click="close"
             >
               취소
             </Button>
-            <Button
-              type="submit"
-              class="h-12 bg-red-600 text-white hover:bg-red-500"
-              :disabled="!canSubmit"
-            >
+            <Button type="submit" variant="solid" tone="danger" size="touch" :disabled="!canSubmit">
               <Loader2 v-if="props.pending" class="size-4 animate-spin" />
               <Send v-else class="size-4" />
               {{ props.pending ? '등록 중' : '이슈 등록 및 전송 예약' }}

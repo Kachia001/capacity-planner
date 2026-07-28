@@ -250,7 +250,7 @@ function updateHighAltitude(item: TemplateItemDraft, value: boolean | 'indetermi
           class="h-10 border-zinc-700 bg-zinc-900 pl-9 text-white placeholder:text-zinc-500"
         />
       </label>
-      <Button class="h-10" @click="addGroup">
+      <Button size="md" @click="addGroup">
         <Plus />
         그룹 추가
       </Button>
@@ -270,7 +270,7 @@ function updateHighAltitude(item: TemplateItemDraft, value: boolean | 'indetermi
     <p class="mt-2 max-w-sm text-sm leading-6 text-zinc-600">
       workName을 기준으로 첫 그룹을 추가하고, 그룹 안에 상세 작업을 구성하세요.
     </p>
-    <Button class="mt-5 h-10" @click="addGroup"> <Plus /> 첫 그룹 추가 </Button>
+    <Button size="md" class="mt-5" @click="addGroup"> <Plus /> 첫 그룹 추가 </Button>
   </div>
 
   <div v-else class="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[17rem_minmax(0,1fr)]">
@@ -293,7 +293,8 @@ function updateHighAltitude(item: TemplateItemDraft, value: boolean | 'indetermi
           v-for="group in filteredGroups"
           :key="group.clientId"
           variant="ghost"
-          class="group mb-1 h-auto w-full justify-start gap-3 rounded-sm border px-3 py-3 text-left whitespace-normal"
+          size="content"
+          class="group mb-1 w-full justify-start gap-3 whitespace-normal rounded-sm border px-3 py-3 text-left"
           :class="
             selectedGroup?.clientId === group.clientId
               ? 'border-zinc-950 bg-zinc-950 text-white shadow-sm'
@@ -396,12 +397,12 @@ function updateHighAltitude(item: TemplateItemDraft, value: boolean | 'indetermi
             >
               <ArrowDown />
             </Button>
-            <Button variant="outline" class="h-10" @click="duplicateGroup(selectedGroup)">
+            <Button variant="outline" size="md" @click="duplicateGroup(selectedGroup)">
               <Copy /> 복제
             </Button>
             <Button
               variant="destructive"
-              class="h-10"
+              size="md"
               :class="
                 pendingGroupDeleteId === selectedGroup.clientId
                   ? 'bg-destructive text-destructive-foreground'
@@ -430,7 +431,7 @@ function updateHighAltitude(item: TemplateItemDraft, value: boolean | 'indetermi
               상세 작업 {{ selectedGroup.items.length }}개
             </h3>
           </div>
-          <Button class="h-10" @click="addItem(selectedGroup)"> <Plus /> 상세 작업 추가 </Button>
+          <Button size="md" @click="addItem(selectedGroup)"> <Plus /> 상세 작업 추가 </Button>
         </div>
         <section class="space-y-3 overflow-y-auto">
           <Card

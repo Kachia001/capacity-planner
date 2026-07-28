@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Clock3, Loader2, LockKeyhole, Play, RefreshCw, Square } from '@lucide/vue'
+import { Clock3, LockKeyhole, Play, RefreshCw, Square } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
 import type { OperationStatus } from '@/types/operations'
 
 const props = defineProps<{
@@ -159,36 +160,46 @@ onBeforeUnmount(() => {
           />
           <span class="text-xs text-zinc-500">분</span>
         </label>
-        <button
+        <Button
           v-if="effectivelyOpen"
-          type="button"
-          class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 text-xs font-bold text-white transition hover:bg-zinc-700 disabled:opacity-50"
+          variant="solid"
+          tone="neutral"
+          size="md"
+          :loading="mutationPending"
+          loading-text="지금 Close"
           :disabled="mutationPending"
           @click="emit('close')"
         >
-          <Loader2 v-if="mutationPending" class="size-4 animate-spin" />
-          <Square v-else class="size-3.5 fill-current" /> 지금 Close
-        </button>
-        <button
+          <Square class="size-3.5 fill-current" /> 지금 Close
+        </Button>
+        <Button
           v-else
-          type="button"
-          class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 text-xs font-bold text-white transition hover:bg-emerald-600 disabled:opacity-50"
+          variant="solid"
+          tone="success"
+          size="md"
+          :loading="mutationPending"
+          :loading-text="status?.isWithinRegularHours ? '운영 Open' : '연장 Open'"
           :disabled="pending || mutationPending || !status"
           @click="requestOpen"
         >
-          <Loader2 v-if="mutationPending" class="size-4 animate-spin" />
-          <Play v-else class="size-4 fill-current" />
+          <Play class="size-4 fill-current" />
           {{ status?.isWithinRegularHours ? '운영 Open' : '연장 Open' }}
-        </button>
-        <button
-          type="button"
-          class="inline-flex size-10 items-center justify-center rounded-lg border border-zinc-300 bg-white text-zinc-600 transition hover:bg-zinc-50 disabled:opacity-50"
-          :disabled="pending || mutationPending"
+        </Button>
+        <Button
+          variant="outline"
+          tone="neutral"
+          size="icon-md"
+          :loading="pending"
+          :disabled="mutationPending"
           aria-label="운영 상태 새로고침"
+          tooltip="운영 상태 새로고침"
+          :disabled-reason="
+            mutationPending ? '운영 상태 변경이 끝난 뒤 새로고침할 수 있습니다' : undefined
+          "
           @click="emit('refresh')"
         >
-          <RefreshCw class="size-4" :class="pending ? 'animate-spin' : ''" />
-        </button>
+          <RefreshCw />
+        </Button>
       </div>
     </div>
   </section>

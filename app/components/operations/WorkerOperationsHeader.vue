@@ -49,19 +49,22 @@ const description = computed(() =>
           class="grid grid-cols-3 divide-x divide-zinc-700 overflow-hidden rounded-md border border-zinc-700 bg-zinc-900/90"
         >
           <div class="p-3 sm:p-4">
-            <SearchCheck class="size-[18px] text-emerald-300 sm:size-5" />
+            <SearchCheck data-layout="mobile" class="size-[18px] text-emerald-300 sm:hidden" />
+            <SearchCheck data-layout="desktop" class="hidden size-5 text-emerald-300 sm:block" />
             <p class="mt-2 text-[10px] text-zinc-400 sm:mt-3 sm:text-xs">선택 가능 Bay</p>
             <p class="mt-1 text-lg font-semibold tabular-nums sm:text-xl">{{ props.bayCount }}</p>
           </div>
           <div class="p-3 sm:p-4">
-            <UserRoundCheck class="size-[18px] text-amber-300 sm:size-5" />
+            <UserRoundCheck data-layout="mobile" class="size-[18px] text-amber-300 sm:hidden" />
+            <UserRoundCheck data-layout="desktop" class="hidden size-5 text-amber-300 sm:block" />
             <p class="mt-2 text-[10px] text-zinc-400 sm:mt-3 sm:text-xs">상태 변경</p>
             <p class="mt-1 text-xs font-semibold sm:text-sm">
               {{ props.isAdmin ? '관리자 제어' : '순방향 전용' }}
             </p>
           </div>
           <div class="p-3 sm:p-4">
-            <ShieldCheck class="size-[18px] text-sky-300 sm:size-5" />
+            <ShieldCheck data-layout="mobile" class="size-[18px] text-sky-300 sm:hidden" />
+            <ShieldCheck data-layout="desktop" class="hidden size-5 text-sky-300 sm:block" />
             <p class="mt-2 text-[10px] text-zinc-400 sm:mt-3 sm:text-xs">안전 구분</p>
             <p class="mt-1 text-xs font-semibold sm:text-sm">항상 표시</p>
           </div>

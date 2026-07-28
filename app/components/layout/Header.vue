@@ -88,15 +88,28 @@ async function signOut() {
 
             <Button
               v-if="auth.user"
+              data-layout="mobile"
+              variant="secondary"
+              size="icon-md"
+              :disabled="auth.pending"
+              :aria-label="`${roleLabel} 계정 로그아웃`"
+              class="sm:hidden"
+              @click="signOut"
+            >
+              <LogOut class="size-4 shrink-0 overflow-visible" />
+            </Button>
+            <Button
+              v-if="auth.user"
+              data-layout="desktop"
               variant="secondary"
               size="sm"
               :disabled="auth.pending"
               :aria-label="`${roleLabel} 계정 로그아웃`"
-              class="size-10 gap-2 rounded-lg p-0 sm:h-9 sm:w-auto sm:px-3"
+              class="hidden sm:inline-flex"
               @click="signOut"
             >
               <LogOut class="size-4 shrink-0 overflow-visible" />
-              <span class="hidden sm:inline">로그아웃</span>
+              로그아웃
             </Button>
           </div>
         </ClientOnly>

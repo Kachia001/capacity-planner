@@ -114,14 +114,17 @@ function cancelAlert() {
   >
     <div class="absolute inset-x-0 top-0 h-1" :class="variantPresentation.accentClass" />
 
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      tone="neutral"
+      size="icon-sm"
       aria-label="알림 닫기"
-      class="absolute right-4 top-4 rounded-md p-1.5 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+      class="absolute right-4 top-4 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
       @click="cancelAlert"
     >
       <X class="size-4" />
-    </button>
+    </Button>
 
     <div class="max-h-[85vh] overflow-y-auto px-6 pb-5 pt-7">
       <div class="flex items-start gap-4 pr-8">

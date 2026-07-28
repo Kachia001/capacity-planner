@@ -9,6 +9,7 @@ import {
   TriangleAlert,
 } from '@lucide/vue'
 import TemplateGroupEditor from '@/components/admin/bay-wizard/TemplateGroupEditor.vue'
+import { Button } from '@/components/ui/button'
 import {
   cloneTemplateGroups,
   createBlankTemplateGroups,
@@ -187,17 +188,20 @@ onMounted(loadTemplates)
           이제 새 BAY를 만들 때 이 템플릿을 선택할 수 있습니다.
         </p>
         <div class="mt-7 flex flex-wrap justify-center gap-2">
-          <button
+          <Button
             type="button"
-            class="inline-flex h-11 items-center gap-2 rounded-sm border border-zinc-300 px-4 text-sm font-semibold"
+            variant="outline"
+            tone="neutral"
+            size="lg"
+            shape="compact"
+            class="border-zinc-300"
             @click="resetForm"
           >
-            <RotateCcw class="size-4" /> 다른 템플릿 만들기</button
-          ><NuxtLink
-            to="/admin/bays/new"
-            class="inline-flex h-11 items-center gap-2 rounded-sm bg-zinc-950 px-5 text-sm font-semibold text-white"
-            >이 템플릿으로 BAY 생성</NuxtLink
-          >
+            <RotateCcw class="size-4" /> 다른 템플릿 만들기
+          </Button>
+          <Button as-child variant="solid" tone="neutral" size="lg" shape="compact">
+            <NuxtLink to="/admin/bays/new">이 템플릿으로 BAY 생성</NuxtLink>
+          </Button>
         </div>
       </section>
     </div>
@@ -229,30 +233,30 @@ onMounted(loadTemplates)
             Starting point
           </p>
           <div class="mt-3 grid grid-cols-2 gap-2">
-            <button
+            <Button
               type="button"
-              class="h-10 rounded-sm border text-xs font-semibold"
-              :class="
-                source === 'blank'
-                  ? 'border-zinc-950 bg-zinc-950 text-white'
-                  : 'border-zinc-300 bg-white'
-              "
+              :variant="source === 'blank' ? 'solid' : 'outline'"
+              tone="neutral"
+              size="md"
+              shape="compact"
+              class="text-xs"
               @click="applySource('blank')"
             >
-              빈 구성</button
-            ><button
+              빈 구성
+            </Button>
+            <Button
               type="button"
               :disabled="templates.length === 0"
-              class="h-10 rounded-sm border text-xs font-semibold disabled:opacity-40"
-              :class="
-                source === 'clone'
-                  ? 'border-zinc-950 bg-zinc-950 text-white'
-                  : 'border-zinc-300 bg-white'
-              "
+              disabled-reason="복제할 기존 템플릿이 없습니다."
+              :variant="source === 'clone' ? 'solid' : 'outline'"
+              tone="neutral"
+              size="md"
+              shape="compact"
+              class="text-xs"
               @click="applySource('clone')"
             >
               <Copy class="mr-1 inline size-3.5" />기존 복제
-            </button>
+            </Button>
           </div>
           <div v-if="source === 'clone'" class="mt-3">
             <select
@@ -301,17 +305,21 @@ onMounted(loadTemplates)
         class="mx-auto flex w-full max-w-[92rem] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8"
       >
         <p class="hidden text-xs text-zinc-500 sm:block">템플릿 저장은 BAY를 생성하지 않습니다.</p>
-        <button
+        <Button
           type="button"
           :disabled="!canSave"
-          class="ml-auto inline-flex h-11 items-center justify-center gap-2 rounded-sm bg-zinc-950 px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+          :loading="savePending"
+          loading-text="저장 중"
+          disabled-reason="템플릿 이름과 작업 구성을 확인해 주세요."
+          variant="solid"
+          tone="neutral"
+          size="lg"
+          shape="compact"
+          class="ml-auto"
           @click="saveTemplate"
         >
-          <Loader2 v-if="savePending" class="size-4 animate-spin" /><FilePlus2
-            v-else
-            class="size-4"
-          />{{ savePending ? '저장 중' : '템플릿 저장' }}
-        </button>
+          <FilePlus2 class="size-4" />템플릿 저장
+        </Button>
       </div>
     </footer>
   </main>

@@ -278,34 +278,28 @@ function severityLabel(item: OperationWorkItem) {
           </label>
 
           <div class="flex gap-2">
-            <button
-              type="button"
+            <Button
+              :variant="props.filters.highAltitude ? 'soft' : 'outline'"
+              :tone="props.filters.highAltitude ? 'warning' : 'neutral'"
+              :size="isMobileRole ? 'touch' : 'lg'"
               :disabled="!props.selectedBayId"
-              class="inline-flex items-center justify-center gap-2 rounded-md border px-3 text-xs font-bold transition disabled:opacity-40"
-              :class="[
-                isMobileRole ? 'h-12 flex-1' : 'h-11',
-                props.filters.highAltitude
-                  ? 'border-amber-400 bg-amber-100 text-amber-950'
-                  : 'border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-50',
-              ]"
+              :class="isMobileRole ? 'flex-1' : undefined"
+              :aria-pressed="props.filters.highAltitude"
               @click="toggleHighAltitude"
             >
-              <ShieldAlert class="size-4" /> 고소작업
-            </button>
-            <button
-              type="button"
+              <ShieldAlert /> 고소작업
+            </Button>
+            <Button
+              :variant="props.filters.hasIssue ? 'soft' : 'outline'"
+              :tone="props.filters.hasIssue ? 'danger' : 'neutral'"
+              :size="isMobileRole ? 'touch' : 'lg'"
               :disabled="!props.selectedBayId"
-              class="inline-flex items-center justify-center gap-2 rounded-md border px-3 text-xs font-bold transition disabled:opacity-40"
-              :class="[
-                isMobileRole ? 'h-12 flex-1' : 'h-11',
-                props.filters.hasIssue
-                  ? 'border-red-300 bg-red-100 text-red-900'
-                  : 'border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-50',
-              ]"
+              :class="isMobileRole ? 'flex-1' : undefined"
+              :aria-pressed="props.filters.hasIssue"
               @click="toggleHasIssue"
             >
-              <AlertCircle class="size-4" /> 이슈 있음
-            </button>
+              <AlertCircle /> 이슈 있음
+            </Button>
           </div>
         </div>
       </header>
@@ -344,7 +338,7 @@ function severityLabel(item: OperationWorkItem) {
         <Button
           variant="outline"
           size="sm"
-          class="h-9 shrink-0 border-sky-300 bg-white text-sky-800 hover:bg-sky-100"
+          class="shrink-0 border-sky-300 bg-white text-sky-800 hover:bg-sky-100"
           @click="requestClearFocus"
         >
           전체 작업 보기
@@ -373,7 +367,7 @@ function severityLabel(item: OperationWorkItem) {
         <AlertCircle class="size-8 text-red-600" />
         <h3 class="mt-4 font-semibold text-zinc-950">작업 목록을 불러오지 못했습니다.</h3>
         <p class="mt-2 max-w-lg text-sm text-red-700">{{ props.errorMessage }}</p>
-        <Button variant="outline" class="mt-5 h-10 gap-2" @click="requestRetry">
+        <Button variant="outline" size="md" class="mt-5" @click="requestRetry">
           <RefreshCw class="size-4" /> 다시 시도
         </Button>
       </div>
@@ -563,7 +557,8 @@ function severityLabel(item: OperationWorkItem) {
                     <Button
                       v-if="!item.hasIssue || item.issueStatus === 'resolved'"
                       variant="outline"
-                      class="h-10 border-red-200 px-3 text-red-700 hover:bg-red-50"
+                      size="md"
+                      class="border-red-200 text-red-700 hover:bg-red-50"
                       :disabled="props.mutationItemId !== null"
                       @click="requestReportIssue(item)"
                     >
@@ -572,7 +567,7 @@ function severityLabel(item: OperationWorkItem) {
                     <Button
                       v-if="props.role === 'admin'"
                       variant="destructive"
-                      class="h-10 px-3"
+                      size="md"
                       :disabled="props.mutationItemId !== null"
                       @click="requestVoid(item)"
                     >
@@ -581,7 +576,8 @@ function severityLabel(item: OperationWorkItem) {
                     <Button
                       v-if="isSupervisor && item.status === 'in_progress'"
                       variant="outline"
-                      class="h-10 border-amber-300 px-3 text-amber-800 hover:bg-amber-50"
+                      size="md"
+                      class="border-amber-300 text-amber-800 hover:bg-amber-50"
                       :disabled="props.mutationItemId !== null"
                       @click="requestCancelStart(item)"
                     >
@@ -589,7 +585,8 @@ function severityLabel(item: OperationWorkItem) {
                     </Button>
                     <Button
                       v-if="item.status === 'not_started'"
-                      class="h-10 bg-emerald-700 px-4 text-white hover:bg-emerald-600"
+                      tone="success"
+                      size="md"
                       :disabled="props.mutationItemId !== null || !props.operationOpen"
                       @click="requestStart(item)"
                     >
@@ -601,7 +598,8 @@ function severityLabel(item: OperationWorkItem) {
                     </Button>
                     <Button
                       v-else-if="item.status === 'in_progress' && canComplete(item)"
-                      class="h-10 bg-zinc-950 px-4 text-white hover:bg-zinc-800"
+                      tone="neutral"
+                      size="md"
                       :disabled="props.mutationItemId !== null || !props.operationOpen"
                       @click="requestComplete(item)"
                     >
@@ -633,7 +631,8 @@ function severityLabel(item: OperationWorkItem) {
         <div v-if="props.nextCursor" class="mt-6 flex justify-center border-t border-zinc-200 pt-5">
           <Button
             variant="outline"
-            class="h-10 min-w-36 gap-2"
+            size="md"
+            class="min-w-36"
             :disabled="props.loadingMore"
             @click="requestLoadMore"
           >

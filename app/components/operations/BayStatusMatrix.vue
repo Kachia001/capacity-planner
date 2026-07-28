@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowUpRight, Loader2, Search, UsersRound } from '@lucide/vue'
 import HighAltitudeBadge from '@/components/operations/HighAltitudeBadge.vue'
+import { Button } from '@/components/ui/button'
 import type { DashboardBaySummary } from '@/types/operations'
 
 type BayViewFilter = 'all' | 'attention' | 'in_progress' | 'completed' | 'high_altitude'
@@ -130,11 +131,14 @@ function bayStatusLabel(bay: DashboardBaySummary) {
     </div>
 
     <div v-else class="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-      <button
+      <Button
         v-for="bay in filteredBays"
         :key="bay.id"
         type="button"
-        class="group rounded-lg border p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-[#8aaa70] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8aaa70]"
+        variant="outline"
+        tone="neutral"
+        size="content"
+        class="group flex-col items-stretch justify-start whitespace-normal rounded-lg p-4 text-left hover:-translate-y-0.5 hover:border-[#8aaa70] hover:shadow-md"
         :class="
           props.selectedBayId === bay.id
             ? 'border-[#8aaa70] bg-[#f1f7eb] ring-2 ring-[#dcebcf]'
@@ -210,7 +214,7 @@ function bayStatusLabel(bay: DashboardBaySummary) {
         <p class="mt-2 text-[10px] text-zinc-400">
           최근 활동 {{ formatDateTime(bay.lastActivityAt) }}
         </p>
-      </button>
+      </Button>
     </div>
   </section>
 </template>

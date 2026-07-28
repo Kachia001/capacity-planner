@@ -18,11 +18,15 @@ import { Database, RefreshCw } from '@lucide/vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
-defineProps<DashboardHeaderProps>()
+const props = defineProps<DashboardHeaderProps>()
 
-defineEmits<{
+const emit = defineEmits<{
   refresh: []
 }>()
+
+function handleRefresh() {
+  emit('refresh')
+}
 </script>
 
 <template>
@@ -39,32 +43,21 @@ defineEmits<{
 
     <div class="flex flex-col gap-2">
       <div class="flex flex-wrap items-center gap-2">
-        <Badge variant="outline">
-          전체 {{ bayHealth.total }} bays
+        <Badge variant="outline"> 전체 {{ props.bayHealth.total }} bays </Badge>
+        <Badge :variant="props.bayHealth.issueBays > 0 ? 'destructive' : 'secondary'">
+          이슈 {{ props.bayHealth.issueBays }}
         </Badge>
-        <Badge :variant="bayHealth.issueBays > 0 ? 'destructive' : 'secondary'">
-          이슈 {{ bayHealth.issueBays }}
-        </Badge>
-        <Badge variant="secondary">
-          미완료 {{ bayHealth.openBays }}
-        </Badge>
-        <Badge variant="outline">
-          완료 {{ bayHealth.completeBays }}
-        </Badge>
+        <Badge variant="secondary"> 미완료 {{ props.bayHealth.openBays }} </Badge>
+        <Badge variant="outline"> 완료 {{ props.bayHealth.completeBays }} </Badge>
         <span class="text-sm text-muted-foreground">
-          {{ userEmail }}
+          {{ props.userEmail }}
         </span>
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          :disabled="pending"
-          @click="$emit('refresh')"
-        >
-          <RefreshCw class="mr-2 size-4" :class="pending ? 'animate-spin' : ''" />
-          {{ pending ? '동기화 중' : '새로고침' }}
+        <Button variant="outline" size="sm" :disabled="props.pending" @click="handleRefresh">
+          <RefreshCw class="mr-2 size-4" :class="props.pending ? 'animate-spin' : ''" />
+          {{ props.pending ? '동기화 중' : '새로고침' }}
         </Button>
       </div>
     </div>

@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button'
 
 const props = defineProps<BaySelectorProps>()
 
-defineEmits<{
+const emit = defineEmits<{
   select: [bay: string]
 }>()
 
@@ -39,7 +39,7 @@ function scrollBayList(direction: 'previous' | 'next') {
   })
 }
 
-function bayDotClass(bay: { issues: number, completionRate: number }) {
+function bayDotClass(bay: { issues: number; completionRate: number }) {
   if (bay.issues > 0) {
     return 'bg-red-500'
   }
@@ -51,7 +51,7 @@ function bayDotClass(bay: { issues: number, completionRate: number }) {
   return 'bg-amber-400'
 }
 
-function bayButtonClass(bay: { bay: string, issues: number, completionRate: number }) {
+function bayButtonClass(bay: { bay: string; issues: number; completionRate: number }) {
   if (bay.bay === props.selectedBay) {
     return 'border-emerald-500 bg-emerald-50 text-emerald-950 shadow-sm ring-2 ring-emerald-200 hover:bg-emerald-50 hover:text-emerald-950'
   }
@@ -66,11 +66,15 @@ function bayButtonClass(bay: { bay: string, issues: number, completionRate: numb
 
   return 'border-amber-200 bg-amber-50/60 hover:bg-amber-50'
 }
+
+function handleSelect(bay: string) {
+  emit('select', bay)
+}
 </script>
 
 <template>
   <div
-    v-if="bays.length === 0 && !pending"
+    v-if="props.bays.length === 0 && !props.pending"
     class="rounded-md border border-dashed border-emerald-200 bg-emerald-50/70 p-6 text-center text-sm text-muted-foreground"
   >
     저장된 bay 데이터가 없습니다.
@@ -92,13 +96,13 @@ function bayButtonClass(bay: { bay: string, issues: number, completionRate: numb
       class="flex min-w-0 flex-1 snap-x snap-mandatory gap-2 overflow-x-auto scroll-smooth px-1 pb-1"
     >
       <Button
-        v-for="bay in bays"
+        v-for="bay in props.bays"
         :key="bay.bay"
         type="button"
         variant="outline"
         class="block min-h-20 w-40 shrink-0 snap-start rounded-md p-3 text-left focus-visible:ring-2 focus-visible:ring-emerald-500"
         :class="bayButtonClass(bay)"
-        @click="$emit('select', bay.bay)"
+        @click="handleSelect(bay.bay)"
       >
         <div class="flex items-start justify-between gap-3">
           <span class="break-words text-base font-semibold leading-tight">{{ bay.bay }}</span>
@@ -114,7 +118,10 @@ function bayButtonClass(bay: { bay: string, issues: number, completionRate: numb
             :style="{ width: `${bay.completionRate}%` }"
           />
         </div>
-        <div class="mt-1 text-xs font-medium" :class="bay.issues > 0 ? 'text-red-700' : 'text-muted-foreground'">
+        <div
+          class="mt-1 text-xs font-medium"
+          :class="bay.issues > 0 ? 'text-red-700' : 'text-muted-foreground'"
+        >
           {{ bay.issues > 0 ? `이슈 ${bay.issues}건` : '이슈 없음' }}
         </div>
       </Button>

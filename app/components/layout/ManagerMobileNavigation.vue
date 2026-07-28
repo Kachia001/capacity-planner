@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Boxes, Menu, Wrench, X } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
 import {
   Sheet,
   SheetClose,
@@ -42,13 +43,16 @@ function isCurrent(path: string) {
 <template>
   <Sheet v-model:open="isOpen">
     <SheetTrigger as-child>
-      <button
+      <Button
         type="button"
-        class="flex size-10 shrink-0 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-900 transition hover:bg-emerald-100 sm:hidden"
+        variant="outline"
+        tone="success"
+        size="icon-md"
+        class="shrink-0 border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 sm:hidden"
         aria-label="운영 관리자 메뉴 열기"
       >
         <Menu class="size-4" />
-      </button>
+      </Button>
     </SheetTrigger>
 
     <SheetContent
@@ -96,13 +100,16 @@ function isCurrent(path: string) {
       </nav>
 
       <SheetClose as-child>
-        <button
+        <Button
           type="button"
-          class="absolute right-4 top-4 flex size-10 items-center justify-center rounded-lg border border-[#dce2da] bg-white text-[#5f675d]"
+          variant="outline"
+          tone="neutral"
+          size="icon-md"
+          class="absolute right-4 top-4 border-[#dce2da] bg-white text-[#5f675d]"
           aria-label="운영 관리자 메뉴 닫기"
         >
           <X class="size-4" />
-        </button>
+        </Button>
       </SheetClose>
     </SheetContent>
   </Sheet>

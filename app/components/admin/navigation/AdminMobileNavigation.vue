@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { LogOut, Menu, X } from '@lucide/vue'
 import { useMediaQuery } from '@vueuse/core'
+import { Button } from '@/components/ui/button'
 import {
   Sheet,
   SheetClose,
@@ -9,7 +10,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import AdminNavigationContent from './AdminNavigationContent.vue'
+import AdminNavigationContent from '@/components/admin/navigation/AdminNavigationContent.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -48,13 +49,16 @@ async function signOut() {
 <template>
   <Sheet v-model:open="isOpen">
     <SheetTrigger as-child>
-      <button
+      <Button
         type="button"
-        class="flex size-11 shrink-0 items-center justify-center rounded-lg border border-[#d9ddd5] bg-white text-[#303630] shadow-[0_6px_24px_rgba(24,35,26,0.06)] transition hover:bg-[#f1f3ee] lg:hidden"
+        variant="outline"
+        tone="neutral"
+        size="icon-touch"
+        class="shrink-0 border-[#d9ddd5] bg-white text-[#303630] shadow-[0_6px_24px_rgba(24,35,26,0.06)] hover:bg-[#f1f3ee] lg:hidden"
         aria-label="내비게이션 열기"
       >
         <Menu class="size-5" />
-      </button>
+      </Button>
     </SheetTrigger>
 
     <SheetContent
@@ -73,28 +77,34 @@ async function signOut() {
             <p class="truncate text-xs font-semibold text-zinc-200">{{ loginId }}</p>
             <p class="mt-1 text-[10px] text-zinc-500">{{ roleLabel }}</p>
           </div>
-          <button
+          <Button
             type="button"
-            class="flex size-10 shrink-0 items-center justify-center rounded-lg border border-white/10 text-zinc-400 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            variant="outline"
+            tone="neutral"
+            size="icon-md"
+            class="shrink-0 border-white/10 bg-transparent text-zinc-400 hover:bg-white/10 hover:text-white"
             :disabled="auth.pending"
             aria-label="로그아웃"
             @click="signOut"
           >
             <LogOut class="size-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
       <AdminNavigationContent />
 
       <SheetClose as-child>
-        <button
+        <Button
           type="button"
-          class="absolute right-4 top-3 z-10 flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.05] text-zinc-300 transition hover:bg-white/10 hover:text-white"
+          variant="outline"
+          tone="neutral"
+          size="icon-md"
+          class="absolute right-4 top-3 z-10 border-white/10 bg-white/[0.05] text-zinc-300 hover:bg-white/10 hover:text-white"
           aria-label="내비게이션 닫기"
         >
           <X class="size-5" />
-        </button>
+        </Button>
       </SheetClose>
     </SheetContent>
   </Sheet>
