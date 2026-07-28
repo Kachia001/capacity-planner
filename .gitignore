@@ -18,6 +18,9 @@ logs
 .fleet
 .idea
 
+# Temporary agent UI verification artifacts
+agent-test/
+
 # Local env files
 .env
 .env.*
