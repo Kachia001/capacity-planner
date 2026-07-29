@@ -4,9 +4,9 @@
 
 - Nuxt Nitro
 - TypeScript
-- PostgreSQL / Supabase
+- PostgreSQL
 - Drizzle ORM / Drizzle Kit
-- Supabase Auth
+- Argon2id 비밀번호 인증 / HttpOnly 쿠키 세션
 - Zod 기반 API contract
 - Nitro scheduled task
 
@@ -26,7 +26,7 @@ Nitro route
 
 ### 의존성 방향
 
-- Domain은 Nitro, Drizzle, Supabase 및 Vue를 import하지 않습니다.
+- Domain은 Nitro, Drizzle 및 Vue를 import하지 않습니다.
 - Controller는 HTTP 입력 파싱, 인증 정보 추출 및 응답 변환을 담당합니다.
 - Application service는 use case와 transaction 경계를 조정합니다.
 - Aggregate는 상태 전이와 비즈니스 권한을 검증합니다.
@@ -74,7 +74,7 @@ request와 response contract는 `shared/api`에 둡니다. Vue 애플리케이�
 - Domain aggregate 또는 domain event
 - Drizzle row type
 - Repository interface
-- Supabase 또는 Nitro runtime object
+- Nitro runtime object
 
 Persistence row, domain aggregate, application result 및 public API response는 별도 모델로
 유지하고 명시적인 mapper로 연결합니다.
@@ -97,11 +97,13 @@ Persistence row, domain aggregate, application result 및 public API response는
 
 ### 인증 및 사용자
 
-| Method | Path         | 설명                     |
-| ------ | ------------ | ------------------------ |
-| GET    | `/api/me`    | 현재 애플리케이션 사용자 |
-| GET    | `/api/users` | 사용자 목록              |
-| POST   | `/api/users` | 사용자 생성              |
+| Method | Path               | 설명                     |
+| ------ | ------------------ | ------------------------ |
+| POST   | `/api/auth/login`  | 로그인 및 세션 쿠키 발급 |
+| POST   | `/api/auth/logout` | 세션 쿠키 제거           |
+| GET    | `/api/me`          | 현재 애플리케이션 사용자 |
+| GET    | `/api/users`       | 사용자 목록              |
+| POST   | `/api/users`       | 사용자 생성              |
 
 ### BAY와 템플릿
 
@@ -151,9 +153,11 @@ Persistence row, domain aggregate, application result 및 public API response는
 
 ## 인증과 권한
 
-- 브라우저는 Supabase access token을 Authorization Bearer token으로 전달합니다.
-- 서버는 Supabase를 통해 token을 검증하고 `app_users`에서 역할을 확인합니다.
-- service role key는 서버에서만 사용하며 public runtime config에 노출하지 않습니다.
+- 서버는 Argon2id로 `app_users.password_hash`를 검증합니다.
+- 로그인 성공 시 12시간 유효한 서명 세션을 HttpOnly, SameSite 쿠키로 발급합니다.
+- API는 세션의 사용자 UUID와 `auth_version`을 DB에서 다시 확인합니다.
+- 비밀번호 변경 또는 계정 비활성화 시 `auth_version`을 증가시켜 기존 세션을 무효화합니다.
+- 로그인 5회 실패 시 15분 동안 계정을 잠급니다.
 - UI의 역할 제어와 관계없이 API에서 역할을 다시 검증합니다.
 - 권한 부족은 인증 실패와 구분되는 안정적인 HTTP 상태 및 error code로 반환합니다.
 
@@ -177,10 +181,13 @@ Persistence row, domain aggregate, application result 및 public API response는
 
 #### `app_users`
 
-Supabase Auth 사용자와 애플리케이션 역할을 연결합니다.
+인증 정보와 애플리케이션 역할을 하나의 테이블에서 관리합니다.
 
 - PK: `auth_user_id`
-- 주요 필드: `email`, `display_name`, `role`, `created_by`
+- 주요 필드: `email`, `password_hash`, `display_name`, `role`, `is_active`
+- 세션 무효화: `auth_version`
+- 로그인 보호: `failed_login_count`, `locked_until`, `last_login_at`
+- `created_by`는 `app_users.auth_user_id` 자기 참조 FK입니다.
 
 #### `bay_templates`
 
@@ -287,17 +294,64 @@ Mock을 사용할 때만 API base URL을 `http://127.0.0.1:3123`으로 설정합
 ## 환경 변수
 
 ```env
+# 기존 로컬 Supabase PostgreSQL 컨테이너의 DB 포트
 NUXT_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:54322/postgres
-NUXT_SUPABASE_SERVICE_ROLE_KEY=
+NUXT_AUTH_SESSION_SECRET=replace-with-at-least-32-random-characters
 NUXT_TELEGRAM_ENCRYPTION_KEY=
 NUXT_TELEGRAM_API_BASE_URL=https://api.telegram.org
-NUXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NUXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
+- 로컬에서는 Supabase Docker의 PostgreSQL 컨테이너만 사용하며 Auth, REST, Storage API에는
+  연결하지 않습니다.
+- 일반 PostgreSQL에서는 `NUXT_DATABASE_URL`만 해당 서버의 연결 문자열로 변경합니다.
+- `NUXT_AUTH_SESSION_SECRET`은 32자 이상의 서버 전용 랜덤 값입니다.
 - `NUXT_TELEGRAM_ENCRYPTION_KEY`는 Bot Token이 아닌 32자 이상의 서버 비밀키입니다.
 - 암호화된 기존 Token을 계속 사용하려면 환경별로 encryption key를 유지해야 합니다.
-- `SERVICE_ROLE_KEY`, encryption key 및 실제 DB 인증 정보는 클라이언트에 전달하지 않습니다.
+- 세션 비밀키, encryption key 및 실제 DB 인증 정보는 클라이언트에 전달하지 않습니다.
+
+## 최초 관리자
+
+마이그레이션 후 다음 명령으로 최초 관리자 계정을 생성합니다.
+
+```bash
+pnpm auth:create-admin
+pnpm auth:create-admin admin01 "시스템 관리자"
+```
+
+비대화형 환경에서는 `CAPACITY_ADMIN_PASSWORD` 환경 변수로 비밀번호를 전달할 수 있습니다.
+비밀번호는 Argon2id 해시로만 DB에 저장됩니다.
+
+## 로컬 테스트 계정
+
+다음 명령은 로컬 PostgreSQL에만 테스트 계정을 생성하거나 갱신합니다.
+
+```bash
+pnpm auth:seed-test-users
+```
+
+| 로그인 ID | 비밀번호 | 역할    |
+| --------- | -------- | ------- |
+| `admin`   | `123123` | admin   |
+| `manager` | `123123` | manager |
+| `worker`  | `123123` | worker  |
+
+6자리 비밀번호는 로컬 테스트 계정에만 허용되는 예외입니다. 관리 화면과 최초 관리자 생성은
+8자리 이상의 비밀번호를 요구합니다.
+
+## 로컬 데이터 복구 기록
+
+2026-07-29에 `backup/20260716-052401` 백업에서 Auth 데이터를 제외하고 다음 업무 데이터를
+로컬 `postgres` DB로 복구했습니다.
+
+- BAY 템플릿 1개
+- 템플릿 행 242개
+- BAY 19개
+- 작업 항목 4,357개
+- 작업 상태 이력 13개
+
+백업의 `admin`, `testmanager`, `testworker` 사용자 참조는 현재 로컬 `admin`, `manager`,
+`worker` 계정에 각각 매핑했습니다. Supabase Auth 사용자, 세션 및 refresh token은
+복구하지 않았습니다.
 
 ## Drizzle 명령
 

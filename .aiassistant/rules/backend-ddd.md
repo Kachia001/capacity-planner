@@ -22,7 +22,7 @@
 | `work-execution`    | 작업 시작, 완료, 시작 취소, 완료 복구, 무효화, 이슈 등록, 감사 이력 |
 | `bay-configuration` | BAY, 템플릿, 템플릿으로부터 작업 생성                               |
 | `operations`        | 정규 운영시간, 수동 Close, 연장 Open                                |
-| `identity-access`   | 사용자 프로필, 역할, Supabase 인증 연결                             |
+| `identity-access`   | 사용자 인증, 프로필, 역할 및 세션 관리                              |
 | `notifications`     | Telegram 설정, Outbox, 전송 및 재시도                               |
 | `reporting`         | 대시보드, 검색, 집계용 Read Model                                   |
 
@@ -89,7 +89,7 @@ Nitro Route
 ### 금지
 
 - Domain → Controller, Service, Infrastructure
-- Domain → Nitro, H3, Drizzle, Supabase, Vue, Zod
+- Domain → Nitro, H3, Drizzle, Vue, Zod
 - Service → Nitro의 `H3Event`, `createError`
 - Controller → Drizzle Schema 또는 Repository 구현체
 - 프론트엔드 → `server/**`
@@ -306,7 +306,7 @@ IssueRateLimitExceededError
 
 ### Infrastructure Error
 
-DB, Supabase, Telegram 등 기술적 실패를 표현한다. PostgreSQL 오류 코드나 외부 API의 원본 오류를 Controller로 노출하지 않는다.
+DB, 비밀번호 해시, 세션 서명, Telegram 등 기술적 실패를 표현한다. PostgreSQL 오류 코드나 외부 API의 원본 오류를 Controller로 노출하지 않는다.
 
 ### Presentation Error
 
@@ -370,7 +370,7 @@ export type CancelWorkItemStartRequest = z.infer<typeof CancelWorkItemStartReque
 - Domain Aggregate와 Domain Event
 - Repository와 Unit of Work
 - Drizzle Row 및 Schema 타입
-- Supabase User
+- 인증 세션과 비밀번호 해시
 - Application Service와 내부 Command
 - Telegram 내부 전송 모델
 
@@ -399,7 +399,7 @@ export type CancelWorkItemStartRequest = z.infer<typeof CancelWorkItemStartReque
 - 무효화된 Aggregate 접근
 - 중복 이슈 차단
 
-Domain Test는 DB, Nuxt, Supabase 없이 실행할 수 있어야 한다.
+Domain Test는 DB, Nuxt 및 인증 인프라 없이 실행할 수 있어야 한다.
 
 ### Application Service Test
 

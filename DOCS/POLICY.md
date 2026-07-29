@@ -143,7 +143,7 @@ BAY별로 완료율, 상태별 작업 수, 열린 이슈, 고소작업, 현재 �
 ## 데이터 안전
 
 - 원본 Excel, CSV, TSV, DB dump, 로컬 SQLite 및 업로드 파일을 저장소에 커밋하지 않습니다.
-- 운영 데이터는 Supabase/PostgreSQL에 저장하고 저장소에는 스키마, migration 및 코드만 둡니다.
+- 운영 데이터는 PostgreSQL에 저장하고 저장소에는 스키마, migration 및 코드만 둡니다.
 - `.gitignore`에서 `data/`, `uploads/`, `*.xlsx`, `*.csv`, `*.db`, `*.dump` 등을 차단합니다.
 - 비밀키, 서비스 역할 키, Bot Token 및 실제 환경 파일을 커밋하지 않습니다.
 - 작업 데이터는 hard delete보다 상태 변경과 감사 이력을 우선합니다.
@@ -180,7 +180,7 @@ git diff --check
 ```text
 feat(component): 메인 UI 생성
 feat(bay): BAY 생성 기능 구현
-chore(db): DB 및 Supabase 설정 완료
+chore(db): PostgreSQL 및 인증 설정 완료
 chore(rule): 프로젝트 개발 지침 설정
 docs(readme): 프로젝트 문서 정리
 ```

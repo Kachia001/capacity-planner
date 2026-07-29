@@ -31,8 +31,8 @@ Admin, Manager, Worker 역할에 따라 BAY와 템플릿 관리, 작업 시작�
 ### Backend
 
 - Nuxt Nitro
-- PostgreSQL / Supabase
-- Supabase Auth
+- PostgreSQL
+- Argon2id 비밀번호 인증 / HttpOnly 쿠키 세션
 - Drizzle ORM
 - Zod
 - Nitro scheduled task
@@ -46,20 +46,34 @@ Admin, Manager, Worker 역할에 따라 BAY와 템플릿 관리, 작업 시작�
 
 ## 로컬 실행
 
+현재 로컬 개발 환경은 기존 Supabase Docker 스택의 PostgreSQL 컨테이너만 DB로 사용합니다.
+애플리케이션은 Supabase Auth, REST, Storage 등에 연결하지 않으며 Supabase 패키지도
+사용하지 않습니다. 일반 PostgreSQL을 직접 설치한 환경에서도 연결 문자열만 변경하면
+동일하게 실행할 수 있습니다.
+
 ```bash
 pnpm install
 cp .env.example .env
-pnpm db:push
+pnpm db:migrate
+pnpm auth:seed-test-users
 pnpm dev
 ```
 
-기본 개발 서버는 Nuxt 설정에 따라 실행됩니다. Supabase와 Telegram을 포함한 환경 변수 및
-DB 설정은 [백엔드 문서](./DOCS/BACKEND.md)를 참고합니다.
+로컬 테스트 계정은 `admin`, `manager`, `worker`이며 비밀번호는 모두 `123123`입니다.
+테스트 계정 시드는 로컬 호스트 DB에서만 실행됩니다.
+
+별도 초기 관리자가 필요하면 `auth:create-admin`을 사용합니다. 기본 로그인 ID `admin`의
+비밀번호를 터미널에서 안전하게 입력받습니다.
+다른 ID와 이름을 사용하려면 `pnpm auth:create-admin admin01 "관리자"`처럼 실행합니다.
+환경 변수와 DB 설정은 [백엔드 문서](./DOCS/BACKEND.md)를 참고합니다.
 
 ## 주요 명령
 
 ```bash
 pnpm dev
+pnpm db:migrate
+pnpm auth:create-admin
+pnpm auth:seed-test-users
 pnpm typecheck
 pnpm test:run
 pnpm build
