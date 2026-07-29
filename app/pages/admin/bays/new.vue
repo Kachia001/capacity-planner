@@ -108,9 +108,8 @@ async function loadTemplates() {
   try {
     await auth.initialize()
     await planner.loadWorkItems()
-    const accessToken = await auth.getAccessToken()
-    if (!accessToken) throw new Error('로그인이 필요합니다.')
-    templates.value = await fetchBayTemplates(accessToken)
+    if (!auth.user) throw new Error('로그인이 필요합니다.')
+    templates.value = await fetchBayTemplates()
   } catch (error) {
     loadError.value = getRequestErrorMessage(error, '템플릿을 불러오지 못했습니다.')
   } finally {
@@ -123,11 +122,9 @@ async function createBay() {
   submitPending.value = true
   submitError.value = null
   try {
-    const accessToken = await auth.getAccessToken()
-    if (!accessToken) throw new Error('로그인이 필요합니다.')
+    if (!auth.user) throw new Error('로그인이 필요합니다.')
     await $fetch('/api/bays', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` },
       body: {
         bay: { code: bayCode.value.trim(), description: bayDescription.value.trim() },
         groups: cloneTemplateGroups(draftGroups.value),

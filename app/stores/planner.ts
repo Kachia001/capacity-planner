@@ -65,18 +65,8 @@ export const usePlannerStore = defineStore('planner', () => {
   const errorMessage = ref<string | null>(null)
 
   async function fetchWorkItems(bay?: string) {
-    const auth = useAuthStore()
-    const accessToken = await auth.getAccessToken()
-
-    if (!accessToken) {
-      throw new Error('로그인이 필요합니다.')
-    }
-
     return await $fetch<WorkItemsResponse>('/api/work-items', {
       query: bay ? { bay } : undefined,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
     })
   }
 

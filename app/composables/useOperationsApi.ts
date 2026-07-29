@@ -26,10 +26,6 @@ import type {
   VoidWorkItemResponse,
 } from '#shared/api/work-items/void-work-item.contract'
 
-function authorizationHeaders(accessToken: string) {
-  return { Authorization: `Bearer ${accessToken}` }
-}
-
 export function getRequestErrorMessage(error: unknown, fallback: string) {
   if (typeof error === 'object' && error) {
     const data = 'data' in error ? error.data : null
@@ -49,48 +45,38 @@ export function getRequestErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error && error.message ? error.message : fallback
 }
 
-export async function fetchBayOptions(accessToken: string) {
-  return await $fetch<BayOption[]>('/api/bays', {
-    headers: authorizationHeaders(accessToken),
-  })
+export async function fetchBayOptions() {
+  return await $fetch<BayOption[]>('/api/bays')
 }
 
-export async function fetchOperationsDashboard(accessToken: string) {
-  return await $fetch<OperationsDashboardResponse>('/api/dashboard/bays', {
-    headers: authorizationHeaders(accessToken),
-  })
+export async function fetchOperationsDashboard() {
+  return await $fetch<OperationsDashboardResponse>('/api/dashboard/bays')
 }
 
-export async function fetchOperationStatus(accessToken: string) {
-  return await $fetch<OperationStatus>('/api/operations/status', {
-    headers: authorizationHeaders(accessToken),
-  })
+export async function fetchOperationStatus() {
+  return await $fetch<OperationStatus>('/api/operations/status')
 }
 
-export async function openOperation(accessToken: string, extensionMinutes?: number) {
+export async function openOperation(extensionMinutes?: number) {
   return await $fetch<OperationStatus>('/api/operations/open', {
     method: 'POST',
-    headers: authorizationHeaders(accessToken),
     body: extensionMinutes === undefined ? {} : { extensionMinutes },
   })
 }
 
-export async function closeOperation(accessToken: string) {
+export async function closeOperation() {
   return await $fetch<OperationStatus>('/api/operations/close', {
     method: 'POST',
-    headers: authorizationHeaders(accessToken),
   })
 }
 
 export async function fetchBayWorkItems(
-  accessToken: string,
   bayId: string,
   filters: WorkItemSearchFilters,
   cursor?: string | null,
   workItemId?: number | null,
 ) {
   return await $fetch<WorkItemSearchResponse>(`/api/bays/${bayId}/work-items`, {
-    headers: authorizationHeaders(accessToken),
     query: {
       q: filters.q.trim() || undefined,
       status: filters.status === 'all' ? undefined : filters.status,
@@ -103,32 +89,28 @@ export async function fetchBayWorkItems(
   })
 }
 
-export async function startWorkItem(accessToken: string, workItemId: number) {
+export async function startWorkItem(workItemId: number) {
   return await $fetch<StartWorkItemResponse>(`/api/work-items/${workItemId}/start`, {
     method: 'POST',
-    headers: authorizationHeaders(accessToken),
   })
 }
 
-export async function completeWorkItem(accessToken: string, workItemId: number) {
+export async function completeWorkItem(workItemId: number) {
   return await $fetch<CompleteWorkItemResponse>(`/api/work-items/${workItemId}/complete`, {
     method: 'POST',
-    headers: authorizationHeaders(accessToken),
   })
 }
 
-export async function cancelWorkItemStart(accessToken: string, workItemId: number, reason: string) {
+export async function cancelWorkItemStart(workItemId: number, reason: string) {
   const body: CancelWorkItemStartRequest = { reason }
 
   return await $fetch<CancelWorkItemStartResponse>(`/api/work-items/${workItemId}/cancel-start`, {
     method: 'POST',
-    headers: authorizationHeaders(accessToken),
     body,
   })
 }
 
 export async function restoreCompletedWorkItem(
-  accessToken: string,
   workItemId: number,
   targetStatus: CompletedWorkItemRestoreTarget,
   reason: string,
@@ -139,24 +121,21 @@ export async function restoreCompletedWorkItem(
     `/api/work-items/${workItemId}/restore-completed`,
     {
       method: 'POST',
-      headers: authorizationHeaders(accessToken),
       body,
     },
   )
 }
 
-export async function voidWorkItem(accessToken: string, workItemId: number, reason: string) {
+export async function voidWorkItem(workItemId: number, reason: string) {
   const body: VoidWorkItemRequest = { reason }
 
   return await $fetch<VoidWorkItemResponse>(`/api/work-items/${workItemId}/void`, {
     method: 'POST',
-    headers: authorizationHeaders(accessToken),
     body,
   })
 }
 
 export async function reportWorkItemIssue(
-  accessToken: string,
   workItemId: number,
   severity: IssueSeverity,
   note: string,
@@ -165,7 +144,6 @@ export async function reportWorkItemIssue(
 
   return await $fetch<ReportWorkItemIssueResponse>(`/api/work-items/${workItemId}/issue`, {
     method: 'POST',
-    headers: authorizationHeaders(accessToken),
     body,
   })
 }

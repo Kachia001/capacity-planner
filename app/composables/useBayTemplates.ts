@@ -101,9 +101,7 @@ export function mapTemplateResponse(template: TemplateApiResponse): ExistingTemp
   }
 }
 
-export async function fetchBayTemplates(accessToken: string) {
-  const templates = await $fetch<TemplateApiResponse[]>('/api/bay-templates', {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  })
+export async function fetchBayTemplates() {
+  const templates = await $fetch<TemplateApiResponse[]>('/api/bay-templates')
   return templates.map(mapTemplateResponse)
 }

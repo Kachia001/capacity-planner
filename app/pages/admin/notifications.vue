@@ -59,10 +59,6 @@ const canSave = computed(
     !saving.value,
 )
 
-function authorizationHeaders(accessToken: string) {
-  return { Authorization: `Bearer ${accessToken}` }
-}
-
 function applySettings(nextSettings: TelegramSettingsResponse) {
   settings.value = nextSettings
   chatId.value = nextSettings.chatId
@@ -70,10 +66,9 @@ function applySettings(nextSettings: TelegramSettingsResponse) {
   botToken.value = ''
 }
 
-async function requireAccessToken() {
-  const accessToken = await auth.getAccessToken()
-  if (!accessToken) throw new Error('로그인이 필요합니다.')
-  return accessToken
+async function requireAuthenticated() {
+  await auth.initialize()
+  if (!auth.user) throw new Error('로그인이 필요합니다.')
 }
 
 async function loadSettings() {
@@ -81,12 +76,8 @@ async function loadSettings() {
   errorMessage.value = null
 
   try {
-    const accessToken = await requireAccessToken()
-    applySettings(
-      await $fetch<TelegramSettingsResponse>('/api/admin/telegram-settings', {
-        headers: authorizationHeaders(accessToken),
-      }),
-    )
+    await requireAuthenticated()
+    applySettings(await $fetch<TelegramSettingsResponse>('/api/admin/telegram-settings'))
   } catch (error) {
     errorMessage.value = getRequestErrorMessage(error, 'Telegram 설정을 불러오지 못했습니다.')
   } finally {
@@ -98,13 +89,8 @@ async function loadDeliveries() {
   deliveriesLoading.value = true
 
   try {
-    const accessToken = await requireAccessToken()
-    deliveryState.value = await $fetch<TelegramDeliveriesResponse>(
-      '/api/admin/telegram-deliveries',
-      {
-        headers: authorizationHeaders(accessToken),
-      },
-    )
+    await requireAuthenticated()
+    deliveryState.value = await $fetch<TelegramDeliveriesResponse>('/api/admin/telegram-deliveries')
   } catch (error) {
     errorMessage.value = getRequestErrorMessage(error, 'Telegram 전송 내역을 불러오지 못했습니다.')
   } finally {
@@ -119,11 +105,10 @@ async function saveSettings() {
   noticeMessage.value = null
 
   try {
-    const accessToken = await requireAccessToken()
+    await requireAuthenticated()
     const token = botToken.value.trim()
     const nextSettings = await $fetch<TelegramSettingsResponse>('/api/admin/telegram-settings', {
       method: 'PUT',
-      headers: authorizationHeaders(accessToken),
       body: {
         chatId: chatId.value.trim(),
         isEnabled: isEnabled.value,
@@ -145,10 +130,9 @@ async function sendTestMessage() {
   noticeMessage.value = null
 
   try {
-    const accessToken = await requireAccessToken()
+    await requireAuthenticated()
     await $fetch('/api/admin/telegram-settings/test', {
       method: 'POST',
-      headers: authorizationHeaders(accessToken),
     })
     noticeMessage.value = 'Telegram 테스트 메시지를 전송했습니다.'
   } catch (error) {
@@ -175,10 +159,9 @@ async function deleteSettings() {
   noticeMessage.value = null
 
   try {
-    const accessToken = await requireAccessToken()
+    await requireAuthenticated()
     await $fetch('/api/admin/telegram-settings', {
       method: 'DELETE',
-      headers: authorizationHeaders(accessToken),
     })
     applySettings({
       configured: false,
@@ -203,7 +186,7 @@ async function processPendingDeliveries() {
   noticeMessage.value = null
 
   try {
-    const accessToken = await requireAccessToken()
+    await requireAuthenticated()
     const result = await $fetch<{
       claimed: number
       sent: number
@@ -212,7 +195,6 @@ async function processPendingDeliveries() {
       skipped: number
     }>('/api/admin/telegram-deliveries/process', {
       method: 'POST',
-      headers: authorizationHeaders(accessToken),
     })
     noticeMessage.value =
       result.claimed === 0
@@ -232,10 +214,9 @@ async function retryDelivery(delivery: TelegramDeliveryListItem) {
   noticeMessage.value = null
 
   try {
-    const accessToken = await requireAccessToken()
+    await requireAuthenticated()
     await $fetch(`/api/admin/telegram-deliveries/${delivery.id}/retry`, {
       method: 'POST',
-      headers: authorizationHeaders(accessToken),
     })
     noticeMessage.value = `전송 #${delivery.id}을 다시 처리했습니다.`
     await loadDeliveries()

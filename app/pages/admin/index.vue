@@ -43,11 +43,10 @@ async function loadOverview(isRefresh = false) {
 
   try {
     await auth.initialize()
-    const accessToken = await auth.getAccessToken()
-    if (!accessToken) throw new Error('로그인이 필요합니다.')
+    if (!auth.user) throw new Error('로그인이 필요합니다.')
     const [nextDashboard, nextOperationStatus] = await Promise.all([
-      fetchOperationsDashboard(accessToken),
-      fetchOperationStatus(accessToken),
+      fetchOperationsDashboard(),
+      fetchOperationStatus(),
     ])
     dashboard.value = nextDashboard
     operationStatus.value = nextOperationStatus
@@ -64,9 +63,8 @@ async function loadOperationControl() {
   operationError.value = null
 
   try {
-    const accessToken = await auth.getAccessToken()
-    if (!accessToken) throw new Error('로그인이 필요합니다.')
-    operationStatus.value = await fetchOperationStatus(accessToken)
+    if (!auth.user) throw new Error('로그인이 필요합니다.')
+    operationStatus.value = await fetchOperationStatus()
   } catch (error) {
     operationError.value = getRequestErrorMessage(error, '운영 상태를 불러오지 못했습니다.')
   } finally {
@@ -79,9 +77,8 @@ async function requestOperationOpen(extensionMinutes?: number) {
   operationError.value = null
 
   try {
-    const accessToken = await auth.getAccessToken()
-    if (!accessToken) throw new Error('로그인이 필요합니다.')
-    operationStatus.value = await openOperation(accessToken, extensionMinutes)
+    if (!auth.user) throw new Error('로그인이 필요합니다.')
+    operationStatus.value = await openOperation(extensionMinutes)
   } catch (error) {
     operationError.value = getRequestErrorMessage(error, '운영을 Open하지 못했습니다.')
   } finally {
@@ -94,9 +91,8 @@ async function requestOperationClose() {
   operationError.value = null
 
   try {
-    const accessToken = await auth.getAccessToken()
-    if (!accessToken) throw new Error('로그인이 필요합니다.')
-    operationStatus.value = await closeOperation(accessToken)
+    if (!auth.user) throw new Error('로그인이 필요합니다.')
+    operationStatus.value = await closeOperation()
   } catch (error) {
     operationError.value = getRequestErrorMessage(error, '운영을 Close하지 못했습니다.')
   } finally {

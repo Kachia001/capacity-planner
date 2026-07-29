@@ -48,9 +48,7 @@ async function submit() {
     <Card class="w-full max-w-md">
       <CardHeader>
         <CardTitle>로그인</CardTitle>
-        <CardDescription>
-          Supabase Auth로 Capacity Planner 접근 권한을 확인합니다.
-        </CardDescription>
+        <CardDescription> Capacity Planner에 등록된 계정으로 로그인합니다. </CardDescription>
       </CardHeader>
       <CardContent>
         <form class="flex flex-col gap-4" @submit.prevent="submit">
@@ -64,7 +62,7 @@ async function submit() {
             <Input
               v-model="password"
               autocomplete="current-password"
-              placeholder="6자 이상"
+              placeholder="8자 이상"
               type="password"
             />
           </label>

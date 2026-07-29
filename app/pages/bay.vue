@@ -105,14 +105,11 @@ const selectedBay = computed(
 )
 const isOperationOpen = computed(() => operationStatus.value?.isOpen === true)
 
-async function requireAccessToken() {
-  const accessToken = await auth.getAccessToken()
-
-  if (!accessToken) {
+async function requireAuthenticated() {
+  await auth.initialize()
+  if (!auth.user) {
     throw new Error('로그인이 필요합니다.')
   }
-
-  return accessToken
 }
 
 function sortBays(options: BayOption[]) {
@@ -122,8 +119,8 @@ function sortBays(options: BayOption[]) {
 }
 
 async function loadBays() {
-  const accessToken = await requireAccessToken()
-  bays.value = sortBays(await fetchBayOptions(accessToken))
+  await requireAuthenticated()
+  bays.value = sortBays(await fetchBayOptions())
 }
 
 async function loadDashboard() {
@@ -135,8 +132,8 @@ async function loadDashboard() {
   dashboardError.value = null
 
   try {
-    const accessToken = await requireAccessToken()
-    dashboard.value = await fetchOperationsDashboard(accessToken)
+    await requireAuthenticated()
+    dashboard.value = await fetchOperationsDashboard()
   } catch (error) {
     dashboardError.value = getRequestErrorMessage(
       error,
@@ -152,8 +149,8 @@ async function loadOperationControl() {
   operationError.value = null
 
   try {
-    const accessToken = await requireAccessToken()
-    operationStatus.value = await fetchOperationStatus(accessToken)
+    await requireAuthenticated()
+    operationStatus.value = await fetchOperationStatus()
   } catch (error) {
     operationError.value = getRequestErrorMessage(error, '운영 상태를 불러오지 못했습니다.')
   } finally {
@@ -166,8 +163,8 @@ async function requestOperationOpen(extensionMinutes?: number) {
   operationError.value = null
 
   try {
-    const accessToken = await requireAccessToken()
-    operationStatus.value = await openOperation(accessToken, extensionMinutes)
+    await requireAuthenticated()
+    operationStatus.value = await openOperation(extensionMinutes)
     showNotice('작업 운영을 Open했습니다.', 'success')
   } catch (error) {
     operationError.value = getRequestErrorMessage(error, '운영을 Open하지 못했습니다.')
@@ -181,8 +178,8 @@ async function requestOperationClose() {
   operationError.value = null
 
   try {
-    const accessToken = await requireAccessToken()
-    operationStatus.value = await closeOperation(accessToken)
+    await requireAuthenticated()
+    operationStatus.value = await closeOperation()
     showNotice('작업 운영을 Close했습니다.', 'success')
   } catch (error) {
     operationError.value = getRequestErrorMessage(error, '운영을 Close하지 못했습니다.')
@@ -223,9 +220,8 @@ async function loadWorkItems(append = false) {
   }
 
   try {
-    const accessToken = await requireAccessToken()
+    await requireAuthenticated()
     const response = await fetchBayWorkItems(
-      accessToken,
       bayId,
       filters,
       append ? nextCursor.value : null,
@@ -440,8 +436,8 @@ async function requestStart(item: OperationWorkItem) {
 
   mutationItemId.value = item.id
   try {
-    const accessToken = await requireAccessToken()
-    await startWorkItem(accessToken, item.id)
+    await requireAuthenticated()
+    await startWorkItem(item.id)
     showNotice(`“${workDetailLabel(item)}” 세부 작업 1건을 시작했습니다.`, 'success')
     await refreshAfterMutation()
     await revealWorkItem(item.id)
@@ -473,8 +469,8 @@ async function requestComplete(item: OperationWorkItem) {
 
   mutationItemId.value = item.id
   try {
-    const accessToken = await requireAccessToken()
-    await completeWorkItem(accessToken, item.id)
+    await requireAuthenticated()
+    await completeWorkItem(item.id)
     showNotice(`“${workDetailLabel(item)}” 세부 작업 1건을 완료했습니다.`, 'success')
     await refreshAfterMutation()
     await revealWorkItem(item.id)
@@ -507,8 +503,8 @@ async function requestCancelStart(item: OperationWorkItem) {
 
   mutationItemId.value = item.id
   try {
-    const accessToken = await requireAccessToken()
-    await cancelWorkItemStart(accessToken, item.id, reason)
+    await requireAuthenticated()
+    await cancelWorkItemStart(item.id, reason)
     showNotice('작업 시작을 취소하고 미작업 상태로 복구했습니다.', 'success')
     await refreshAfterMutation()
   } catch (error) {
@@ -546,8 +542,8 @@ async function requestRestoreCompleted(
 
   mutationItemId.value = item.id
   try {
-    const accessToken = await requireAccessToken()
-    await restoreCompletedWorkItem(accessToken, item.id, targetStatus, reason)
+    await requireAuthenticated()
+    await restoreCompletedWorkItem(item.id, targetStatus, reason)
     showNotice(
       `“${workDetailLabel(item)}” 세부 작업을 ${targetLabel} 상태로 변경했습니다.`,
       'success',
@@ -583,8 +579,8 @@ async function requestVoid(item: OperationWorkItem) {
 
   mutationItemId.value = item.id
   try {
-    const accessToken = await requireAccessToken()
-    await voidWorkItem(accessToken, item.id, reason)
+    await requireAuthenticated()
+    await voidWorkItem(item.id, reason)
     showNotice('작업 항목을 감사 가능한 상태로 무효화했습니다.', 'success')
     await refreshAfterMutation()
   } catch (error) {
@@ -616,8 +612,8 @@ async function submitIssueReport(severity: IssueSeverity, note: string) {
   mutationItemId.value = item.id
 
   try {
-    const accessToken = await requireAccessToken()
-    const response = await reportWorkItemIssue(accessToken, item.id, severity, note)
+    await requireAuthenticated()
+    const response = await reportWorkItemIssue(item.id, severity, note)
     issueReportItem.value = null
 
     if (response.telegram.status === 'queued') {

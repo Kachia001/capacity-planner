@@ -86,7 +86,7 @@ const canCreate = computed(
   () =>
     createForm.loginId.trim().length >= 2 &&
     createForm.displayName.trim().length >= 1 &&
-    createForm.password.length >= 6 &&
+    createForm.password.length >= 8 &&
     !createPending.value,
 )
 
@@ -204,11 +204,8 @@ async function loadAccounts(isRefresh = false) {
 
   try {
     await auth.initialize()
-    const accessToken = await auth.getAccessToken()
-    if (!accessToken) throw new Error('로그인이 필요합니다.')
-    accounts.value = await $fetch<AccountRow[]>('/api/users', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
+    if (!auth.user) throw new Error('로그인이 필요합니다.')
+    accounts.value = await $fetch<AccountRow[]>('/api/users')
   } catch (error) {
     errorMessage.value = getRequestErrorMessage(error, '계정 목록을 불러오지 못했습니다.')
   } finally {
@@ -224,11 +221,9 @@ async function createAccount() {
   createNotice.value = null
 
   try {
-    const accessToken = await auth.getAccessToken()
-    if (!accessToken) throw new Error('로그인이 필요합니다.')
+    if (!auth.user) throw new Error('로그인이 필요합니다.')
     const created = await $fetch<AccountRow>('/api/users', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` },
       body: {
         email: normalizeAccountEmail(createForm.loginId),
         password: createForm.password,
@@ -453,7 +448,7 @@ onMounted(() => {
               type="password"
               autocomplete="new-password"
               class="h-11 rounded-lg border border-[#d6dad2] px-3 text-sm outline-none focus:border-[#71865e] focus:ring-4 focus:ring-[#c5f277]/20"
-              placeholder="6자 이상"
+              placeholder="8자 이상"
             />
           </label>
           <Button

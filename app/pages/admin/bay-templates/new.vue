@@ -92,9 +92,8 @@ async function loadTemplates() {
   loading.value = true
   try {
     await auth.initialize()
-    const accessToken = await auth.getAccessToken()
-    if (!accessToken) throw new Error('로그인이 필요합니다.')
-    templates.value = await fetchBayTemplates(accessToken)
+    if (!auth.user) throw new Error('로그인이 필요합니다.')
+    templates.value = await fetchBayTemplates()
     sourceTemplateId.value = templates.value[0]?.id ?? ''
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : '기존 템플릿을 불러오지 못했습니다.'
@@ -108,11 +107,9 @@ async function saveTemplate() {
   savePending.value = true
   saveError.value = null
   try {
-    const accessToken = await auth.getAccessToken()
-    if (!accessToken) throw new Error('로그인이 필요합니다.')
+    if (!auth.user) throw new Error('로그인이 필요합니다.')
     const created = await $fetch<{ name: string }>('/api/bay-templates', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` },
       body: {
         name: name.value.trim(),
         description: description.value.trim(),
