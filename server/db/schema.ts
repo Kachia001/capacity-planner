@@ -1,4 +1,5 @@
 import {
+  type AnyPgColumn,
   boolean,
   check,
   date,
@@ -35,11 +36,19 @@ export const telegramDeliveryStatus = pgEnum('telegram_delivery_status', [
 ])
 
 export const appUsers = pgTable('app_users', {
-  authUserId: uuid('auth_user_id').primaryKey(),
+  authUserId: uuid('auth_user_id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
   displayName: text('display_name'),
   role: appRole('role').notNull().default('worker'),
-  createdBy: uuid('created_by'),
+  isActive: boolean('is_active').notNull().default(true),
+  authVersion: integer('auth_version').notNull().default(1),
+  failedLoginCount: integer('failed_login_count').notNull().default(0),
+  lockedUntil: timestamp('locked_until', { withTimezone: true }),
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
+  createdBy: uuid('created_by').references((): AnyPgColumn => appUsers.authUserId, {
+    onDelete: 'set null',
+  }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

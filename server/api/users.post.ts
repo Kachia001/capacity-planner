@@ -1,9 +1,10 @@
+import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { appUsers, type AppUser } from '../db/schema'
 
 const createUserSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(3),
+  password: z.string().min(8).max(256),
   displayName: z.string().trim().min(1).max(80).optional().or(z.literal('')),
   role: z.enum(['admin', 'manager', 'worker']),
 })
@@ -19,54 +20,45 @@ export default defineEventHandler(async event => {
     })
   }
 
-  const supabase = useSupabaseAdmin()
-  const { data, error } = await supabase.auth.admin.createUser({
-    email: body.email,
-    password: body.password,
-    email_confirm: true,
-    user_metadata: {
-      role: body.role,
-      display_name: body.displayName || null,
-    },
-  })
+  const db = useDb()
+  const email = normalizeLoginEmail(body.email)
+  const [existing] = await db
+    .select({ id: appUsers.authUserId })
+    .from(appUsers)
+    .where(eq(appUsers.email, email))
+    .limit(1)
 
-  if (error || !data.user) {
+  if (existing) {
     throw createError({
-      statusCode: 400,
-      statusMessage: error?.message ?? 'Failed to create Supabase Auth user.',
+      statusCode: 409,
+      statusMessage: '이미 등록된 로그인 ID입니다.',
     })
   }
 
-  try {
-    const db = useDb()
-    const [created] = await db
-      .insert(appUsers)
-      .values({
-        authUserId: data.user.id,
-        email: body.email,
-        displayName: body.displayName || null,
-        role: body.role as AppUser['role'],
-        createdBy: authUser.id,
-      })
-      .returning()
+  const passwordHash = await hashPassword(body.password)
+  const [created] = await db
+    .insert(appUsers)
+    .values({
+      email,
+      passwordHash,
+      displayName: body.displayName || null,
+      role: body.role as AppUser['role'],
+      createdBy: authUser.id,
+    })
+    .returning()
 
-    if (!created) {
-      throw new Error('Failed to read the created app user profile.')
-    }
-
-    return {
-      id: created.authUserId,
-      email: created.email,
-      displayName: created.displayName,
-      role: created.role,
-      createdAt: created.createdAt,
-    }
-  } catch (error) {
-    await supabase.auth.admin.deleteUser(data.user.id)
-
+  if (!created) {
     throw createError({
       statusCode: 500,
-      statusMessage: error instanceof Error ? error.message : 'Failed to save app user profile.',
+      statusMessage: 'Failed to create the app user.',
     })
+  }
+
+  return {
+    id: created.authUserId,
+    email: created.email,
+    displayName: created.displayName,
+    role: created.role,
+    createdAt: created.createdAt,
   }
 })

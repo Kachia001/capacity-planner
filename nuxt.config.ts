@@ -22,13 +22,9 @@ export default defineNuxtConfig({
   ],
   runtimeConfig: {
     databaseUrl: '',
-    supabaseServiceRoleKey: '',
+    authSessionSecret: '',
     telegramEncryptionKey: '',
     telegramApiBaseUrl: 'https://api.telegram.org',
-    public: {
-      supabaseUrl: '',
-      supabaseAnonKey: '',
-    },
   },
   typescript: {
     strict: true,

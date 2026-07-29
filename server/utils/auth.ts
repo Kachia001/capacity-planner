@@ -1,49 +1,58 @@
 import type { H3Event } from 'h3'
-import type { User } from '@supabase/supabase-js'
 import { eq } from 'drizzle-orm'
 import { appUsers, type AppUser } from '../db/schema'
 
 export type AppRole = AppUser['role']
 
 export type AuthorizedAppUser = {
-  authUser: User
+  authUser: {
+    id: string
+    email: string
+  }
   profile: AppUser
 }
 
-export async function requireSupabaseUser(event: H3Event) {
-  const authorization = getHeader(event, 'authorization')
-  const token = authorization?.startsWith('Bearer ') ? authorization.slice(7) : null
-
+export async function requireSessionUser(event: H3Event) {
+  const token = getSessionCookie(event)
   if (!token) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Missing Supabase access token.',
+      statusMessage: 'Authentication is required.',
     })
   }
 
-  const { data, error } = await useSupabaseAdmin().auth.getUser(token)
-
-  if (error || !data.user) {
+  const session = await readSessionToken(token)
+  if (!session) {
+    clearSessionCookie(event)
     throw createError({
       statusCode: 401,
-      statusMessage: 'Invalid or expired Supabase access token.',
+      statusMessage: 'The session is invalid or expired.',
     })
   }
 
-  return data.user
+  const db = useDb()
+  const [profile] = await db
+    .select()
+    .from(appUsers)
+    .where(eq(appUsers.authUserId, session.userId))
+    .limit(1)
+
+  if (!profile || !profile.isActive || profile.authVersion !== session.authVersion) {
+    clearSessionCookie(event)
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'The session is no longer valid.',
+    })
+  }
+
+  return profile
 }
 
-export async function requireAppUser(event: H3Event, allowedRoles?: AppRole[]): Promise<AuthorizedAppUser> {
-  const authUser = await requireSupabaseUser(event)
-  const db = useDb()
-  const [profile] = await db.select().from(appUsers).where(eq(appUsers.authUserId, authUser.id)).limit(1)
-
-  if (!profile) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'This Supabase account is not registered in app_users.',
-    })
-  }
+export async function requireAppUser(
+  event: H3Event,
+  allowedRoles?: AppRole[],
+): Promise<AuthorizedAppUser> {
+  const profile = await requireSessionUser(event)
 
   if (allowedRoles && !allowedRoles.includes(profile.role)) {
     throw createError({
@@ -53,7 +62,10 @@ export async function requireAppUser(event: H3Event, allowedRoles?: AppRole[]): 
   }
 
   return {
-    authUser,
+    authUser: {
+      id: profile.authUserId,
+      email: profile.email,
+    },
     profile,
   }
 }

@@ -1,4 +1,4 @@
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async event => {
   const { authUser, profile } = await requireAppUser(event)
 
   return {
