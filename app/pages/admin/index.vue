@@ -10,7 +10,11 @@ import {
   getRequestErrorMessage,
   openOperation,
 } from '@/composables/useOperationsApi'
-import type { OperationStatus, OperationsDashboardResponse } from '@/types/operations'
+import type {
+  OperationOpenRequest,
+  OperationStatus,
+  OperationsDashboardResponse,
+} from '@/types/operations'
 
 definePageMeta({
   layout: 'admin',
@@ -72,13 +76,13 @@ async function loadOperationControl() {
   }
 }
 
-async function requestOperationOpen(extensionMinutes?: number) {
+async function requestOperationOpen(request?: OperationOpenRequest) {
   operationMutationPending.value = true
   operationError.value = null
 
   try {
     if (!auth.user) throw new Error('로그인이 필요합니다.')
-    operationStatus.value = await openOperation(extensionMinutes)
+    operationStatus.value = await openOperation(request)
   } catch (error) {
     operationError.value = getRequestErrorMessage(error, '운영을 Open하지 못했습니다.')
   } finally {

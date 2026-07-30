@@ -23,6 +23,7 @@ import {
 import type {
   BayOption,
   CompletedWorkItemRestoreTarget,
+  OperationOpenRequest,
   OperationStatus,
   OperationWorkItem,
   OperationsDashboardResponse,
@@ -158,13 +159,13 @@ async function loadOperationControl() {
   }
 }
 
-async function requestOperationOpen(extensionMinutes?: number) {
+async function requestOperationOpen(request?: OperationOpenRequest) {
   operationMutationPending.value = true
   operationError.value = null
 
   try {
     await requireAuthenticated()
-    operationStatus.value = await openOperation(extensionMinutes)
+    operationStatus.value = await openOperation(request)
     showNotice('작업 운영을 Open했습니다.', 'success')
   } catch (error) {
     operationError.value = getRequestErrorMessage(error, '운영을 Open하지 못했습니다.')
@@ -756,7 +757,7 @@ onBeforeUnmount(() => {
       @refresh="refreshAll"
     />
 
-    <div class="bg-[#f5f8f5] px-4 pt-4 sm:px-6">
+    <div class="bg-[#f5f8f5] p-4 sm:px-6">
       <OperationControlPanel
         class="mx-auto max-w-7xl"
         :status="operationStatus"

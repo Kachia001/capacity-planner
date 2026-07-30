@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Clock3, LockKeyhole, Play, RefreshCw, Square } from '@lucide/vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
 import { Button } from '@/components/ui/button'
-import type { OperationStatus } from '@/types/operations'
+import type { OperationOpenRequest, OperationStatus } from '@/types/operations'
 
 const props = defineProps<{
   status: OperationStatus | null
@@ -12,13 +13,18 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  open: [extensionMinutes?: number]
+  open: [request?: OperationOpenRequest]
   close: []
   refresh: []
   expired: []
 }>()
 
-const extensionMinutes = ref(60)
+type ExtensionOption = '30' | '60' | 'custom'
+
+const selectedExtension = ref<ExtensionOption>('60')
+const customExtensionDate = ref('')
+const customExtensionHour = ref('')
+const customExtensionMinute = ref('')
 const now = ref(Date.now())
 let clockTimer: ReturnType<typeof setInterval> | undefined
 let emittedExpirationFor: string | null = null
@@ -59,15 +65,109 @@ const closeTimeLabel = computed(() => {
   }).format(new Date(props.status.closesAt))
 })
 
+const showsExtensionControls = computed(
+  () => !effectivelyOpen.value && props.status && !props.status.isWithinRegularHours,
+)
+
+function formatSeoulDateTimeLocal(timestamp: number) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    })
+      .formatToParts(new Date(timestamp))
+      .map(part => [part.type, part.value]),
+  )
+
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`
+}
+
+const customExtensionUntil = computed(() => {
+  if (
+    !customExtensionDate.value ||
+    customExtensionHour.value === '' ||
+    customExtensionMinute.value === ''
+  ) {
+    return ''
+  }
+
+  const hour = String(customExtensionHour.value).padStart(2, '0')
+  const minute = String(customExtensionMinute.value).padStart(2, '0')
+  return `${customExtensionDate.value}T${hour}:${minute}`
+})
+
+function parseSeoulDateTimeLocal(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return null
+
+  const hour = Number(value.slice(11, 13))
+  const minute = Number(value.slice(14, 16))
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null
+
+  const parsed = new Date(`${value}:00+09:00`)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+const customExtensionDateMin = computed(() => formatSeoulDateTimeLocal(now.value).slice(0, 10))
+
+const customExtensionDateMax = computed(() =>
+  formatSeoulDateTimeLocal(now.value + 24 * 60 * 60 * 1000).slice(0, 10),
+)
+
+const customExtensionError = computed(() => {
+  if (selectedExtension.value !== 'custom') return null
+
+  const selected = parseSeoulDateTimeLocal(customExtensionUntil.value)
+  if (!selected) return '작업이 끝날 시각을 선택해 주세요.'
+  if (selected.getTime() <= now.value) return '현재보다 이후 시각을 선택해 주세요.'
+  if (selected.getTime() > now.value + 24 * 60 * 60 * 1000) {
+    return '종료 시각은 현재부터 24시간 이내로 선택해 주세요.'
+  }
+
+  return null
+})
+
+const canRequestOpen = computed(
+  () =>
+    Boolean(props.status) &&
+    !props.pending &&
+    !props.mutationPending &&
+    (!showsExtensionControls.value || !customExtensionError.value),
+)
+
+function selectExtension(option: ExtensionOption) {
+  selectedExtension.value = option
+
+  if (option === 'custom' && customExtensionError.value) {
+    const defaultUntil = Math.ceil((now.value + 60 * 60 * 1000) / 60_000) * 60_000
+    const [date, time] = formatSeoulDateTimeLocal(defaultUntil).split('T')
+    const [hour, minute] = time!.split(':')
+
+    customExtensionDate.value = date!
+    customExtensionHour.value = hour!
+    customExtensionMinute.value = minute!
+  }
+}
+
 function requestOpen() {
   if (!props.status || props.status.isWithinRegularHours) {
     emit('open')
     return
   }
 
-  const minutes = Math.min(1440, Math.max(1, Math.round(extensionMinutes.value || 0)))
-  extensionMinutes.value = minutes
-  emit('open', minutes)
+  if (selectedExtension.value === 'custom') {
+    const extensionUntil = parseSeoulDateTimeLocal(customExtensionUntil.value)
+    if (!extensionUntil || customExtensionError.value) return
+
+    emit('open', { extensionUntil: extensionUntil.toISOString() })
+    return
+  }
+
+  emit('open', { extensionMinutes: Number(selectedExtension.value) })
 }
 
 watchEffect(() => {
@@ -145,61 +245,118 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div v-if="canManage" class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
-        <label
-          v-if="!effectivelyOpen && status && !status.isWithinRegularHours"
-          class="flex h-10 items-center gap-2 rounded-lg border border-zinc-300 bg-zinc-50 px-3"
-        >
-          <span class="text-xs font-semibold text-zinc-600">연장</span>
-          <input
-            v-model.number="extensionMinutes"
-            type="number"
-            min="1"
-            max="1440"
-            class="w-16 bg-transparent text-right text-sm font-bold text-zinc-950 outline-none"
-          />
-          <span class="text-xs text-zinc-500">분</span>
-        </label>
-        <Button
-          v-if="effectivelyOpen"
-          variant="solid"
-          tone="neutral"
-          size="md"
-          :loading="mutationPending"
-          loading-text="지금 Close"
-          :disabled="mutationPending"
-          @click="emit('close')"
-        >
-          <Square class="size-3.5 fill-current" /> 지금 Close
-        </Button>
-        <Button
-          v-else
-          variant="solid"
-          tone="success"
-          size="md"
-          :loading="mutationPending"
-          :loading-text="status?.isWithinRegularHours ? '운영 Open' : '연장 Open'"
-          :disabled="pending || mutationPending || !status"
-          @click="requestOpen"
-        >
-          <Play class="size-4 fill-current" />
-          {{ status?.isWithinRegularHours ? '운영 Open' : '연장 Open' }}
-        </Button>
-        <Button
-          variant="outline"
-          tone="neutral"
-          size="icon-md"
-          :loading="pending"
-          :disabled="mutationPending"
-          aria-label="운영 상태 새로고침"
-          tooltip="운영 상태 새로고침"
-          :disabled-reason="
-            mutationPending ? '운영 상태 변경이 끝난 뒤 새로고침할 수 있습니다' : undefined
-          "
-          @click="emit('refresh')"
-        >
-          <RefreshCw />
-        </Button>
+      <div v-if="canManage" class="flex shrink-0 flex-col gap-3">
+        <div v-if="showsExtensionControls" class="grid gap-2">
+          <div class="grid grid-cols-3 gap-2" role="group" aria-label="작업 연장 방식">
+            <Button
+              v-for="option in ['30', '60', 'custom'] as ExtensionOption[]"
+              :key="option"
+              type="button"
+              :variant="selectedExtension === option ? 'solid' : 'outline'"
+              tone="success"
+              size="sm"
+              class="text-xs"
+              :aria-pressed="selectedExtension === option"
+              :disabled="mutationPending"
+              @click="selectExtension(option)"
+            >
+              {{ option === 'custom' ? '직접 입력' : `${option}분` }}
+            </Button>
+          </div>
+
+          <div
+            v-if="selectedExtension === 'custom'"
+            class="grid gap-1 rounded-lg border border-zinc-300 bg-zinc-50 p-3"
+          >
+            <span class="mb-1 text-xs font-semibold text-zinc-700">종료 시각 (한국시간)</span>
+            <div class="grid grid-cols-[minmax(0,1fr)_4.25rem_4.25rem] gap-2">
+              <label class="grid min-w-0 gap-1">
+                <span class="text-[11px] font-semibold text-zinc-600">날짜</span>
+                <input
+                  v-model="customExtensionDate"
+                  type="date"
+                  aria-label="종료 날짜"
+                  :min="customExtensionDateMin"
+                  :max="customExtensionDateMax"
+                  class="h-10 min-w-0 rounded-md border border-zinc-300 bg-white px-2 text-sm font-semibold text-zinc-950 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                />
+              </label>
+              <label class="grid gap-1">
+                <span class="text-center text-[11px] font-semibold text-zinc-600">시</span>
+                <input
+                  v-model="customExtensionHour"
+                  type="number"
+                  inputmode="numeric"
+                  aria-label="종료 시"
+                  min="0"
+                  max="23"
+                  placeholder="00"
+                  class="h-10 min-w-0 rounded-md border border-zinc-300 bg-white px-1 text-center text-sm font-semibold text-zinc-950 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                />
+              </label>
+              <label class="grid gap-1">
+                <span class="text-center text-[11px] font-semibold text-zinc-600">분</span>
+                <input
+                  v-model="customExtensionMinute"
+                  type="number"
+                  inputmode="numeric"
+                  aria-label="종료 분"
+                  min="0"
+                  max="59"
+                  placeholder="00"
+                  class="h-10 min-w-0 rounded-md border border-zinc-300 bg-white px-1 text-center text-sm font-semibold text-zinc-950 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                />
+              </label>
+            </div>
+            <span v-if="customExtensionError" class="text-[11px] font-medium text-red-700">
+              {{ customExtensionError }}
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2">
+          <Button
+            v-if="effectivelyOpen"
+            variant="solid"
+            tone="neutral"
+            size="md"
+            :loading="mutationPending"
+            loading-text="지금 Close"
+            :disabled="mutationPending"
+            @click="emit('close')"
+          >
+            <Square class="size-3.5 fill-current" /> 지금 Close
+          </Button>
+          <Button
+            v-else
+            variant="solid"
+            tone="success"
+            size="md"
+            :loading="mutationPending"
+            :loading-text="status?.isWithinRegularHours ? '운영 Open' : '연장 Open'"
+            :disabled="!canRequestOpen"
+            :disabled-reason="customExtensionError ?? undefined"
+            @click="requestOpen"
+          >
+            <Play class="size-4 fill-current" />
+            {{ status?.isWithinRegularHours ? '운영 Open' : '연장 Open' }}
+          </Button>
+          <Button
+            variant="outline"
+            tone="neutral"
+            size="icon-md"
+            :loading="pending"
+            :disabled="mutationPending"
+            aria-label="운영 상태 새로고침"
+            tooltip="운영 상태 새로고침"
+            :disabled-reason="
+              mutationPending ? '운영 상태 변경이 끝난 뒤 새로고침할 수 있습니다' : undefined
+            "
+            @click="emit('refresh')"
+          >
+            <RefreshCw />
+          </Button>
+        </div>
       </div>
     </div>
   </section>

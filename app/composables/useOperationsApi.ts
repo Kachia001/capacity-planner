@@ -2,6 +2,7 @@ import type {
   BayOption,
   CompletedWorkItemRestoreTarget,
   IssueSeverity,
+  OperationOpenRequest,
   OperationStatus,
   OperationsDashboardResponse,
   WorkItemSearchFilters,
@@ -57,10 +58,10 @@ export async function fetchOperationStatus() {
   return await $fetch<OperationStatus>('/api/operations/status')
 }
 
-export async function openOperation(extensionMinutes?: number) {
+export async function openOperation(request?: OperationOpenRequest) {
   return await $fetch<OperationStatus>('/api/operations/open', {
     method: 'POST',
-    body: extensionMinutes === undefined ? {} : { extensionMinutes },
+    body: request ?? {},
   })
 }
 

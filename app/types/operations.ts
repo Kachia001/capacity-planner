@@ -24,6 +24,11 @@ export interface OperationStatus {
   timeZone: 'Asia/Seoul'
 }
 
+export interface OperationOpenRequest {
+  extensionMinutes?: number
+  extensionUntil?: string
+}
+
 export interface BayOption {
   id: string
   code: string
