@@ -64,6 +64,9 @@ export function mapTemplateResponse(template: TemplateApiResponse): ExistingTemp
 
   for (const row of template.rows) {
     const key = row.workName?.trim() || '__material__'
+    const isLegacyEmptyRow = ![row.workDetail, row.vendor, row.partNo, row.itemName, row.bolt].some(
+      value => value?.trim(),
+    )
     let group = groups.at(-1)
     if (!group || (group.workName || '__material__') !== key) {
       group = {
@@ -79,7 +82,7 @@ export function mapTemplateResponse(template: TemplateApiResponse): ExistingTemp
     group.items.push({
       clientId: makeTemplateClientId('item'),
       sortOrder: group.items.length + 1,
-      legacySourceRow: null,
+      legacySourceRow: isLegacyEmptyRow ? row.sortOrder : null,
       workDetail: row.workDetail ?? '',
       vendor: row.vendor ?? '',
       partNo: row.partNo ?? '',
@@ -94,7 +97,7 @@ export function mapTemplateResponse(template: TemplateApiResponse): ExistingTemp
     id: template.id,
     name: template.name,
     description: template.description,
-    sourceBay: '템플릿',
+    sourceBay: '생성 옵션',
     updatedAtLabel: new Date(template.updatedAt).toLocaleDateString('ko-KR'),
     usedByBayCount: 0,
     groups,
