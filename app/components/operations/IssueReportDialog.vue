@@ -88,9 +88,9 @@ onBeforeUnmount(() => {
               <h2 id="issue-report-title" class="mt-1 text-lg font-semibold text-zinc-950">
                 작업 이슈 등록
               </h2>
-              <p id="issue-report-description" class="mt-1 text-sm leading-6 text-zinc-600">
-                저장된 이슈는 운영 현황에 반영되고 Telegram 전송 대기열에 안전하게 등록됩니다.
-              </p>
+              <!--              <p id="issue-report-description" class="mt-1 text-sm leading-6 text-zinc-600">-->
+              <!--                저장된 이슈는 운영 현황에 반영되고 Telegram 전송 대기열에 안전하게 등록됩니다.-->
+              <!--              </p>-->
             </div>
           </div>
 
