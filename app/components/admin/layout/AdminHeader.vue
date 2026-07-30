@@ -89,7 +89,7 @@ onMounted(() => {
         <span
           class="mt-1 hidden font-mono text-[9px] uppercase tracking-[0.22em] text-zinc-500 sm:block"
         >
-          Admin console
+          Management console
         </span>
       </span>
     </NuxtLink>

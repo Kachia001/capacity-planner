@@ -31,8 +31,8 @@ useHead({
       </div>
       <div class="p-6">
         <p class="text-sm leading-6 text-zinc-600">
-          새 BAY 생성과 템플릿 구성은 관리자에게만 허용됩니다. 권한이 필요하면 시스템 관리자에게
-          문의하세요.
+          현재 계정 역할에서는 이 화면 또는 작업을 사용할 수 없습니다. 추가 권한이 필요하면 시스템
+          관리자에게 문의하세요.
         </p>
         <Button as-child variant="solid" tone="neutral" size="md" shape="compact" class="mt-6">
           <NuxtLink to="/"><ArrowLeft class="size-4" /> Dashboard로 돌아가기</NuxtLink>

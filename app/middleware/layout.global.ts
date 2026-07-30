@@ -15,11 +15,6 @@ export default defineNuxtRouteMiddleware(async to => {
     return
   }
 
-  if (to.path.startsWith('/manager')) {
-    setPageLayout('default')
-    return
-  }
-
   // 레이아웃은 표현만 결정합니다. 실제 접근 권한은 각 페이지의 auth/role middleware가 검증합니다.
-  setPageLayout(auth.isAdmin ? 'admin' : 'default')
+  setPageLayout(auth.isSupervisor ? 'admin' : 'default')
 })

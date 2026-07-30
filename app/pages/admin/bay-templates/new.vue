@@ -20,7 +20,7 @@ import type { ExistingTemplateDraft, TemplateGroupDraft, TemplateSource } from '
 definePageMeta({
   layout: 'admin',
   middleware: ['auth-client', 'role-client'],
-  roles: ['admin'],
+  roles: ['admin', 'manager'],
 })
 useHead({ title: '새 BAY 템플릿 · Capacity Planner' })
 

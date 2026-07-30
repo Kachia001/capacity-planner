@@ -19,7 +19,7 @@ import type { AppRole } from '@/stores/auth'
 definePageMeta({
   layout: 'admin',
   middleware: ['auth-client', 'role-client'],
-  roles: ['admin'],
+  roles: ['admin', 'manager'],
 })
 useHead({ title: '계정관리 · Capacity Planner Admin' })
 
@@ -267,9 +267,10 @@ onMounted(() => {
         </div>
 
         <dl
-          class="grid w-full grid-cols-3 overflow-hidden rounded-xl border border-[#d9ddd5] bg-white shadow-[0_12px_36px_rgba(24,35,26,0.05)] xl:w-auto xl:min-w-[28rem]"
+          class="grid w-full overflow-hidden rounded-xl border border-[#d9ddd5] bg-white shadow-[0_12px_36px_rgba(24,35,26,0.05)] xl:w-auto xl:min-w-[28rem]"
+          :class="auth.isAdmin ? 'grid-cols-3' : 'grid-cols-2'"
         >
-          <div class="border-r border-[#e4e7e1] px-5 py-4">
+          <div v-if="auth.isAdmin" class="border-r border-[#e4e7e1] px-5 py-4">
             <dt class="font-mono text-[8px] uppercase tracking-[0.16em] text-[#969d94]">Admin</dt>
             <dd class="mt-1.5 text-2xl font-semibold tracking-[-0.04em]">{{ roleCounts.admin }}</dd>
           </div>
@@ -328,7 +329,7 @@ onMounted(() => {
               class="h-11 rounded-lg border border-[#d6dad2] bg-white px-3 text-sm font-medium outline-none transition focus:border-[#71865e] focus:ring-4 focus:ring-[#c5f277]/20"
             >
               <option value="all">전체</option>
-              <option value="admin">시스템 관리자</option>
+              <option v-if="auth.isAdmin" value="admin">시스템 관리자</option>
               <option value="manager">운영 관리자</option>
               <option value="worker">작업자</option>
             </select>
@@ -437,7 +438,7 @@ onMounted(() => {
               class="h-11 rounded-lg border border-[#d6dad2] bg-white px-3 text-sm outline-none focus:border-[#71865e] focus:ring-4 focus:ring-[#c5f277]/20"
             >
               <option value="worker">작업자</option>
-              <option value="manager">운영 관리자</option>
+              <option v-if="auth.isAdmin" value="manager">운영 관리자</option>
               <!--              <option value="admin">시스템 관리자</option>-->
             </select>
           </label>

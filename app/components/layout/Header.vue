@@ -2,13 +2,10 @@
 import { LogOut } from '@lucide/vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import HeaderAdminAction from '@/components/layout/HeaderAdminAction.vue'
-import ManagerMobileNavigation from '@/components/layout/ManagerMobileNavigation.vue'
 
 const auth = useAuthStore()
-const route = useRoute()
 
-const homePath = computed(() => (auth.profile?.role === 'manager' ? '/manager/bays' : '/bay'))
+const homePath = computed(() => (auth.isSupervisor ? '/admin' : '/bay'))
 
 const roleLabel = computed(() => {
   if (auth.profile?.role === 'admin') return 'Admin'
@@ -48,35 +45,13 @@ async function signOut() {
       >
         <ClientOnly>
           <div class="flex items-center gap-2">
-            <div
-              v-if="auth.user && auth.profile?.role === 'manager'"
-              class="hidden items-center gap-4 sm:flex"
-            >
-              <NuxtLink
-                to="/manager/bays"
-                class="transition hover:text-foreground"
-                :class="route.path.startsWith('/manager/bays') ? 'text-foreground' : ''"
-                :aria-current="route.path.startsWith('/manager/bays') ? 'page' : undefined"
-              >
-                Bay 목록
-              </NuxtLink>
-              <NuxtLink
-                to="/bay"
-                class="transition hover:text-foreground"
-                :class="route.path === '/bay' ? 'text-foreground' : ''"
-                :aria-current="route.path === '/bay' ? 'page' : undefined"
-              >
-                작업 운영
-              </NuxtLink>
-            </div>
             <NuxtLink
-              v-else-if="auth.user && auth.profile?.role === 'worker'"
+              v-if="auth.user && auth.profile?.role === 'worker'"
               to="/bay"
               class="hidden transition hover:text-foreground sm:inline"
             >
               작업 실행
             </NuxtLink>
-            <ManagerMobileNavigation v-if="auth.user && auth.profile?.role === 'manager'" />
             <Badge
               v-if="roleLabel"
               variant="outline"
@@ -84,8 +59,6 @@ async function signOut() {
             >
               {{ roleLabel }}
             </Badge>
-            <HeaderAdminAction v-if="auth.user && auth.isAdmin" />
-
             <Button
               v-if="auth.user"
               data-layout="mobile"

@@ -7,6 +7,7 @@ const props = defineProps<{
   bayCode: string
   itemCount: number
   highAltitudeCount: number
+  bayListPath: string
 }>()
 </script>
 
@@ -23,7 +24,7 @@ const props = defineProps<{
       </CardContent>
       <CardFooter>
         <Button as-child size="lg">
-          <NuxtLink :to="{ path: '/admin/bays', query: { q: props.bayCode } }">
+          <NuxtLink :to="{ path: props.bayListPath, query: { q: props.bayCode } }">
             Bay 목록에서 확인 <ChevronRight />
           </NuxtLink>
         </Button>

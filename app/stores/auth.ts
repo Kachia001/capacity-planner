@@ -20,10 +20,10 @@ export const useAuthStore = defineStore('auth', () => {
   const pending = ref(false)
   const errorMessage = ref<string | null>(null)
 
-  const canManageUsers = computed(
+  const isAdmin = computed(() => profile.value?.role === 'admin')
+  const isSupervisor = computed(
     () => profile.value?.role === 'admin' || profile.value?.role === 'manager',
   )
-  const isAdmin = computed(() => profile.value?.role === 'admin')
 
   function setProfile(nextProfile: AppUserProfile | null) {
     profile.value = nextProfile
@@ -99,8 +99,8 @@ export const useAuthStore = defineStore('auth', () => {
     initialized,
     pending,
     errorMessage,
-    canManageUsers,
     isAdmin,
+    isSupervisor,
     initialize,
     signIn,
     signOut,

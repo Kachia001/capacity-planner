@@ -15,7 +15,7 @@ import type { OperationStatus, OperationsDashboardResponse } from '@/types/opera
 definePageMeta({
   layout: 'admin',
   middleware: ['auth-client', 'role-client'],
-  roles: ['admin'],
+  roles: ['admin', 'manager'],
 })
 useHead({ title: '운영 현황 · Capacity Planner Admin' })
 

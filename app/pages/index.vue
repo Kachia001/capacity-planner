@@ -1,6 +1,12 @@
 <script setup lang="ts">
 definePageMeta({
-  redirect: '/bay',
+  middleware: [
+    'auth-client',
+    () => {
+      const auth = useAuthStore()
+      return navigateTo(auth.isSupervisor ? '/admin' : '/bay', { replace: true })
+    },
+  ],
 })
 </script>
 

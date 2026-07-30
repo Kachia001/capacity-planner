@@ -19,7 +19,7 @@ import type { DashboardBaySummary, OperationsDashboardResponse } from '@/types/o
 definePageMeta({
   layout: 'admin',
   middleware: ['auth-client', 'role-client'],
-  roles: ['admin'],
+  roles: ['admin', 'manager'],
 })
 useHead({ title: 'Bay 조회 · Capacity Planner Admin' })
 

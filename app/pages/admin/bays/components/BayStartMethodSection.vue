@@ -14,6 +14,7 @@ const props = defineProps<{
   directWriteId: string
   loading: boolean
   loadError: string | null
+  templateCreatePath: string
 }>()
 
 const emit = defineEmits<{
@@ -122,7 +123,7 @@ const selectedMethod = computed({
           <AlertDescription>직접 작성하거나 새 템플릿을 만들 수 있습니다.</AlertDescription>
         </div>
         <Button as-child size="sm">
-          <NuxtLink to="/admin/bay-templates/new"> <Plus /> 템플릿 만들기 </NuxtLink>
+          <NuxtLink :to="props.templateCreatePath"> <Plus /> 템플릿 만들기 </NuxtLink>
         </Button>
       </Alert>
     </CardContent>

@@ -2,7 +2,7 @@ import { asc, eq } from 'drizzle-orm'
 import { bayTemplateRows, bayTemplates } from '../db/schema'
 
 export default defineEventHandler(async event => {
-  await requireAppUser(event, ['admin'])
+  await requireAppUser(event, ['admin', 'manager'])
   const db = useDb()
 
   const templates = await db

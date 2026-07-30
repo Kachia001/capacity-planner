@@ -2,27 +2,36 @@
 import { BellRing, Boxes, ChevronRight, PanelsTopLeft, UsersRound } from '@lucide/vue'
 
 const route = useRoute()
+const auth = useAuthStore()
 
-const navigation = [
+const navigationItems = [
   {
     label: 'Bay 조회',
     caption: 'Bay registry',
     to: '/admin/bays',
     icon: PanelsTopLeft,
+    roles: ['admin', 'manager'],
   },
   {
     label: '계정관리',
     caption: 'Account control',
     to: '/admin/accounts',
     icon: UsersRound,
+    roles: ['admin', 'manager'],
   },
   {
     label: 'Telegram 알림',
     caption: 'Issue notifications',
     to: '/admin/notifications',
     icon: BellRing,
+    roles: ['admin'],
   },
 ]
+
+const navigation = computed(() => {
+  const role = auth.profile?.role
+  return role ? navigationItems.filter(item => item.roles.includes(role)) : []
+})
 
 function isNavigationActive(to: string) {
   if (to === '/admin/bays') {
@@ -39,7 +48,7 @@ function isNavigationActive(to: string) {
 
 <template>
   <aside class="flex h-full justify-between flex-1 flex-col bg-[#111512] text-white">
-    <nav class="flex flex-col px-4 py-7" aria-label="관리자 주 메뉴">
+    <nav class="flex flex-col px-4 py-7" aria-label="관리 콘솔 주 메뉴">
       <NuxtLink
         v-for="item in navigation"
         :key="item.to"

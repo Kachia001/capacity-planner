@@ -65,7 +65,7 @@ const createTemplateSchema = z
   })
 
 export default defineEventHandler(async event => {
-  await requireAppUser(event, ['admin'])
+  await requireAppUser(event, ['admin', 'manager'])
   const body = createTemplateSchema.parse(await readBody(event))
   const db = useDb()
 

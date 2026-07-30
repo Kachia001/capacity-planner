@@ -16,7 +16,7 @@ import type { ExistingTemplateDraft, TemplateGroupDraft } from '@/types/template
 definePageMeta({
   layout: 'admin',
   middleware: ['auth-client', 'role-client'],
-  roles: ['admin'],
+  roles: ['admin', 'manager'],
 })
 useHead({ title: '새 BAY 만들기 · Capacity Planner' })
 
@@ -144,14 +144,18 @@ onMounted(loadTemplates)
 </script>
 
 <template>
-  <main class="min-h-full text-zinc-950">
-    <BayCreationPageHeader />
+  <main class="min-h-full text-zinc-950 mx-6">
+    <BayCreationPageHeader
+      bay-list-path="/admin/bays"
+      template-create-path="/admin/bay-templates/new"
+    />
 
     <BayCreationSuccess
       v-if="created"
       :bay-code="bayCode"
       :item-count="itemCount"
       :high-altitude-count="highAltitudeCount"
+      bay-list-path="/admin/bays"
     />
 
     <div
@@ -170,6 +174,7 @@ onMounted(loadTemplates)
           :direct-write-id="directWriteId"
           :loading="loading"
           :load-error="loadError"
+          template-create-path="/admin/bay-templates/new"
         />
         <BayWorkConfigurationSection
           v-model:groups="draftGroups"

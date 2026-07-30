@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { ArrowLeft, Plus } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+
+const props = defineProps<{
+  bayListPath: string
+  templateCreatePath: string
+}>()
 </script>
 
 <template>
   <header class="border-b border-zinc-300 bg-[#f8faf7]">
     <div class="mx-auto w-full max-w-368 px-4 py-6 sm:px-6 lg:px-8">
       <Button as-child variant="ghost" class="-ml-2 text-muted-foreground">
-        <NuxtLink to="/admin/bays"> <ArrowLeft /> 운영 현황 </NuxtLink>
+        <NuxtLink :to="props.bayListPath"> <ArrowLeft /> 운영 현황 </NuxtLink>
       </Button>
       <div class="mt-7 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
         <div>
@@ -23,7 +28,7 @@ import { Button } from '@/components/ui/button'
           </p>
         </div>
         <Button as-child variant="outline" size="lg" class="bg-card">
-          <NuxtLink to="/admin/bay-templates/new"> <Plus /> 새 템플릿 만들기 </NuxtLink>
+          <NuxtLink :to="props.templateCreatePath"> <Plus /> 새 템플릿 만들기 </NuxtLink>
         </Button>
       </div>
     </div>
