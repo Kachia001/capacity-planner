@@ -16,7 +16,13 @@ export default defineEventHandler(async event => {
   if (profile.role === 'manager' && body.role !== 'worker') {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Managers can create worker accounts only.',
+      statusMessage: '매니저는 작업자만 생성 할 수 있습니다.',
+    })
+  }
+  if (body.role === 'admin') {
+    throw createError({
+      statusCode: 400,
+      statusMessage: '어드민은 생성할 수 없습니다.',
     })
   }
 

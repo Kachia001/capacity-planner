@@ -438,7 +438,7 @@ onMounted(() => {
             >
               <option value="worker">작업자</option>
               <option value="manager">운영 관리자</option>
-              <option value="admin">시스템 관리자</option>
+              <!--              <option value="admin">시스템 관리자</option>-->
             </select>
           </label>
           <label class="grid gap-2 text-xs font-semibold text-[#50574f]">
