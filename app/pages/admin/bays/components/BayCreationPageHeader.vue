@@ -20,15 +20,15 @@ const props = defineProps<{
             Bay commissioning
           </p>
           <h1 class="mt-2 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
-            직접 구성하거나 템플릿에서 시작하세요.
+            직접 구성하거나 생성 옵션에서 시작하세요.
           </h1>
           <p class="mt-2 max-w-2xl text-sm leading-6 text-zinc-600">
-            빈 작업 구성부터 직접 작성하거나 기존 템플릿을 복사할 수 있습니다. 어느 방식을 선택해도
-            이 Bay만의 독립적인 작업 목록으로 저장됩니다.
+            빈 작업 구성부터 직접 작성하거나 기존 베이 생성 옵션을 복사할 수 있습니다. 어느 방식을
+            선택해도 이 Bay만의 독립적인 작업 목록으로 저장됩니다.
           </p>
         </div>
         <Button as-child variant="outline" size="lg" class="bg-card">
-          <NuxtLink :to="props.templateCreatePath"> <Plus /> 새 템플릿 만들기 </NuxtLink>
+          <NuxtLink :to="props.templateCreatePath"> <Plus /> 새 생성 옵션 만들기 </NuxtLink>
         </Button>
       </div>
     </div>

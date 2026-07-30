@@ -22,7 +22,7 @@ definePageMeta({
   middleware: ['auth-client', 'role-client'],
   roles: ['admin', 'manager'],
 })
-useHead({ title: '새 BAY 템플릿 · Capacity Planner' })
+useHead({ title: '새 베이 생성 옵션 · Capacity Planner' })
 
 const auth = useAuthStore()
 const name = ref('')
@@ -96,7 +96,8 @@ async function loadTemplates() {
     templates.value = await fetchBayTemplates()
     sourceTemplateId.value = templates.value[0]?.id ?? ''
   } catch (error) {
-    loadError.value = error instanceof Error ? error.message : '기존 템플릿을 불러오지 못했습니다.'
+    loadError.value =
+      error instanceof Error ? error.message : '기존 베이 생성 옵션을 불러오지 못했습니다.'
   } finally {
     loading.value = false
   }
@@ -119,7 +120,7 @@ async function saveTemplate() {
     savedTemplateName.value = created.name
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (error) {
-    saveError.value = error instanceof Error ? error.message : '템플릿을 저장하지 못했습니다.'
+    saveError.value = error instanceof Error ? error.message : '생성 옵션을 저장하지 못했습니다.'
   } finally {
     savePending.value = false
   }
@@ -156,7 +157,7 @@ onMounted(loadTemplates)
               Blueprint workshop
             </p>
             <h1 class="mt-2 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
-              재사용할 작업 템플릿을 설계합니다.
+              재사용할 베이 생성 옵션을 설계합니다.
             </h1>
             <p class="mt-2 max-w-2xl text-sm leading-6 text-zinc-600">
               BAY와 무관한 표준 작업 구조를 만들고 저장합니다. 실제 운영 단위 생성은 별도 BAY 생성
@@ -180,9 +181,11 @@ onMounted(loadTemplates)
     <div v-if="savedTemplateName" class="mx-auto max-w-3xl px-4 py-14 text-center">
       <section class="rounded-md border border-emerald-300 bg-white p-8 shadow-xl">
         <CheckCircle2 class="mx-auto size-12 text-emerald-600" />
-        <h2 class="mt-5 text-2xl font-semibold">{{ savedTemplateName }} 템플릿을 저장했습니다.</h2>
+        <h2 class="mt-5 text-2xl font-semibold">
+          {{ savedTemplateName }} 생성 옵션을 저장했습니다.
+        </h2>
         <p class="mt-2 text-sm text-zinc-600">
-          이제 새 BAY를 만들 때 이 템플릿을 선택할 수 있습니다.
+          이제 새 BAY를 만들 때 이 생성 옵션을 선택할 수 있습니다.
         </p>
         <div class="mt-7 flex flex-wrap justify-center gap-2">
           <Button
@@ -194,10 +197,10 @@ onMounted(loadTemplates)
             class="border-zinc-300"
             @click="resetForm"
           >
-            <RotateCcw class="size-4" /> 다른 템플릿 만들기
+            <RotateCcw class="size-4" /> 다른 생성 옵션 만들기
           </Button>
           <Button as-child variant="solid" tone="neutral" size="lg" shape="compact">
-            <NuxtLink to="/admin/bays/new">이 템플릿으로 BAY 생성</NuxtLink>
+            <NuxtLink to="/admin/bays/new">이 생성 옵션으로 BAY 생성</NuxtLink>
           </Button>
         </div>
       </section>
@@ -209,7 +212,7 @@ onMounted(loadTemplates)
       >
         <div class="grid gap-4 sm:grid-cols-2">
           <label class="grid gap-2 text-sm font-semibold"
-            >템플릿 이름<input
+            >생성 옵션 이름<input
               v-model="name"
               maxlength="100"
               class="h-11 rounded-sm border border-zinc-300 px-3 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
@@ -244,7 +247,7 @@ onMounted(loadTemplates)
             <Button
               type="button"
               :disabled="templates.length === 0"
-              disabled-reason="복제할 기존 템플릿이 없습니다."
+              disabled-reason="복제할 기존 생성 옵션이 없습니다."
               :variant="source === 'clone' ? 'solid' : 'outline'"
               tone="neutral"
               size="md"
@@ -267,7 +270,7 @@ onMounted(loadTemplates)
             </select>
           </div>
           <p v-if="loading" class="mt-3 flex items-center gap-2 text-xs text-zinc-500">
-            <Loader2 class="size-3.5 animate-spin" /> 기존 템플릿 확인 중
+            <Loader2 class="size-3.5 animate-spin" /> 기존 생성 옵션 확인 중
           </p>
           <p v-if="loadError" class="mt-3 text-xs text-red-700">{{ loadError }}</p>
         </div>
@@ -301,13 +304,15 @@ onMounted(loadTemplates)
       <div
         class="mx-auto flex w-full max-w-[92rem] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8"
       >
-        <p class="hidden text-xs text-zinc-500 sm:block">템플릿 저장은 BAY를 생성하지 않습니다.</p>
+        <p class="hidden text-xs text-zinc-500 sm:block">
+          생성 옵션 저장은 BAY를 생성하지 않습니다.
+        </p>
         <Button
           type="button"
           :disabled="!canSave"
           :loading="savePending"
           loading-text="저장 중"
-          disabled-reason="템플릿 이름과 작업 구성을 확인해 주세요."
+          disabled-reason="생성 옵션 이름과 작업 구성을 확인해 주세요."
           variant="solid"
           tone="neutral"
           size="lg"
@@ -315,7 +320,7 @@ onMounted(loadTemplates)
           class="ml-auto"
           @click="saveTemplate"
         >
-          <FilePlus2 class="size-4" />템플릿 저장
+          <FilePlus2 class="size-4" />생성 옵션 저장
         </Button>
       </div>
     </footer>

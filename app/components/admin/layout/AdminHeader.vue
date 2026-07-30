@@ -21,7 +21,7 @@ const pageContext = computed(() => {
   }
 
   if (route.path.startsWith('/admin/bay-templates')) {
-    return { eyebrow: 'BAY MANAGEMENT', title: 'Bay Template 생성' }
+    return { eyebrow: 'BAY MANAGEMENT', title: '베이 생성 옵션' }
   }
 
   if (route.path === '/admin/bays/new') {

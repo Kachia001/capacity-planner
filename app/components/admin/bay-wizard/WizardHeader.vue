@@ -41,10 +41,10 @@ function handleCreateTemplate() {
             size="sm"
             shape="compact"
             :disabled="!props.templateCreateAvailable"
-            disabled-reason="현재 구성으로 템플릿을 만들 수 없습니다."
+            disabled-reason="현재 구성으로 베이 생성 옵션을 만들 수 없습니다."
             @click="handleCreateTemplate"
           >
-            <FilePlus2 class="size-3.5" /> 현재 구성으로 템플릿 만들기
+            <FilePlus2 class="size-3.5" /> 현재 구성으로 베이 생성 옵션 만들기
           </Button>
           <span
             class="inline-flex items-center gap-2 rounded-sm border border-emerald-200 bg-emerald-50 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-800"
@@ -73,7 +73,7 @@ function handleCreateTemplate() {
             새 BAY에 작업 구조를 배정합니다.
           </h1>
           <p class="mt-2 max-w-2xl text-sm leading-6 text-zinc-600">
-            기존 템플릿을 고정하거나, workName 그룹과 상세 작업을 새로 구성해 운영 단위를
+            기존 생성 옵션을 선택하거나, workName 그룹과 상세 작업을 새로 구성해 운영 단위를
             준비하세요.
           </p>
         </div>
