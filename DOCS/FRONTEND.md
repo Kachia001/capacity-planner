@@ -41,6 +41,12 @@ app/
   `props.<name>`으로 접근합니다.
 - 이벤트는 `const emit = defineEmits<...>()`로 선언하고 명시적인 handler에서 호출합니다.
 
+### 작업 운영 상태
+
+`OperationControlPanel`은 정규 운영 시간 외의 연장 옵션을 30분, 60분, 직접 입력으로
+제공합니다. 직접 입력을 선택하면 한국시간 기준 종료 날짜, 시, 분을 구분해 입력하며,
+현재보다 미래이고 24시간 이내인 값만 서버에 요청합니다.
+
 ## Import
 
 - 기능·페이지·공통 컴포넌트 사이의 import는 `@/` alias를 사용합니다.
@@ -226,7 +232,10 @@ if (accepted) {
 ## 권한 UI
 
 - 권한 없는 액션은 숨기거나 비활성화하되 사유를 명확하게 전달합니다.
-- Admin 전용 BAY 생성 액션은 Admin에게만 표시합니다.
+- Admin과 Manager는 `/admin` 아래의 동일한 관리 콘솔 UI와 경로를 사용합니다.
+- BAY 및 BAY 템플릿 생성 액션은 Admin과 Manager에게 표시합니다.
+- 계정 관리에서 Manager는 Worker 계정만 생성할 수 있습니다.
+- Telegram 설정처럼 Admin 전용인 메뉴와 화면은 Manager에게 노출하지 않습니다.
 - UI 표시 제어를 보안 수단으로 간주하지 않으며 서버와 route middleware에서 다시 검증합니다.
 
 ## 스타일과 접근성

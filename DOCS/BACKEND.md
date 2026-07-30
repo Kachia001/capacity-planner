@@ -107,14 +107,14 @@ Persistence row, domain aggregate, application result 및 public API response는
 
 ### BAY와 템플릿
 
-| Method | Path                       | 설명                               |
-| ------ | -------------------------- | ---------------------------------- |
-| GET    | `/api/bay-templates`       | BAY 템플릿 목록                    |
-| POST   | `/api/bay-templates`       | BAY 템플릿 생성                    |
-| GET    | `/api/bays`                | BAY 목록                           |
-| POST   | `/api/bays`                | 템플릿 또는 직접 입력으로 BAY 생성 |
-| GET    | `/api/bays/:id/work-items` | BAY의 작업 검색과 필터             |
-| GET    | `/api/dashboard/bays`      | Manager/Admin용 BAY 집계           |
+| Method | Path                       | 설명                            |
+| ------ | -------------------------- | ------------------------------- |
+| GET    | `/api/bay-templates`       | Admin/Manager용 BAY 템플릿 목록 |
+| POST   | `/api/bay-templates`       | Admin/Manager용 BAY 템플릿 생성 |
+| GET    | `/api/bays`                | BAY 목록                        |
+| POST   | `/api/bays`                | Admin/Manager의 BAY 생성        |
+| GET    | `/api/bays/:id/work-items` | BAY의 작업 검색과 필터          |
+| GET    | `/api/dashboard/bays`      | Manager/Admin용 BAY 집계        |
 
 ### 작업 실행
 
@@ -135,6 +135,11 @@ Persistence row, domain aggregate, application result 및 public API response는
 | GET    | `/api/operations/status` | 현재 운영 가능 상태           |
 | POST   | `/api/operations/open`   | 운영 시간 연장 또는 수동 오픈 |
 | POST   | `/api/operations/close`  | 운영 수동 종료                |
+
+`POST /api/operations/open`은 `extensionMinutes` 또는 ISO 8601 형식의
+`extensionUntil` 중 하나를 받습니다. 두 필드는 함께 전송할 수 없으며, 정규 운영 시간
+외에는 하나가 필수입니다. 종료 시각은 현재보다 미래이고 요청 시점에서 최대 24시간
+이내여야 합니다.
 
 ### Telegram
 

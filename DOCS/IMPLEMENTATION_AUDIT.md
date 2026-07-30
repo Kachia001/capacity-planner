@@ -14,9 +14,10 @@
 | ------ | ------------------------ | ---------------------------------------------- | ------------------- |
 | 높음   | 백엔드 아키텍처          | `work-execution`만 모듈형 구조가 적용됨        | 문서 설명 보정 필요 |
 | 높음   | Manager 작업 무효화      | 정책과 달리 Admin만 가능                       | 정책·구현 충돌      |
-| 중간   | Manager 계정 관리        | API만 지원하고 Manager용 UI가 없음             | 부분 구현           |
+| 해결   | Manager 계정 관리        | 공통 계정 화면에서 Worker 계정 관리 제공       | 2026-07-30 완료     |
 | 중간   | Admin 대시보드           | BAY 상태 매트릭스 위주로 구성됨                | 부분 구현           |
 | 중간   | 전체 작업 상태 이력      | 대시보드 API가 최근 20건만 제공함              | 정책·구현 차이      |
+| 해결   | Admin/Manager 관리 UI    | `/admin` 공통 UI와 역할별 기능 제한 적용       | 2026-07-30 완료     |
 | 해결   | 프론트엔드 디자인 시스템 | 공통 Button·DataTable 및 반응형 영역 분리 적용 | 2026-07-28 완료     |
 | 낮음   | Cursor pagination        | 실제로는 cursor 형태의 offset pagination임     | 용어 보정 필요      |
 | 낮음   | API·환경변수 문서        | Health API 및 환경변수 예제 일부 누락          | 문서 보완 필요      |
@@ -58,19 +59,31 @@ BAY, 사용자, 대시보드, 운영 제어, Telegram 설정 등의 기존 API�
 
 ## 2. Manager 권한
 
+### BAY 및 BAY 템플릿 생성
+
+2026-07-30에 Admin과 Manager의 관리 화면을 `/admin` 아래의 공통 UI로 통합하고
+Manager가 BAY와 BAY 템플릿을 생성할 수 있도록 다음 범위를 함께 반영했습니다.
+
+- BAY 템플릿 조회·생성 API
+- BAY 생성 API
+- `/admin`, `/admin/bays`, `/admin/bays/new`, `/admin/bay-templates/new` 공통 경로
+- Admin과 Manager를 허용하는 역할 기반 route 검증
+- Manager에게 Admin 전용 Telegram 메뉴를 숨기는 권한 기반 내비게이션
+- 별도 Manager 페이지와 내비게이션 제거
+
 ### Worker 계정 관리
 
 `POLICY.md`는 Manager가 Worker 계정을 관리할 수 있다고 정의합니다.
 
-실제 사용자 API는 Admin과 Manager를 허용하며, Manager는 Worker 계정만
-생성할 수 있도록 제한합니다. 하지만 계정 관리 화면은
-`app/pages/admin/accounts.vue`에만 있고 Admin 전용 route이므로 Manager가
-사용할 수 있는 화면은 없습니다.
+실제 사용자 API와 `/admin/accounts` 화면은 Admin과 Manager를 허용합니다.
+Manager에게는 조회 가능한 계정만 표시하고 신규 계정 역할을 Worker로 제한하며,
+서버에서도 Worker 외 역할 생성을 거부합니다.
 
 현재 상태는 다음과 같습니다.
 
 - 백엔드 권한: 구현됨
-- Manager UI 및 진입 경로: 미구현
+- 공통 관리 UI 및 진입 경로: 구현됨
+- 역할별 생성 옵션 제한: 구현됨
 
 ### 작업 무효화
 
@@ -89,9 +102,8 @@ BAY, 사용자, 대시보드, 운영 제어, Telegram 설정 등의 기존 API�
 `POLICY.md`는 Admin과 Manager가 KPI, 이슈, 최근 작업 상태를 확인할 수 있도록
 정의합니다.
 
-현재 Manager의 `/bay` 화면에는 `ManagementOverview`가 연결되어 있지만,
-Admin 대시보드는 `BayStatusMatrix` 중심이며 서버가 제공하는 KPI, 이슈,
-최근 이벤트를 모두 표시하지 않습니다.
+Admin과 Manager는 동일한 `/admin` 대시보드에서 `BayStatusMatrix`를 사용합니다.
+다만 서버가 제공하는 KPI, 이슈, 최근 이벤트를 화면에 모두 표시하지는 않습니다.
 
 또한 `/api/dashboard/bays`의 작업 이벤트 조회는 최근 20건으로 제한됩니다.
 따라서 문서에 있는 “전체 작업 상태 이력”이라는 표현과 실제 제공 범위가
@@ -101,7 +113,7 @@ Admin 대시보드는 `BayStatusMatrix` 중심이며 서버가 제공하는 KPI,
 
 - 대시보드에는 최근 이벤트만 표시하고 별도 이력 화면을 제공할지
 - 대시보드 자체에서 페이지네이션된 전체 이력을 제공할지
-- Admin과 Manager에게 동일한 지표를 제공할지
+- 공통 대시보드에 어떤 지표를 추가할지
 
 ## 4. 프론트엔드 디자인 시스템 적용 상태
 
@@ -123,7 +135,6 @@ Admin 대시보드는 `BayStatusMatrix` 중심이며 서버가 제공하는 KPI,
 
 - `app/pages/admin/accounts.vue`
 - `app/pages/admin/bays/index.vue`
-- `app/pages/manager/bays/index.vue`
 
 각 화면은 모바일 카드와 데스크톱 DataTable을 독립 영역으로 렌더링하며,
 컬럼은 props, 커스텀 셀은 `cell-{key}` slot으로 구성합니다.
