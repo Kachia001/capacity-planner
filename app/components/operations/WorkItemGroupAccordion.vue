@@ -6,6 +6,7 @@ import {
   CircleOff,
   Layers3,
   Loader2,
+  LockKeyhole,
   Play,
   RotateCcw,
   ShieldAlert,
@@ -490,8 +491,13 @@ function requestReportIssue(item: OperationWorkItem) {
                   :disabled="props.mutationItemId !== null || !props.operationOpen"
                   @click="requestStart(item)"
                 >
-                  <Loader2 v-if="props.mutationItemId === item.id" class="size-4 animate-spin" />
-                  <Check v-else class="size-4" /> 세부 작업 시작
+                  <template v-if="!props.operationOpen">
+                    <LockKeyhole class="size-4" /> 작업 시간이 아닙니다
+                  </template>
+                  <template v-else>
+                    <Loader2 v-if="props.mutationItemId === item.id" class="size-4 animate-spin" />
+                    <Check v-else class="size-4" /> 세부 작업 시작
+                  </template>
                 </Button>
                 <Button
                   v-else-if="item.status === 'in_progress' && canComplete(item)"
