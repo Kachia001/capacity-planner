@@ -28,6 +28,7 @@ const bayDescription = ref('')
 const templates = ref<ExistingTemplateDraft[]>([])
 const selectedTemplateId = ref(directWriteId)
 const draftGroups = ref<TemplateGroupDraft[]>(createBlankTemplateGroups())
+const editingWorkConfiguration = ref(true)
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 const submitError = ref<string | null>(null)
@@ -39,7 +40,10 @@ const selectedTemplate = computed(
 )
 const isDirectWrite = computed(() => selectedTemplateId.value === directWriteId)
 const selectedStartLabel = computed(() =>
-  isDirectWrite.value ? '직접 작성' : (selectedTemplate.value?.name ?? '시작 방식을 선택하세요'),
+  isDirectWrite.value ? '직접 작성' : (selectedTemplate.value?.name ?? '생성 옵션을 선택하세요'),
+)
+const hasSelectedStartMethod = computed(
+  () => isDirectWrite.value || Boolean(selectedTemplate.value),
 )
 const groupCount = computed(() => draftGroups.value.length)
 const itemCount = computed(() =>
@@ -83,7 +87,8 @@ const codeAvailable = computed(() => {
 const canSubmit = computed(
   () =>
     codeAvailable.value &&
-    (isDirectWrite.value || Boolean(selectedTemplate.value)) &&
+    hasSelectedStartMethod.value &&
+    (editingWorkConfiguration.value || !isDirectWrite.value) &&
     groupCount.value > 0 &&
     invalidGroupCount.value === 0 &&
     emptyItemCount.value === 0 &&
@@ -91,6 +96,14 @@ const canSubmit = computed(
 )
 
 function applySelectedTemplate(templateId: string) {
+  editingWorkConfiguration.value = templateId === directWriteId
+  submitError.value = null
+
+  if (!templateId) {
+    draftGroups.value = []
+    return
+  }
+
   if (templateId === directWriteId) {
     draftGroups.value = createBlankTemplateGroups()
     return
@@ -102,6 +115,16 @@ function applySelectedTemplate(templateId: string) {
 
 watch(selectedTemplateId, applySelectedTemplate)
 
+async function enterWorkConfiguration(templateId: string) {
+  if (selectedTemplateId.value !== templateId) {
+    selectedTemplateId.value = templateId
+    await nextTick()
+  }
+
+  if (!hasSelectedStartMethod.value) return
+  editingWorkConfiguration.value = true
+}
+
 async function loadTemplates() {
   loading.value = true
   loadError.value = null
@@ -111,7 +134,7 @@ async function loadTemplates() {
     if (!auth.user) throw new Error('로그인이 필요합니다.')
     templates.value = await fetchBayTemplates()
   } catch (error) {
-    loadError.value = getRequestErrorMessage(error, '템플릿을 불러오지 못했습니다.')
+    loadError.value = getRequestErrorMessage(error, '베이 생성 옵션을 불러오지 못했습니다.')
   } finally {
     loading.value = false
   }
@@ -174,9 +197,12 @@ onMounted(loadTemplates)
           :direct-write-id="directWriteId"
           :loading="loading"
           :load-error="loadError"
+          :editing-work-configuration="editingWorkConfiguration"
           template-create-path="/admin/bay-templates/new"
+          @edit-template="enterWorkConfiguration"
         />
         <BayWorkConfigurationSection
+          v-if="editingWorkConfiguration"
           v-model:groups="draftGroups"
           :is-direct-write="isDirectWrite"
           :invalid-group-count="invalidGroupCount"
@@ -189,6 +215,8 @@ onMounted(loadTemplates)
         :item-count="itemCount"
         :high-altitude-count="highAltitudeCount"
         :selected-start-label="selectedStartLabel"
+        :has-selected-start-method="hasSelectedStartMethod"
+        :editing-work-configuration="editingWorkConfiguration"
         :is-direct-write="isDirectWrite"
         :submit-error="submitError"
         :submit-pending="submitPending"

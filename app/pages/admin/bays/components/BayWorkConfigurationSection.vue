@@ -40,8 +40,8 @@ const editableGroups = computed({
           <CardDescription>
             {{
               props.isDirectWrite
-                ? '템플릿 없이 이 BAY의 작업을 직접 구성합니다.'
-                : '여기서 수정한 내용은 원본 템플릿에 영향을 주지 않습니다.'
+                ? '생성 옵션 없이 이 BAY의 작업을 직접 구성합니다.'
+                : '여기서 수정한 내용은 원본 생성 옵션에 영향을 주지 않습니다.'
             }}
           </CardDescription>
         </div>

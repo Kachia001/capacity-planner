@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Layers3, Plus } from '@lucide/vue'
+import { computed } from 'vue'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -14,15 +15,21 @@ const props = defineProps<{
   directWriteId: string
   loading: boolean
   loadError: string | null
+  editingWorkConfiguration: boolean
   templateCreatePath: string
 }>()
 
 const emit = defineEmits<{
   'update:selectedTemplateId': [value: string]
+  'edit-template': [templateId: string]
 }>()
 
 function handleStartMethodChange(value: string) {
   emit('update:selectedTemplateId', value)
+}
+
+function editTemplate(templateId: string) {
+  emit('edit-template', templateId)
 }
 
 const selectedMethod = computed({
@@ -45,7 +52,7 @@ const selectedMethod = computed({
           <CardTitle>시작 방식</CardTitle>
         </div>
       </div>
-      <Badge variant="secondary">템플릿 {{ props.templates.length }}개</Badge>
+      <Badge variant="secondary">생성 옵션 {{ props.templates.length }}개</Badge>
     </CardHeader>
 
     <CardContent v-if="props.loading" class="grid min-h-56 gap-3 p-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -77,41 +84,58 @@ const selectedMethod = computed({
             <CardContent class="p-4 pr-12">
               <p class="font-semibold">직접 작성</p>
               <p class="mt-1 text-xs leading-5 text-muted-foreground">
-                템플릿 없이 빈 작업 그룹부터 직접 구성합니다.
+                생성 옵션 없이 빈 작업 그룹부터 직접 구성합니다.
               </p>
               <p class="mt-4 font-mono text-[10px] uppercase text-muted-foreground">
-                No template · blank start
+                No option · blank start
               </p>
             </CardContent>
           </Card>
         </label>
 
-        <label v-for="template in props.templates" :key="template.id" class="cursor-pointer">
-          <Card
-            class="relative h-full gap-0 py-0 transition"
-            :class="
-              props.selectedTemplateId === template.id
-                ? 'ring-2 ring-primary'
-                : 'hover:ring-foreground/30'
-            "
+        <div v-for="template in props.templates" :key="template.id" class="relative">
+          <label class="block h-full cursor-pointer">
+            <Card
+              class="relative h-full gap-0 py-0 transition"
+              :class="
+                props.selectedTemplateId === template.id
+                  ? 'ring-2 ring-primary'
+                  : 'hover:ring-foreground/30'
+              "
+            >
+              <RadioGroupItem
+                :value="template.id"
+                class="absolute right-4 top-4"
+                :aria-label="template.name"
+              />
+              <CardContent class="p-4 pb-14 pr-12">
+                <p class="font-semibold">{{ template.name }}</p>
+                <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                  {{ template.description || '설명 없음' }}
+                </p>
+                <p class="mt-4 font-mono text-[10px] uppercase text-muted-foreground">
+                  {{ template.groups.length }} groups ·
+                  {{ template.groups.reduce((sum, group) => sum + group.items.length, 0) }} items
+                </p>
+              </CardContent>
+            </Card>
+          </label>
+          <Button
+            v-if="props.selectedTemplateId !== template.id || !props.editingWorkConfiguration"
+            type="button"
+            variant="outline"
+            tone="neutral"
+            size="xs"
+            shape="compact"
+            class="absolute bottom-3 left-4 bg-white text-[11px]"
+            @click.stop="editTemplate(template.id)"
           >
-            <RadioGroupItem
-              :value="template.id"
-              class="absolute right-4 top-4"
-              :aria-label="template.name"
-            />
-            <CardContent class="p-4 pr-12">
-              <p class="font-semibold">{{ template.name }}</p>
-              <p class="mt-1 text-xs leading-5 text-muted-foreground">
-                {{ template.description || '설명 없음' }}
-              </p>
-              <p class="mt-4 font-mono text-[10px] uppercase text-muted-foreground">
-                {{ template.groups.length }} groups ·
-                {{ template.groups.reduce((sum, group) => sum + group.items.length, 0) }} items
-              </p>
-            </CardContent>
-          </Card>
-        </label>
+            작업 내용 변경 후 생성
+          </Button>
+          <Badge v-else variant="secondary" class="absolute bottom-3 left-4 text-[10px]">
+            작업 편집 중
+          </Badge>
+        </div>
       </RadioGroup>
 
       <Alert
@@ -119,11 +143,11 @@ const selectedMethod = computed({
         class="items-center sm:grid-cols-[1fr_auto]"
       >
         <div>
-          <p class="text-sm font-semibold">등록된 템플릿이 없습니다.</p>
-          <AlertDescription>직접 작성하거나 새 템플릿을 만들 수 있습니다.</AlertDescription>
+          <p class="text-sm font-semibold">등록된 베이 생성 옵션이 없습니다.</p>
+          <AlertDescription>직접 작성하거나 새 생성 옵션을 만들 수 있습니다.</AlertDescription>
         </div>
         <Button as-child size="sm">
-          <NuxtLink :to="props.templateCreatePath"> <Plus /> 템플릿 만들기 </NuxtLink>
+          <NuxtLink :to="props.templateCreatePath"> <Plus /> 생성 옵션 만들기 </NuxtLink>
         </Button>
       </Alert>
     </CardContent>
