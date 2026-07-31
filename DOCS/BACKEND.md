@@ -118,15 +118,17 @@ Persistence row, domain aggregate, application result 및 public API response는
 
 ### 작업 실행
 
-| Method | Path                                    | 설명             |
-| ------ | --------------------------------------- | ---------------- |
-| GET    | `/api/work-items`                       | 작업 검색        |
-| POST   | `/api/work-items/:id/start`             | 작업 시작        |
-| POST   | `/api/work-items/:id/complete`          | 작업 완료        |
-| POST   | `/api/work-items/:id/cancel-start`      | 잘못된 시작 취소 |
-| POST   | `/api/work-items/:id/restore-completed` | 완료 작업 복원   |
-| POST   | `/api/work-items/:id/void`              | 작업 무효화      |
-| POST   | `/api/work-items/:id/issue`             | 이슈 등록        |
+| Method | Path                                         | 설명             |
+| ------ | -------------------------------------------- | ---------------- |
+| GET    | `/api/work-items`                            | 작업 검색        |
+| POST   | `/api/work-items/:id/start`                  | 작업 시작        |
+| POST   | `/api/work-items/:id/complete`               | 작업 완료        |
+| POST   | `/api/work-items/:id/cancel-start`           | 잘못된 시작 취소 |
+| POST   | `/api/work-items/:id/restore-completed`      | 완료 작업 복원   |
+| POST   | `/api/work-items/:id/void`                   | 작업 무효화      |
+| POST   | `/api/work-items/:id/issue`                  | 이슈 등록        |
+| PATCH  | `/api/work-items/:id/issues/:issueId`        | 이슈 내용 수정   |
+| PATCH  | `/api/work-items/:id/issues/:issueId/status` | 이슈 상태 변경   |
 
 ### 운영 제어
 
@@ -173,14 +175,14 @@ Persistence row, domain aggregate, application result 및 public API response는
 
 ### Enum
 
-| Enum                       | 값                                                     |
-| -------------------------- | ------------------------------------------------------ |
-| `app_role`                 | `admin`, `manager`, `worker`                           |
-| `work_status`              | `not_started`, `in_progress`, `completed`              |
-| `work_item_event_action`   | `start`, `complete`, `cancel_start`, `void`, `restore` |
-| `issue_status`             | `open`, `resolved`                                     |
-| `issue_severity`           | `low`, `medium`, `high`, `critical`                    |
-| `telegram_delivery_status` | `pending`, `processing`, `sent`, `failed`, `skipped`   |
+| Enum                       | 값                                                          |
+| -------------------------- | ----------------------------------------------------------- |
+| `app_role`                 | `admin`, `manager`, `worker`                                |
+| `work_status`              | `not_started`, `in_progress`, `completed`                   |
+| `work_item_event_action`   | `start`, `complete`, `cancel_start`, `void`, `restore`      |
+| `work_item_issue_category` | `material_shortage`, `work_delay`, `quality_issue`, `other` |
+| `work_item_issue_status`   | `unconfirmed`, `in_review`, `resolved`                      |
+| `telegram_delivery_status` | `pending`, `processing`, `sent`, `failed`, `skipped`        |
 
 ### 테이블
 
@@ -231,7 +233,6 @@ BAY에서 실행되는 독립 작업 행입니다.
 - 작업 정보: 정렬 순서, 원본 행, 작업 번호와 이름, 상세, 업체, 품번, 품명, bolt
 - 실행 정보: `status`, 시작/완료 사용자와 시각
 - 안전 정보: `is_high_altitude`, `safety_note`
-- 이슈 정보: 상태, 심각도, 생성/해결 사용자와 시각, 메모
 - 감사 정보: version, 무효화 사용자/시각/사유
 - legacy 호환 필드: `worker`, `work_date`, `is_completed`
 - BAY 삭제 시 작업은 restrict합니다.
@@ -243,6 +244,20 @@ BAY에서 실행되는 독립 작업 행입니다.
 - `(bay_id, status)` index
 - `(bay_id, is_high_altitude)` index
 - `(started_by, status)` index
+
+#### `work_item_issues`
+
+작업별 이슈를 독립된 행으로 저장하며 하나의 작업에 여러 이슈를 등록할 수 있습니다.
+
+- FK: `work_item_id → work_items.id`
+- 카테고리: 자재부족, 작업지연, 품질이슈, 기타
+- 상태: 미확인, 확인 중, 처리완료
+- 주요 필드: 내용, 등록 사용자와 시각, 상태 변경 사용자와 시각
+- 새 이슈는 `unconfirmed` 상태로 생성합니다.
+- 이슈 생성은 Admin, Manager, Worker에게 허용합니다.
+- 이슈 내용과 상태 변경은 Admin과 Manager에게만 허용합니다.
+- `(work_item_id, status)` index로 작업별 미처리 이슈를 조회합니다.
+- 작업 삭제 시 이슈는 restrict합니다.
 
 #### `work_item_status_events`
 
@@ -263,8 +278,9 @@ Telegram 설정 singleton입니다.
 
 Telegram 알림의 전달 상태와 재시도 정보를 저장합니다.
 
-- FK: `work_item_id → work_items.id`
-- `(work_item_id, issue_version)`은 unique입니다.
+- FK: `work_item_id → work_items.id`, `issue_id → work_item_issues.id`
+- 새 알림은 `issue_id`별로 하나만 생성합니다.
+- 기존 알림의 이슈 버전은 nullable `issue_version`에 보존합니다.
 - 상태, 재시도 횟수, 다음 시도 시각, lock, 오류 및 Telegram message ID를 기록합니다.
 - `(status, next_attempt_at)` index로 발송 대상을 조회합니다.
 

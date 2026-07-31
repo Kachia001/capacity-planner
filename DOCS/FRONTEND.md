@@ -214,6 +214,8 @@ import { storeToRefs } from 'pinia'
 - `confirm`은 `Promise<boolean>`을 반환합니다.
 - 취소, ESC, 배경 클릭 및 닫기는 모두 `false`입니다.
 - variant는 `default`, `destructive`, `success`, `warning`을 지원합니다.
+- Worker가 이슈 등록을 시작하면 `warning` 확인 UI로 등록 후 내용과 상태를 직접 수정할 수
+  없음을 안내하고 acknowledgement 확인 후에만 작성 화면을 엽니다.
 
 ```ts
 const globalAlert = useGlobalAlertStore()
