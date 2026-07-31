@@ -319,7 +319,7 @@ function requestEditIssueContent(item: OperationWorkItem, issue: OperationWorkIt
           <p
             class="border-b border-[#dfe4dd] bg-[#eef3e9] px-4 py-2.5 text-[11px] font-semibold text-[#596653]"
           >
-            상태 변경은 선택한 workDetail 1건에만 적용됩니다.
+            상태 변경은 선택한 상세 작업 1건에만 적용됩니다.
           </p>
           <div class="divide-y divide-[#dfe4dd]">
             <article

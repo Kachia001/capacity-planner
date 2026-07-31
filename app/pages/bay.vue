@@ -435,7 +435,7 @@ async function requestStart(item: OperationWorkItem) {
     variant: 'warning',
     title: '선택한 세부 작업을 시작할까요?',
     message:
-      '선택한 workDetail 1건만 작업 중으로 변경됩니다. 같은 workName에 포함된 다른 세부 작업의 상태는 변경되지 않습니다. 작업자는 시작 후 직접 취소할 수 없으므로 대상을 다시 확인해 주세요.',
+      '선택한 상세 작업 1건만 작업 중으로 변경됩니다. 같은 작업에 포함된 다른 세부 작업의 상태는 변경되지 않습니다. 작업자는 시작 후 직접 취소할 수 없으므로 대상을 다시 확인해 주세요.',
     confirmLabel: '세부 작업 시작',
     cancelLabel: '돌아가기',
     details: workItemDetails(item),
@@ -471,7 +471,7 @@ async function requestComplete(item: OperationWorkItem) {
     variant: 'success',
     title: '선택한 세부 작업을 완료할까요?',
     message:
-      '선택한 workDetail 1건만 완료로 변경됩니다. 같은 workName의 다른 세부 작업은 현재 상태를 유지합니다. 실제 작업 결과와 대상 항목을 다시 확인해 주세요.',
+      '선택한 세부 작업 1건만 완료로 변경됩니다. 같은 작업의 다른 세부 작업은 현재 상태를 유지합니다. 실제 작업 결과와 대상 항목을 다시 확인해 주세요.',
     confirmLabel: '세부 작업 완료',
     cancelLabel: '계속 작업',
     details: workItemDetails(item),
@@ -499,7 +499,7 @@ async function requestCancelStart(item: OperationWorkItem) {
     variant: 'warning',
     title: '선택한 세부 작업의 시작을 취소합니다',
     message:
-      '선택한 workDetail 1건만 미작업으로 돌아가며 기존 시작과 관리자 취소 기록은 감사 이력에 남습니다.',
+      '선택한 세부 작업 1건만 미작업으로 돌아가며 기존 시작과 관리자 취소 기록은 감사 이력에 남습니다.',
     confirmLabel: '세부 시작 취소',
     cancelLabel: '돌아가기',
     details: workItemDetails(item),
