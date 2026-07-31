@@ -1,4 +1,8 @@
-import type { IssueSeverity, IssueStatus, WorkItemStatus } from '../../domain/work-item.types'
+import type {
+  WorkItemIssueCategory,
+  WorkItemIssueStatus,
+  WorkItemStatus,
+} from '../../domain/work-item.types'
 
 export type WorkItemStateResult = {
   id: number
@@ -12,14 +16,16 @@ export type WorkItemStateResult = {
 }
 
 export type ReportWorkItemIssueResult = {
-  item: {
+  issue: {
     id: number
-    hasIssue: true
-    issueStatus: Extract<IssueStatus, 'open'>
-    issueSeverity: IssueSeverity
-    issueNote: string
-    issueCreatedAt: Date
-    version: number
+    workItemId: number
+    category: WorkItemIssueCategory
+    status: WorkItemIssueStatus
+    note: string
+    createdBy: string | null
+    createdByName: string | null
+    createdAt: Date
+    updatedAt: Date
   }
   notification:
     | {

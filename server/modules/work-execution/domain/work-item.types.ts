@@ -2,8 +2,8 @@ export type ActorRole = 'admin' | 'manager' | 'worker'
 export type WorkItemStatus = 'not_started' | 'in_progress' | 'completed'
 export type WorkItemRestoreTarget = Exclude<WorkItemStatus, 'completed'>
 export type WorkItemEventAction = 'start' | 'complete' | 'cancel_start' | 'void' | 'restore'
-export type IssueSeverity = 'low' | 'medium' | 'high' | 'critical'
-export type IssueStatus = 'open' | 'resolved'
+export type WorkItemIssueCategory = 'material_shortage' | 'work_delay' | 'quality_issue' | 'other'
+export type WorkItemIssueStatus = 'unconfirmed' | 'in_review' | 'resolved'
 
 export type Actor = {
   userId: string
@@ -20,6 +20,24 @@ export type WorkItemStatusEvent = {
   actorRole: ActorRole
   reason: string | null
   occurredAt: Date
+}
+
+export type NewWorkItemIssue = {
+  workItemId: number
+  category: WorkItemIssueCategory
+  status: Extract<WorkItemIssueStatus, 'unconfirmed'>
+  note: string
+  createdBy: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type WorkItemIssueRecord = Omit<NewWorkItemIssue, 'status' | 'createdBy'> & {
+  id: number
+  status: WorkItemIssueStatus
+  createdBy: string | null
+  statusUpdatedBy: string | null
+  statusUpdatedAt: Date | null
 }
 
 export type WorkItemProps = {
@@ -42,13 +60,5 @@ export type WorkItemProps = {
   voidedBy: string | null
   voidedAt: Date | null
   voidReason: string | null
-  hasIssue: boolean
-  issueStatus: IssueStatus | null
-  issueSeverity: IssueSeverity | null
-  issueNote: string | null
-  issueCreatedAt: Date | null
-  issueCreatedBy: string | null
-  issueResolvedAt: Date | null
-  issueResolvedBy: string | null
   updatedAt: Date
 }

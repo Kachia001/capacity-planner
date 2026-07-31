@@ -1,10 +1,11 @@
 import type {
   BayOption,
   CompletedWorkItemRestoreTarget,
-  IssueSeverity,
   OperationOpenRequest,
   OperationStatus,
   OperationsDashboardResponse,
+  WorkItemIssueCategory,
+  WorkItemIssueStatus,
   WorkItemSearchFilters,
   WorkItemSearchResponse,
 } from '@/types/operations'
@@ -17,6 +18,14 @@ import type {
   ReportWorkItemIssueRequest,
   ReportWorkItemIssueResponse,
 } from '#shared/api/work-items/report-work-item-issue.contract'
+import type {
+  UpdateWorkItemIssueContentRequest,
+  UpdateWorkItemIssueContentResponse,
+} from '#shared/api/work-items/update-work-item-issue-content.contract'
+import type {
+  UpdateWorkItemIssueStatusRequest,
+  UpdateWorkItemIssueStatusResponse,
+} from '#shared/api/work-items/update-work-item-issue-status.contract'
 import type {
   RestoreCompletedWorkItemRequest,
   RestoreCompletedWorkItemResponse,
@@ -138,13 +147,45 @@ export async function voidWorkItem(workItemId: number, reason: string) {
 
 export async function reportWorkItemIssue(
   workItemId: number,
-  severity: IssueSeverity,
+  category: WorkItemIssueCategory,
   note: string,
 ) {
-  const body: ReportWorkItemIssueRequest = { severity, note }
+  const body: ReportWorkItemIssueRequest = { category, note }
 
   return await $fetch<ReportWorkItemIssueResponse>(`/api/work-items/${workItemId}/issue`, {
     method: 'POST',
     body,
   })
+}
+
+export async function updateWorkItemIssueStatus(
+  workItemId: number,
+  issueId: number,
+  status: WorkItemIssueStatus,
+) {
+  const body: UpdateWorkItemIssueStatusRequest = { status }
+
+  return await $fetch<UpdateWorkItemIssueStatusResponse>(
+    `/api/work-items/${workItemId}/issues/${issueId}/status`,
+    {
+      method: 'PATCH',
+      body,
+    },
+  )
+}
+
+export async function updateWorkItemIssueContent(
+  workItemId: number,
+  issueId: number,
+  note: string,
+) {
+  const body: UpdateWorkItemIssueContentRequest = { note }
+
+  return await $fetch<UpdateWorkItemIssueContentResponse>(
+    `/api/work-items/${workItemId}/issues/${issueId}`,
+    {
+      method: 'PATCH',
+      body,
+    },
+  )
 }

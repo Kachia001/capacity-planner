@@ -22,14 +22,15 @@ export class ReportWorkItemIssueController {
       const result = await this.service.execute({
         workItemId: parseWorkItemId(event),
         actor: toActor(profile),
-        severity: body.severity,
+        category: body.category,
         note: body.note,
       })
 
       return {
-        item: {
-          ...result.item,
-          issueCreatedAt: result.item.issueCreatedAt.toISOString(),
+        issue: {
+          ...result.issue,
+          createdAt: result.issue.createdAt.toISOString(),
+          updatedAt: result.issue.updatedAt.toISOString(),
         },
         telegram: result.notification,
       }

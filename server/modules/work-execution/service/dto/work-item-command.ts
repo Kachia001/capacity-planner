@@ -1,4 +1,8 @@
-import type { Actor, IssueSeverity, WorkItemRestoreTarget } from '../../domain/work-item.types'
+import type {
+  Actor,
+  WorkItemIssueCategory,
+  WorkItemRestoreTarget,
+} from '../../domain/work-item.types'
 
 export type WorkItemCommand = {
   workItemId: number
@@ -14,6 +18,6 @@ export type RestoreCompletedWorkItemCommand = ReasonedWorkItemCommand & {
 }
 
 export type ReportWorkItemIssueCommand = WorkItemCommand & {
-  severity: IssueSeverity
+  category: WorkItemIssueCategory
   note: string
 }

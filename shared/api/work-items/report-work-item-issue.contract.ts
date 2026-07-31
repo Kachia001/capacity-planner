@@ -1,20 +1,22 @@
 import { z } from 'zod'
-import { IssueSeveritySchema } from './work-item.contract'
+import { WorkItemIssueCategorySchema, WorkItemIssueStatusSchema } from './work-item.contract'
 
 export const ReportWorkItemIssueRequestSchema = z.object({
-  severity: IssueSeveritySchema,
+  category: WorkItemIssueCategorySchema,
   note: z.string().trim().min(3).max(1000),
 })
 
 export const ReportWorkItemIssueResponseSchema = z.object({
-  item: z.object({
+  issue: z.object({
     id: z.number().int().positive(),
-    hasIssue: z.literal(true),
-    issueStatus: z.literal('open'),
-    issueSeverity: IssueSeveritySchema,
-    issueNote: z.string(),
-    issueCreatedAt: z.string().datetime(),
-    version: z.number().int().nonnegative(),
+    workItemId: z.number().int().positive(),
+    category: WorkItemIssueCategorySchema,
+    status: WorkItemIssueStatusSchema,
+    note: z.string(),
+    createdBy: z.string().uuid().nullable(),
+    createdByName: z.string().nullable(),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
   }),
   telegram: z.discriminatedUnion('status', [
     z.object({

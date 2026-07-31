@@ -2,13 +2,13 @@ import {
   InvalidWorkItemTransitionError,
   WorkItemAdminRequiredError,
   WorkItemCompletionForbiddenError,
-  WorkItemIssueAlreadyOpenError,
   WorkItemNotFoundError,
   WorkItemSupervisorRequiredError,
 } from './work-item.errors'
 import type {
   Actor,
-  IssueSeverity,
+  NewWorkItemIssue,
+  WorkItemIssueCategory,
   WorkItemProps,
   WorkItemRestoreTarget,
   WorkItemStatusEvent,
@@ -145,22 +145,23 @@ export class WorkItem {
     this.recordStatusEvent(currentStatus, currentStatus, 'void', actor, reason, now)
   }
 
-  reportIssue(actor: Actor, severity: IssueSeverity, note: string, now: Date) {
+  reportIssue(
+    actor: Actor,
+    category: WorkItemIssueCategory,
+    note: string,
+    now: Date,
+  ): NewWorkItemIssue {
     this.ensureAvailable()
 
-    if (this.props.hasIssue && this.props.issueStatus !== 'resolved') {
-      throw new WorkItemIssueAlreadyOpenError()
+    return {
+      workItemId: this.props.id,
+      category,
+      status: 'unconfirmed',
+      note,
+      createdBy: actor.userId,
+      createdAt: now,
+      updatedAt: now,
     }
-
-    this.props.hasIssue = true
-    this.props.issueStatus = 'open'
-    this.props.issueSeverity = severity
-    this.props.issueNote = note
-    this.props.issueCreatedAt = now
-    this.props.issueCreatedBy = actor.userId
-    this.props.issueResolvedAt = null
-    this.props.issueResolvedBy = null
-    this.touch(now)
   }
 
   private ensureAvailable() {

@@ -1,5 +1,5 @@
-import { and, asc, desc, eq, isNull, or, sql } from 'drizzle-orm'
-import { appUsers, bays, workItems, workItemStatusEvents } from '../../db/schema'
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm'
+import { appUsers, bays, workItemIssues, workItems, workItemStatusEvents } from '../../db/schema'
 
 export default defineEventHandler(async event => {
   await requireAppUser(event, ['admin', 'manager'])
@@ -22,11 +22,14 @@ export default defineEventHandler(async event => {
       completed: sql<number>`count(${workItems.id}) filter (
         where ${workItems.voidedAt} is null and ${workItems.status} = 'completed'
       )::int`,
-      openIssues: sql<number>`count(${workItems.id}) filter (
-        where ${workItems.voidedAt} is null
-          and ${workItems.hasIssue} = true
-          and (${workItems.issueStatus} is null or ${workItems.issueStatus} = 'open')
-      )::int`,
+      openIssues: sql<number>`(
+        select count(*)::int
+        from "work_item_issues" as issue
+        inner join "work_items" as issue_item on issue_item."id" = issue."work_item_id"
+        where issue_item."bay_id" = ${bays.id}
+          and issue_item."voided_at" is null
+          and issue."status" <> 'resolved'
+      )`,
       highAltitude: sql<number>`count(${workItems.id}) filter (
         where ${workItems.voidedAt} is null and ${workItems.isHighAltitude} = true
       )::int`,
@@ -101,37 +104,32 @@ export default defineEventHandler(async event => {
 
   const issues = await db
     .select({
-      id: workItems.id,
+      id: workItemIssues.id,
+      workItemId: workItems.id,
       bayId: bays.id,
       bayCode: bays.code,
       workName: workItems.workName,
       workDetail: workItems.workDetail,
-      issueNote: workItems.issueNote,
-      severity: workItems.issueSeverity,
-      createdAt: workItems.issueCreatedAt,
+      note: workItemIssues.note,
+      category: workItemIssues.category,
+      status: workItemIssues.status,
+      createdAt: workItemIssues.createdAt,
       workerName: appUsers.displayName,
       workerEmail: appUsers.email,
       isHighAltitude: workItems.isHighAltitude,
     })
-    .from(workItems)
+    .from(workItemIssues)
+    .innerJoin(workItems, eq(workItemIssues.workItemId, workItems.id))
     .innerJoin(bays, eq(workItems.bayId, bays.id))
-    .leftJoin(appUsers, eq(workItems.issueCreatedBy, appUsers.authUserId))
-    .where(
-      and(
-        isNull(workItems.voidedAt),
-        eq(workItems.hasIssue, true),
-        or(isNull(workItems.issueStatus), eq(workItems.issueStatus, 'open')),
-      ),
-    )
+    .leftJoin(appUsers, eq(workItemIssues.createdBy, appUsers.authUserId))
+    .where(and(isNull(workItems.voidedAt), sql`${workItemIssues.status} <> 'resolved'`))
     .orderBy(
-      sql`CASE ${workItems.issueSeverity}
-        WHEN 'critical' THEN 0
-        WHEN 'high' THEN 1
-        WHEN 'medium' THEN 2
-        WHEN 'low' THEN 3
-        ELSE 4
+      sql`CASE ${workItemIssues.status}
+        WHEN 'unconfirmed' THEN 0
+        WHEN 'in_review' THEN 1
+        ELSE 2
       END`,
-      asc(workItems.issueCreatedAt),
+      asc(workItemIssues.createdAt),
     )
 
   const recentEvents = await db

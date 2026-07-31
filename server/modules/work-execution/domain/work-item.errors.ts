@@ -39,11 +39,3 @@ export class WorkItemAdminRequiredError extends CodedError {
     super('작업을 무효화할 권한이 없습니다.')
   }
 }
-
-export class WorkItemIssueAlreadyOpenError extends CodedError {
-  readonly code = 'WORK_ITEM_ISSUE_ALREADY_OPEN'
-
-  constructor() {
-    super('이 작업에는 이미 확인이 필요한 이슈가 등록되어 있습니다.')
-  }
-}

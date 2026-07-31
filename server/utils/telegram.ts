@@ -16,18 +16,18 @@ export interface TelegramIssueMessage {
   workDetail: string | null
   partNo: string | null
   isHighAltitude: boolean
-  severity: 'low' | 'medium' | 'high' | 'critical'
+  category: 'material_shortage' | 'work_delay' | 'quality_issue' | 'other'
   note: string
   reporterName: string
   reporterRole: 'admin' | 'manager' | 'worker'
   createdAt: Date
 }
 
-const severityLabels: Record<TelegramIssueMessage['severity'], string> = {
-  low: '경미',
-  medium: '보통',
-  high: '중요',
-  critical: '긴급',
+const categoryLabels: Record<TelegramIssueMessage['category'], string> = {
+  material_shortage: '자재부족',
+  work_delay: '작업지연',
+  quality_issue: '품질이슈',
+  other: '기타',
 }
 
 const roleLabels: Record<TelegramIssueMessage['reporterRole'], string> = {
@@ -62,7 +62,7 @@ export function formatTelegramIssueMessage(issue: TelegramIssueMessage) {
     `상세 작업: ${displayValue(issue.workDetail)}`,
     `품번: ${displayValue(issue.partNo)}`,
     `위험 구분: ${issue.isHighAltitude ? '고소작업' : '일반작업'}`,
-    `심각도: ${severityLabels[issue.severity]}`,
+    `카테고리: ${categoryLabels[issue.category]}`,
     `등록자: ${issue.reporterName} (${roleLabels[issue.reporterRole]})`,
     `등록 시각: ${createdAt}`,
     '',

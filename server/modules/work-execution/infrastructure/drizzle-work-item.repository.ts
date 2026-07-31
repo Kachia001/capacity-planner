@@ -31,14 +31,6 @@ export class DrizzleWorkItemRepository implements WorkItemRepository {
         voidedBy: workItems.voidedBy,
         voidedAt: workItems.voidedAt,
         voidReason: workItems.voidReason,
-        hasIssue: workItems.hasIssue,
-        issueStatus: workItems.issueStatus,
-        issueSeverity: workItems.issueSeverity,
-        issueNote: workItems.issueNote,
-        issueCreatedAt: workItems.issueCreatedAt,
-        issueCreatedBy: workItems.issueCreatedBy,
-        issueResolvedAt: workItems.issueResolvedAt,
-        issueResolvedBy: workItems.issueResolvedBy,
         updatedAt: workItems.updatedAt,
       })
       .from(workItems)

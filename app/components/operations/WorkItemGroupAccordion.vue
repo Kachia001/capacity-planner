@@ -13,10 +13,16 @@ import {
   UserRound,
 } from '@lucide/vue'
 import HighAltitudeBadge from '@/components/operations/HighAltitudeBadge.vue'
+import WorkItemIssueList from '@/components/operations/WorkItemIssueList.vue'
 import WorkStatusBadge from '@/components/operations/WorkStatusBadge.vue'
 import { Button } from '@/components/ui/button'
 import type { AppRole } from '@/stores/auth'
-import type { CompletedWorkItemRestoreTarget, OperationWorkItem } from '@/types/operations'
+import type {
+  CompletedWorkItemRestoreTarget,
+  OperationWorkItem,
+  OperationWorkItemIssue,
+  WorkItemIssueStatus,
+} from '@/types/operations'
 
 interface WorkItemGroup {
   key: string
@@ -47,6 +53,8 @@ const emit = defineEmits<{
   cancelStart: [item: OperationWorkItem]
   restoreCompleted: [item: OperationWorkItem, targetStatus: CompletedWorkItemRestoreTarget]
   reportIssue: [item: OperationWorkItem]
+  updateIssueStatus: [item: OperationWorkItem, issueId: number, status: WorkItemIssueStatus]
+  editIssueContent: [item: OperationWorkItem, issue: OperationWorkItemIssue]
   void: [item: OperationWorkItem]
 }>()
 
@@ -82,7 +90,7 @@ const workGroups = computed<WorkItemGroup[]>(() => {
         notStarted: items.filter(item => item.status === 'not_started').length,
         inProgress: items.filter(item => item.status === 'in_progress').length,
         completed,
-        openIssues: items.filter(item => item.hasIssue && item.issueStatus !== 'resolved').length,
+        openIssues: items.reduce((total, item) => total + item.openIssueCount, 0),
         highAltitude: items.filter(item => item.isHighAltitude).length,
         completionRate: items.length > 0 ? Math.round((completed / items.length) * 100) : 0,
       }
@@ -146,13 +154,6 @@ function workerLabel(item: OperationWorkItem) {
   return item.startedByName || item.worker || item.startedByEmail || '담당자 미확인'
 }
 
-function severityLabel(item: OperationWorkItem) {
-  if (item.issueSeverity === 'critical') return '긴급 이슈'
-  if (item.issueSeverity === 'high') return '중요 이슈'
-  if (item.issueSeverity === 'low') return '경미 이슈'
-  return '이슈 있음'
-}
-
 function canComplete(item: OperationWorkItem) {
   return isSupervisor.value || item.startedBy === props.currentUserId
 }
@@ -182,6 +183,18 @@ function requestVoid(item: OperationWorkItem) {
 
 function requestReportIssue(item: OperationWorkItem) {
   emit('reportIssue', item)
+}
+
+function requestUpdateIssueStatus(
+  item: OperationWorkItem,
+  issueId: number,
+  status: WorkItemIssueStatus,
+) {
+  emit('updateIssueStatus', item, issueId, status)
+}
+
+function requestEditIssueContent(item: OperationWorkItem, issue: OperationWorkItemIssue) {
+  emit('editIssueContent', item, issue)
 }
 </script>
 
@@ -338,10 +351,10 @@ function requestReportIssue(item: OperationWorkItem) {
               <div class="mt-3 flex flex-wrap items-center gap-1.5">
                 <HighAltitudeBadge :active="item.isHighAltitude" compact />
                 <span
-                  v-if="item.hasIssue && item.issueStatus !== 'resolved'"
+                  v-if="item.openIssueCount > 0"
                   class="inline-flex h-6 items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 text-[10px] font-bold text-red-800"
                 >
-                  <AlertCircle class="size-3" /> {{ severityLabel(item) }}
+                  <AlertCircle class="size-3" /> 미처리 이슈 {{ item.openIssueCount }}건
                 </span>
               </div>
 
@@ -391,13 +404,15 @@ function requestReportIssue(item: OperationWorkItem) {
                 </p>
               </div>
 
-              <div
-                v-if="item.hasIssue && item.issueNote"
-                class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-xs text-red-900"
-              >
-                <p class="font-bold">이슈 내용</p>
-                <p class="mt-1 leading-5">{{ item.issueNote }}</p>
-              </div>
+              <WorkItemIssueList
+                :issues="item.issues"
+                :can-manage="isSupervisor"
+                :pending="props.mutationItemId !== null"
+                @update-status="
+                  (issueId, status) => requestUpdateIssueStatus(item, issueId, status)
+                "
+                @edit-content="issue => requestEditIssueContent(item, issue)"
+              />
 
               <div
                 v-if="item.status !== 'not_started'"
@@ -414,7 +429,6 @@ function requestReportIssue(item: OperationWorkItem) {
 
               <div class="mt-4 flex flex-wrap gap-2">
                 <Button
-                  v-if="!item.hasIssue || item.issueStatus === 'resolved'"
                   variant="outline"
                   size="touch"
                   class="min-w-28 flex-1 border-red-200 bg-white text-red-700 hover:bg-red-50"

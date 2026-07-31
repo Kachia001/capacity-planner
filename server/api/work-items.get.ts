@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, getTableColumns, isNull, sql } from 'drizzle-orm'
-import { bays, workItems } from '../db/schema'
+import { bays, workItemIssues, workItems } from '../db/schema'
 
 export default defineEventHandler(async event => {
   await requireAppUser(event, ['admin', 'manager'])
@@ -20,9 +20,17 @@ export default defineEventHandler(async event => {
   const completedCount = sql<number>`count(${workItems.id}) filter (
     where ${workItems.voidedAt} is null and ${workItems.status} = 'completed'
   )::int`
-  const issueCount = sql<number>`count(${workItems.id}) filter (
-    where ${workItems.voidedAt} is null and ${workItems.hasIssue} = true
-  )::int`
+  const issueCount = sql<number>`coalesce(sum(
+    case
+      when ${workItems.voidedAt} is null then (
+        select count(*)
+        from ${workItemIssues}
+        where ${workItemIssues.workItemId} = ${workItems.id}
+          and ${workItemIssues.status} <> 'resolved'
+      )
+      else 0
+    end
+  ), 0)::int`
   const highAltitudeInProgressCount = sql<number>`count(${workItems.id}) filter (
     where ${workItems.voidedAt} is null
       and ${workItems.isHighAltitude} = true
@@ -74,6 +82,10 @@ export default defineEventHandler(async event => {
     .select({
       ...getTableColumns(workItems),
       bay: bays.code,
+      hasIssue: sql<boolean>`exists (
+        select 1 from ${workItemIssues}
+        where ${workItemIssues.workItemId} = ${workItems.id}
+      )`,
     })
     .from(workItems)
     .innerJoin(bays, eq(workItems.bayId, bays.id))
@@ -85,6 +97,10 @@ export default defineEventHandler(async event => {
         .select({
           ...getTableColumns(workItems),
           bay: bays.code,
+          hasIssue: sql<boolean>`exists (
+            select 1 from ${workItemIssues}
+            where ${workItemIssues.workItemId} = ${workItems.id}
+          )`,
         })
         .from(workItems)
         .innerJoin(bays, eq(workItems.bayId, bays.id))

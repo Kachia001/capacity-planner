@@ -16,7 +16,7 @@ export default defineEventHandler(async event => {
       .select({
         id: telegramDeliveryOutbox.id,
         workItemId: telegramDeliveryOutbox.workItemId,
-        issueVersion: telegramDeliveryOutbox.issueVersion,
+        issueId: telegramDeliveryOutbox.issueId,
         status: telegramDeliveryOutbox.status,
         attemptCount: telegramDeliveryOutbox.attemptCount,
         nextAttemptAt: telegramDeliveryOutbox.nextAttemptAt,

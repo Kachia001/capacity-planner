@@ -1,4 +1,4 @@
-import type { ActorRole, IssueSeverity } from '../domain/work-item.types'
+import type { ActorRole, WorkItemIssueCategory } from '../domain/work-item.types'
 
 export type IssueNotificationMode = 'enabled' | 'disabled' | 'not_configured'
 
@@ -10,7 +10,7 @@ export type IssueNotificationPayload = {
   workDetail: string | null
   partNo: string | null
   isHighAltitude: boolean
-  severity: IssueSeverity
+  category: WorkItemIssueCategory
   note: string
   reporterName: string
   reporterRole: ActorRole
@@ -19,7 +19,7 @@ export type IssueNotificationPayload = {
 
 export type EnqueueIssueNotificationInput = {
   workItemId: number
-  issueVersion: number
+  issueId: number
   requestedBy: string
   payload: IssueNotificationPayload
   mode: IssueNotificationMode

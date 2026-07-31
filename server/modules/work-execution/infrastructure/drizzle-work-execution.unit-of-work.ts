@@ -5,6 +5,7 @@ import type {
 } from '../repository/work-execution.unit-of-work'
 import { DrizzleIssueNotificationOutboxRepository } from './drizzle-issue-notification-outbox.repository'
 import { DrizzleWorkItemEventRepository } from './drizzle-work-item-event.repository'
+import { DrizzleWorkItemIssueRepository } from './drizzle-work-item-issue.repository'
 import { DrizzleWorkItemRepository } from './drizzle-work-item.repository'
 
 export class DrizzleWorkExecutionUnitOfWork implements WorkExecutionUnitOfWork {
@@ -14,6 +15,7 @@ export class DrizzleWorkExecutionUnitOfWork implements WorkExecutionUnitOfWork {
     return this.db.transaction(async transaction => {
       const repositories: WorkExecutionRepositories = {
         workItems: new DrizzleWorkItemRepository(transaction),
+        issues: new DrizzleWorkItemIssueRepository(transaction),
         events: new DrizzleWorkItemEventRepository(transaction),
         issueNotifications: new DrizzleIssueNotificationOutboxRepository(transaction),
       }

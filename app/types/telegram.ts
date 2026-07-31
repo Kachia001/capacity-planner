@@ -24,7 +24,7 @@ export interface TelegramDeliverySummary {
 export interface TelegramDeliveryListItem {
   id: number
   workItemId: number
-  issueVersion: number
+  issueId: number | null
   status: TelegramDeliveryStatus
   attemptCount: number
   nextAttemptAt: string

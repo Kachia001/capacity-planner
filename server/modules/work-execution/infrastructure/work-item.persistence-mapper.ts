@@ -24,14 +24,6 @@ export class WorkItemPersistenceMapper {
       voidedBy: snapshot.voidedBy,
       voidedAt: snapshot.voidedAt,
       voidReason: snapshot.voidReason,
-      hasIssue: snapshot.hasIssue,
-      issueStatus: snapshot.issueStatus,
-      issueSeverity: snapshot.issueSeverity,
-      issueNote: snapshot.issueNote,
-      issueCreatedAt: snapshot.issueCreatedAt,
-      issueCreatedBy: snapshot.issueCreatedBy,
-      issueResolvedAt: snapshot.issueResolvedAt,
-      issueResolvedBy: snapshot.issueResolvedBy,
       updatedAt: snapshot.updatedAt,
     }
   }

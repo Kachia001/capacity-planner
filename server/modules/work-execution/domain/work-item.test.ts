@@ -3,7 +3,6 @@ import { WorkItem } from './work-item'
 import {
   InvalidWorkItemTransitionError,
   WorkItemCompletionForbiddenError,
-  WorkItemIssueAlreadyOpenError,
   WorkItemNotFoundError,
 } from './work-item.errors'
 import type { Actor, WorkItemProps } from './work-item.types'
@@ -51,14 +50,6 @@ function createProps(overrides: Partial<WorkItemProps> = {}): WorkItemProps {
     voidedBy: null,
     voidedAt: null,
     voidReason: null,
-    hasIssue: false,
-    issueStatus: null,
-    issueSeverity: null,
-    issueNote: null,
-    issueCreatedAt: null,
-    issueCreatedBy: null,
-    issueResolvedAt: null,
-    issueResolvedBy: null,
     updatedAt: new Date('2026-07-26T00:00:00.000Z'),
     ...overrides,
   }
@@ -177,24 +168,26 @@ describe('WorkItem aggregate', () => {
       voidedAt: now,
       voidReason: '중복 생성 항목',
     })
-    expect(() => workItem.reportIssue(workerA, 'high', '후속 이슈', now)).toThrow(
+    expect(() => workItem.reportIssue(workerA, 'quality_issue', '후속 이슈', now)).toThrow(
       WorkItemNotFoundError,
     )
   })
 
-  it('opens one issue at a time', () => {
+  it('creates multiple independent issue drafts for one work item', () => {
     const workItem = WorkItem.reconstitute(createProps())
-    workItem.reportIssue(workerA, 'critical', '전원 연결 이상', now)
+    const first = workItem.reportIssue(workerA, 'quality_issue', '전원 연결 이상', now)
+    const second = workItem.reportIssue(workerA, 'material_shortage', '케이블 부족', now)
 
-    expect(workItem.snapshot()).toMatchObject({
-      hasIssue: true,
-      issueStatus: 'open',
-      issueSeverity: 'critical',
-      issueNote: '전원 연결 이상',
-      issueCreatedBy: workerA.userId,
+    expect(first).toEqual({
+      workItemId: 1,
+      category: 'quality_issue',
+      status: 'unconfirmed',
+      note: '전원 연결 이상',
+      createdBy: workerA.userId,
+      createdAt: now,
+      updatedAt: now,
     })
-    expect(() => workItem.reportIssue(workerA, 'low', '추가 이슈', now)).toThrow(
-      WorkItemIssueAlreadyOpenError,
-    )
+    expect(second.category).toBe('material_shortage')
+    expect(workItem.snapshot().version).toBe(0)
   })
 })

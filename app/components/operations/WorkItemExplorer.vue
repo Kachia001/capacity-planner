@@ -16,13 +16,16 @@ import {
 import { Button } from '@/components/ui/button'
 import HighAltitudeBadge from '@/components/operations/HighAltitudeBadge.vue'
 import WorkItemGroupAccordion from '@/components/operations/WorkItemGroupAccordion.vue'
+import WorkItemIssueList from '@/components/operations/WorkItemIssueList.vue'
 import WorkStatusBadge from '@/components/operations/WorkStatusBadge.vue'
 import type { AppRole } from '@/stores/auth'
 import type {
   BayOption,
   CompletedWorkItemRestoreTarget,
   OperationWorkItem,
+  OperationWorkItemIssue,
   WorkItemSearchFilters,
+  WorkItemIssueStatus,
   WorkItemStatus,
 } from '@/types/operations'
 
@@ -58,6 +61,8 @@ const emit = defineEmits<{
   cancelStart: [item: OperationWorkItem]
   restoreCompleted: [item: OperationWorkItem, targetStatus: CompletedWorkItemRestoreTarget]
   reportIssue: [item: OperationWorkItem]
+  updateIssueStatus: [item: OperationWorkItem, issueId: number, status: WorkItemIssueStatus]
+  editIssueContent: [item: OperationWorkItem, issue: OperationWorkItemIssue]
   void: [item: OperationWorkItem]
   clearFocus: []
   loadMore: []
@@ -122,6 +127,18 @@ function requestReportIssue(item: OperationWorkItem) {
   emit('reportIssue', item)
 }
 
+function requestUpdateIssueStatus(
+  item: OperationWorkItem,
+  issueId: number,
+  status: WorkItemIssueStatus,
+) {
+  emit('updateIssueStatus', item, issueId, status)
+}
+
+function requestEditIssueContent(item: OperationWorkItem, issue: OperationWorkItemIssue) {
+  emit('editIssueContent', item, issue)
+}
+
 function requestClearFocus() {
   emit('clearFocus')
 }
@@ -158,13 +175,6 @@ function formatDateTime(value: string | null) {
 
 function workerLabel(item: OperationWorkItem) {
   return item.startedByName || item.worker || item.startedByEmail || '담당자 미확인'
-}
-
-function severityLabel(item: OperationWorkItem) {
-  if (item.issueSeverity === 'critical') return '긴급 이슈'
-  if (item.issueSeverity === 'high') return '중요 이슈'
-  if (item.issueSeverity === 'low') return '경미 이슈'
-  return '이슈 있음'
 }
 </script>
 
@@ -422,6 +432,8 @@ function severityLabel(item: OperationWorkItem) {
             @cancel-start="requestCancelStart"
             @restore-completed="requestRestoreCompleted"
             @report-issue="requestReportIssue"
+            @update-issue-status="requestUpdateIssueStatus"
+            @edit-issue-content="requestEditIssueContent"
             @void="requestVoid"
           />
 
@@ -453,10 +465,10 @@ function severityLabel(item: OperationWorkItem) {
                   <WorkStatusBadge :status="item.status" />
                   <HighAltitudeBadge :active="item.isHighAltitude" compact />
                   <span
-                    v-if="item.hasIssue && item.issueStatus !== 'resolved'"
+                    v-if="item.openIssueCount > 0"
                     class="inline-flex h-6 items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 text-[11px] font-bold text-red-800"
                   >
-                    <AlertCircle class="size-3.5" /> {{ severityLabel(item) }}
+                    <AlertCircle class="size-3.5" /> 미처리 이슈 {{ item.openIssueCount }}건
                   </span>
                 </div>
                 <span class="flex shrink-0 items-center gap-2">
@@ -531,13 +543,15 @@ function severityLabel(item: OperationWorkItem) {
                   </p>
                 </div>
 
-                <div
-                  v-if="item.hasIssue && item.issueNote"
-                  class="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-900"
-                >
-                  <p class="font-bold">이슈 내용</p>
-                  <p class="mt-1 leading-5">{{ item.issueNote }}</p>
-                </div>
+                <WorkItemIssueList
+                  :issues="item.issues"
+                  :can-manage="isSupervisor"
+                  :pending="props.mutationItemId !== null"
+                  @update-status="
+                    (issueId, status) => requestUpdateIssueStatus(item, issueId, status)
+                  "
+                  @edit-content="issue => requestEditIssueContent(item, issue)"
+                />
 
                 <div class="mt-auto pt-5">
                   <div
@@ -555,7 +569,6 @@ function severityLabel(item: OperationWorkItem) {
 
                   <div class="flex flex-wrap justify-end gap-2">
                     <Button
-                      v-if="!item.hasIssue || item.issueStatus === 'resolved'"
                       variant="outline"
                       size="md"
                       class="border-red-200 text-red-700 hover:bg-red-50"

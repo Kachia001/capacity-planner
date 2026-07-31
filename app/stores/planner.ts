@@ -43,7 +43,6 @@ type WorkItem = {
   isCompleted: boolean
   worker: string | null
   workDate: string | null
-  issueNote: string | null
 }
 
 type WorkItemsResponse = {

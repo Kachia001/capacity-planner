@@ -8,6 +8,20 @@
       "when": 1785311765794,
       "tag": "0000_ancient_kree",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785439727309,
+      "tag": "0001_add_work_item_issues",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785439745830,
+      "tag": "0002_remove_legacy_work_item_issue_fields",
+      "breakpoints": true
     }
   ]
 }

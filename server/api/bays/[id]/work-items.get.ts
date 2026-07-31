@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { and, asc, eq, ilike, isNull, or, sql } from 'drizzle-orm'
-import { appUsers, bays, workItems } from '../../../db/schema'
+import { and, asc, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
+import { appUsers, bays, workItemIssues, workItems } from '../../../db/schema'
 
 const bayIdSchema = z.string().uuid()
 const workStatuses = ['not_started', 'in_progress', 'completed'] as const
@@ -82,7 +82,12 @@ export default defineEventHandler(async event => {
   }
 
   if (hasIssue !== null) {
-    conditions.push(eq(workItems.hasIssue, hasIssue))
+    const hasAnyIssue = sql<boolean>`exists (
+      select 1
+      from ${workItemIssues}
+      where ${workItemIssues.workItemId} = ${workItems.id}
+    )`
+    conditions.push(hasIssue ? hasAnyIssue : sql<boolean>`not (${hasAnyIssue})`)
   }
 
   if (searchQuery) {
@@ -127,10 +132,6 @@ export default defineEventHandler(async event => {
       completedBy: workItems.completedBy,
       completedAt: workItems.completedAt,
       worker: workItems.worker,
-      hasIssue: workItems.hasIssue,
-      issueStatus: workItems.issueStatus,
-      issueSeverity: workItems.issueSeverity,
-      issueNote: workItems.issueNote,
       isHighAltitude: workItems.isHighAltitude,
       safetyNote: workItems.safetyNote,
       version: workItems.version,
@@ -146,10 +147,50 @@ export default defineEventHandler(async event => {
     .offset(cursor)
 
   const hasMore = rows.length > limit
+  const pageRows = hasMore ? rows.slice(0, limit) : rows
+  const itemIds = pageRows.map(row => row.id)
+  const issueRows =
+    itemIds.length > 0
+      ? await db
+          .select({
+            id: workItemIssues.id,
+            workItemId: workItemIssues.workItemId,
+            category: workItemIssues.category,
+            status: workItemIssues.status,
+            note: workItemIssues.note,
+            createdBy: workItemIssues.createdBy,
+            createdByName: appUsers.displayName,
+            createdByEmail: appUsers.email,
+            statusUpdatedBy: workItemIssues.statusUpdatedBy,
+            statusUpdatedAt: workItemIssues.statusUpdatedAt,
+            createdAt: workItemIssues.createdAt,
+            updatedAt: workItemIssues.updatedAt,
+          })
+          .from(workItemIssues)
+          .leftJoin(appUsers, eq(workItemIssues.createdBy, appUsers.authUserId))
+          .where(inArray(workItemIssues.workItemId, itemIds))
+          .orderBy(desc(workItemIssues.createdAt), desc(workItemIssues.id))
+      : []
+  const issuesByWorkItem = new Map<number, typeof issueRows>()
+
+  for (const issue of issueRows) {
+    const issues = issuesByWorkItem.get(issue.workItemId) ?? []
+    issues.push(issue)
+    issuesByWorkItem.set(issue.workItemId, issues)
+  }
 
   return {
     bay,
-    items: hasMore ? rows.slice(0, limit) : rows,
+    items: pageRows.map(row => {
+      const issues = issuesByWorkItem.get(row.id) ?? []
+
+      return {
+        ...row,
+        hasIssue: issues.length > 0,
+        openIssueCount: issues.filter(issue => issue.status !== 'resolved').length,
+        issues,
+      }
+    }),
     total,
     nextCursor: hasMore ? String(cursor + limit) : null,
   }

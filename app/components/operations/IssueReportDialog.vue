@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { AlertTriangle, Loader2, Send, X } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
-import type { IssueSeverity, OperationWorkItem } from '@/types/operations'
+import type { OperationWorkItem, WorkItemIssueCategory } from '@/types/operations'
 
 const props = defineProps<{
   item: OperationWorkItem
@@ -11,11 +11,11 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  submit: [severity: IssueSeverity, note: string]
+  submit: [category: WorkItemIssueCategory, note: string]
   close: []
 }>()
 
-const severity = ref<IssueSeverity>('medium')
+const category = ref<WorkItemIssueCategory>('material_shortage')
 const note = ref('')
 const noteLength = computed(() => note.value.trim().length)
 const canSubmit = computed(() => noteLength.value >= 3 && !props.pending)
@@ -23,10 +23,25 @@ const canSubmit = computed(() => noteLength.value >= 3 && !props.pending)
 function close() {
   if (!props.pending) emit('close')
 }
+const auth = useAuthStore()
+const globalAlert = useGlobalAlertStore()
 
-function submit() {
+async function submit() {
+  if (auth.profile?.role === 'worker') {
+    const accepted = await globalAlert.confirm({
+      variant: 'warning',
+      title: '이슈 등록 전 확인',
+      message:
+        'Worker가 등록한 이슈는 등록 후 내용과 상태를 직접 수정할 수 없습니다. 변경이 필요하면 Manager에게 요청해야 합니다.',
+      confirmLabel: '확인하고 저장',
+      cancelLabel: '취소',
+    })
+
+    if (!accepted) return
+  }
+
   if (canSubmit.value) {
-    emit('submit', severity.value, note.value.trim())
+    emit('submit', category.value, note.value.trim())
   }
 }
 
@@ -88,9 +103,9 @@ onBeforeUnmount(() => {
               <h2 id="issue-report-title" class="mt-1 text-lg font-semibold text-zinc-950">
                 작업 이슈 등록
               </h2>
-              <!--              <p id="issue-report-description" class="mt-1 text-sm leading-6 text-zinc-600">-->
-              <!--                저장된 이슈는 운영 현황에 반영되고 Telegram 전송 대기열에 안전하게 등록됩니다.-->
-              <!--              </p>-->
+              <p id="issue-report-description" class="mt-1 text-sm leading-6 text-zinc-600">
+                카테고리와 내용을 입력하세요. 같은 작업에도 이슈를 여러 건 등록할 수 있습니다.
+              </p>
             </div>
           </div>
 
@@ -115,15 +130,15 @@ onBeforeUnmount(() => {
           </dl>
 
           <label class="mt-5 grid gap-2 text-sm font-semibold text-zinc-800">
-            심각도
+            카테고리
             <select
-              v-model="severity"
+              v-model="category"
               class="h-12 rounded-lg border border-zinc-300 bg-white px-3 text-sm font-medium outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
             >
-              <option value="low">경미 — 작업에 영향이 적음</option>
-              <option value="medium">보통 — 확인 및 조치가 필요함</option>
-              <option value="high">중요 — 작업 진행에 영향이 있음</option>
-              <option value="critical">긴급 — 즉시 확인이 필요함</option>
+              <option value="material_shortage">자재부족</option>
+              <option value="work_delay">작업지연</option>
+              <option value="quality_issue">품질이슈</option>
+              <option value="other">기타</option>
             </select>
           </label>
 

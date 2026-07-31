@@ -45,7 +45,7 @@ export class DrizzleIssueNotificationOutboxRepository implements IssueNotificati
       .insert(telegramDeliveryOutbox)
       .values({
         workItemId: input.workItemId,
-        issueVersion: input.issueVersion,
+        issueId: input.issueId,
         requestedBy: input.requestedBy,
         payload: input.payload,
         status,

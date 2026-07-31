@@ -10,6 +10,7 @@ import type {
   WorkExecutionUnitOfWork,
 } from '../repository/work-execution.unit-of-work'
 import type { WorkItemEventRepository } from '../repository/work-item-event.repository'
+import type { WorkItemIssueRepository } from '../repository/work-item-issue.repository'
 import type { WorkItemRepository } from '../repository/work-item.repository'
 import type { Clock } from './ports/clock'
 import type { OperationGate } from './ports/operation-gate'
@@ -43,14 +44,6 @@ function createWorkItem() {
     voidedBy: null,
     voidedAt: null,
     voidReason: null,
-    hasIssue: false,
-    issueStatus: null,
-    issueSeverity: null,
-    issueNote: null,
-    issueCreatedAt: null,
-    issueCreatedBy: null,
-    issueResolvedAt: null,
-    issueResolvedBy: null,
     updatedAt: new Date('2026-07-26T00:00:00.000Z'),
   }
 
@@ -76,6 +69,12 @@ class InMemoryEventRepository implements WorkItemEventRepository {
 
   async append(events: WorkItemStatusEvent[]) {
     this.events.push(...events)
+  }
+}
+
+class NoopWorkItemIssueRepository implements WorkItemIssueRepository {
+  async create() {
+    return null
   }
 }
 
@@ -124,6 +123,7 @@ describe('StartWorkItemService', () => {
     const events = new InMemoryEventRepository()
     const unitOfWork = new InMemoryUnitOfWork({
       workItems,
+      issues: new NoopWorkItemIssueRepository(),
       events,
       issueNotifications: new NoopIssueNotificationRepository(),
     })

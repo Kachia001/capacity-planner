@@ -36,7 +36,7 @@ describe('Telegram issue message', () => {
       workDetail: '볼트 체결',
       partNo: 'P-100',
       isHighAltitude: true,
-      severity: 'critical',
+      category: 'quality_issue',
       note: '안전 난간이 흔들립니다.',
       reporterName: '홍길동',
       reporterRole: 'worker',
@@ -47,7 +47,7 @@ describe('Telegram issue message', () => {
     expect(message).toContain('Bay: BAY-01')
     expect(message).toContain('작업 ID: #42')
     expect(message).toContain('위험 구분: 고소작업')
-    expect(message).toContain('심각도: 긴급')
+    expect(message).toContain('카테고리: 품질이슈')
     expect(message).toContain('등록자: 홍길동 (작업자)')
     expect(message).toContain('안전 난간이 흔들립니다.')
   })
@@ -61,7 +61,7 @@ describe('Telegram issue message', () => {
       workDetail: null,
       partNo: null,
       isHighAltitude: false,
-      severity: 'medium',
+      category: 'other',
       note: '긴 이슈 내용'.repeat(1000),
       reporterName: '작업자',
       reporterRole: 'worker',

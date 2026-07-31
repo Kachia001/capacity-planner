@@ -14,7 +14,12 @@ import {
 } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import HighAltitudeBadge from '@/components/operations/HighAltitudeBadge.vue'
-import type { DashboardEvent, IssueSeverity, OperationsDashboardResponse } from '@/types/operations'
+import type {
+  DashboardEvent,
+  OperationsDashboardResponse,
+  WorkItemIssueCategory,
+  WorkItemIssueStatus,
+} from '@/types/operations'
 
 const props = defineProps<{
   dashboard: OperationsDashboardResponse | null
@@ -139,11 +144,17 @@ function eventPresentation(event: DashboardEvent) {
   return { label: '작업 무효화', class: 'bg-red-100 text-red-900' }
 }
 
-function severityPresentation(severity: IssueSeverity | null) {
-  if (severity === 'critical') return { label: '긴급', class: 'bg-red-600 text-white' }
-  if (severity === 'high') return { label: '중요', class: 'bg-red-100 text-red-900' }
-  if (severity === 'low') return { label: '경미', class: 'bg-zinc-100 text-zinc-700' }
-  return { label: '보통', class: 'bg-amber-100 text-amber-900' }
+function categoryLabel(category: WorkItemIssueCategory) {
+  if (category === 'material_shortage') return '자재부족'
+  if (category === 'work_delay') return '작업지연'
+  if (category === 'quality_issue') return '품질이슈'
+  return '기타'
+}
+
+function issueStatusPresentation(status: WorkItemIssueStatus) {
+  if (status === 'in_review') return { label: '확인 중', class: 'bg-amber-100 text-amber-900' }
+  if (status === 'resolved') return { label: '처리완료', class: 'bg-emerald-100 text-emerald-900' }
+  return { label: '미확인', class: 'bg-red-100 text-red-900' }
 }
 
 function eventActor(event: DashboardEvent) {
@@ -339,13 +350,20 @@ function eventActor(event: DashboardEvent) {
               size="content"
               class="w-full items-start justify-start gap-3 whitespace-normal rounded-none px-5 py-4 text-left hover:bg-red-50/60"
               :aria-label="`${issue.bayCode} ${issue.workName || '작업명 없음'} 이슈 작업으로 이동`"
-              @click="selectWorkItem(issue.bayId, issue.id)"
+              @click="selectWorkItem(issue.bayId, issue.workItemId)"
             >
-              <span
-                class="mt-0.5 rounded-full px-2 py-1 text-[10px] font-bold"
-                :class="severityPresentation(issue.severity).class"
-              >
-                {{ severityPresentation(issue.severity).label }}
+              <span class="mt-0.5 flex shrink-0 flex-col items-start gap-1">
+                <span
+                  class="rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-bold text-zinc-800"
+                >
+                  {{ categoryLabel(issue.category) }}
+                </span>
+                <span
+                  class="rounded-full px-2 py-1 text-[10px] font-bold"
+                  :class="issueStatusPresentation(issue.status).class"
+                >
+                  {{ issueStatusPresentation(issue.status).label }}
+                </span>
               </span>
               <span class="min-w-0 flex-1">
                 <span class="flex flex-wrap items-center gap-2">
@@ -356,7 +374,7 @@ function eventActor(event: DashboardEvent) {
                   issue.workName || '작업명 없음'
                 }}</span>
                 <span class="mt-1 line-clamp-2 block text-xs leading-5 text-zinc-500">{{
-                  issue.issueNote || issue.workDetail || '이슈 내용 없음'
+                  issue.note || issue.workDetail || '이슈 내용 없음'
                 }}</span>
               </span>
               <ArrowUpRight class="mt-1 size-4 shrink-0 text-zinc-400" />

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Loader2, ShieldAlert } from '@lucide/vue'
-import ManagementOverview from '@/components/operations/ManagementOverview.vue'
+import IssueContentEditDialog from '@/components/operations/IssueContentEditDialog.vue'
 import IssueReportDialog from '@/components/operations/IssueReportDialog.vue'
+import ManagementOverview from '@/components/operations/ManagementOverview.vue'
 import OperationControlPanel from '@/components/operations/OperationControlPanel.vue'
 import WorkerOperationsHeader from '@/components/operations/WorkerOperationsHeader.vue'
 import WorkItemExplorer from '@/components/operations/WorkItemExplorer.vue'
@@ -18,6 +19,8 @@ import {
   reportWorkItemIssue,
   restoreCompletedWorkItem,
   startWorkItem,
+  updateWorkItemIssueContent,
+  updateWorkItemIssueStatus,
   voidWorkItem,
 } from '@/composables/useOperationsApi'
 import type {
@@ -26,10 +29,12 @@ import type {
   OperationOpenRequest,
   OperationStatus,
   OperationWorkItem,
+  OperationWorkItemIssue,
   OperationsDashboardResponse,
   WorkItemSearchFilters,
   WorkItemStatus,
-  IssueSeverity,
+  WorkItemIssueCategory,
+  WorkItemIssueStatus,
 } from '@/types/operations'
 
 definePageMeta({ middleware: 'auth-client' })
@@ -64,6 +69,12 @@ const operationError = ref<string | null>(null)
 const issueReportItem = ref<OperationWorkItem | null>(null)
 const issueReportPending = ref(false)
 const issueReportError = ref<string | null>(null)
+const issueEditTarget = ref<{
+  item: OperationWorkItem
+  issue: OperationWorkItemIssue
+} | null>(null)
+const issueEditPending = ref(false)
+const issueEditError = ref<string | null>(null)
 const filters = reactive<WorkItemSearchFilters>({
   q: '',
   status: 'all',
@@ -592,7 +603,7 @@ async function requestVoid(item: OperationWorkItem) {
   }
 }
 
-function openIssueReport(item: OperationWorkItem) {
+async function openIssueReport(item: OperationWorkItem) {
   issueReportError.value = null
   issueReportItem.value = item
 }
@@ -604,7 +615,7 @@ function closeIssueReport() {
   }
 }
 
-async function submitIssueReport(severity: IssueSeverity, note: string) {
+async function submitIssueReport(category: WorkItemIssueCategory, note: string) {
   const item = issueReportItem.value
   if (!item) return
 
@@ -614,7 +625,7 @@ async function submitIssueReport(severity: IssueSeverity, note: string) {
 
   try {
     await requireAuthenticated()
-    const response = await reportWorkItemIssue(item.id, severity, note)
+    const response = await reportWorkItemIssue(item.id, category, note)
     issueReportItem.value = null
 
     if (response.telegram.status === 'queued') {
@@ -633,8 +644,67 @@ async function submitIssueReport(severity: IssueSeverity, note: string) {
   } catch (error) {
     issueReportError.value = getRequestErrorMessage(error, '이슈를 등록하지 못했습니다.')
   } finally {
+    showNotice('ㅇㅁㄴㅇㄴㅁ', 'success')
     mutationItemId.value = null
     issueReportPending.value = false
+  }
+}
+
+function openIssueContentEdit(item: OperationWorkItem, issue: OperationWorkItemIssue) {
+  if (!isSupervisor.value) return
+
+  issueEditError.value = null
+  issueEditTarget.value = { item, issue }
+}
+
+function closeIssueContentEdit() {
+  if (!issueEditPending.value) {
+    issueEditTarget.value = null
+    issueEditError.value = null
+  }
+}
+
+async function submitIssueContentEdit(note: string) {
+  const target = issueEditTarget.value
+  if (!target) return
+
+  issueEditPending.value = true
+  issueEditError.value = null
+  mutationItemId.value = target.item.id
+
+  try {
+    await requireAuthenticated()
+    await updateWorkItemIssueContent(target.item.id, target.issue.id, note)
+    issueEditTarget.value = null
+    showNotice('이슈 내용을 수정했습니다.', 'success')
+    await refreshAfterMutation()
+    await revealWorkItem(target.item.id)
+  } catch (error) {
+    issueEditError.value = getRequestErrorMessage(error, '이슈 내용을 수정하지 못했습니다.')
+  } finally {
+    mutationItemId.value = null
+    issueEditPending.value = false
+  }
+}
+
+async function updateIssueStatus(
+  item: OperationWorkItem,
+  issueId: number,
+  status: WorkItemIssueStatus,
+) {
+  mutationItemId.value = item.id
+
+  try {
+    await requireAuthenticated()
+    await updateWorkItemIssueStatus(item.id, issueId, status)
+    showNotice('이슈 상태를 변경했습니다.', 'success')
+    await refreshAfterMutation()
+    await revealWorkItem(item.id)
+  } catch (error) {
+    showNotice(getRequestErrorMessage(error, '이슈 상태를 변경하지 못했습니다.'), 'error')
+    await loadWorkItems()
+  } finally {
+    mutationItemId.value = null
   }
 }
 
@@ -806,6 +876,8 @@ onBeforeUnmount(() => {
         @cancel-start="requestCancelStart"
         @restore-completed="requestRestoreCompleted"
         @report-issue="openIssueReport"
+        @update-issue-status="updateIssueStatus"
+        @edit-issue-content="openIssueContentEdit"
         @void="requestVoid"
         @clear-focus="clearFocusedWorkItem"
         @load-more="loadMoreWorkItems"
@@ -821,6 +893,15 @@ onBeforeUnmount(() => {
       :error-message="issueReportError"
       @submit="submitIssueReport"
       @close="closeIssueReport"
+    />
+
+    <IssueContentEditDialog
+      v-if="issueEditTarget"
+      :issue="issueEditTarget.issue"
+      :pending="issueEditPending"
+      :error-message="issueEditError"
+      @submit="submitIssueContentEdit"
+      @close="closeIssueContentEdit"
     />
   </template>
 </template>

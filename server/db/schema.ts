@@ -25,8 +25,17 @@ export const workItemEventAction = pgEnum('work_item_event_action', [
   'void',
   'restore',
 ])
-export const issueStatus = pgEnum('issue_status', ['open', 'resolved'])
-export const issueSeverity = pgEnum('issue_severity', ['low', 'medium', 'high', 'critical'])
+export const workItemIssueCategory = pgEnum('work_item_issue_category', [
+  'material_shortage',
+  'work_delay',
+  'quality_issue',
+  'other',
+])
+export const workItemIssueStatus = pgEnum('work_item_issue_status', [
+  'unconfirmed',
+  'in_review',
+  'resolved',
+])
 export const telegramDeliveryStatus = pgEnum('telegram_delivery_status', [
   'pending',
   'processing',
@@ -147,17 +156,6 @@ export const workItems = pgTable(
     partNo: text('part_no'),
     itemName: text('item_name'),
     bolt: text('bolt'),
-    hasIssue: boolean('has_issue').notNull().default(false),
-    issueStatus: issueStatus('issue_status'),
-    issueSeverity: issueSeverity('issue_severity'),
-    issueCreatedAt: timestamp('issue_created_at', { withTimezone: true }),
-    issueCreatedBy: uuid('issue_created_by').references(() => appUsers.authUserId, {
-      onDelete: 'set null',
-    }),
-    issueResolvedAt: timestamp('issue_resolved_at', { withTimezone: true }),
-    issueResolvedBy: uuid('issue_resolved_by').references(() => appUsers.authUserId, {
-      onDelete: 'set null',
-    }),
     status: workStatus('status').notNull().default('not_started'),
     startedBy: uuid('started_by').references(() => appUsers.authUserId, {
       onDelete: 'set null',
@@ -178,7 +176,6 @@ export const workItems = pgTable(
     worker: text('worker'),
     workDate: date('work_date'),
     isCompleted: boolean('is_completed').notNull().default(false),
-    issueNote: text('issue_note'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -198,6 +195,35 @@ export const workItems = pgTable(
       table.bayId,
       table.sourceRow,
     ),
+  }),
+)
+
+export const workItemIssues = pgTable(
+  'work_item_issues',
+  {
+    id: serial('id').primaryKey(),
+    workItemId: integer('work_item_id')
+      .notNull()
+      .references(() => workItems.id, { onDelete: 'restrict' }),
+    category: workItemIssueCategory('category').notNull(),
+    status: workItemIssueStatus('status').notNull().default('unconfirmed'),
+    note: text('note').notNull(),
+    createdBy: uuid('created_by').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
+    statusUpdatedBy: uuid('status_updated_by').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
+    statusUpdatedAt: timestamp('status_updated_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => ({
+    workItemStatusIndex: index('work_item_issues_item_status_idx').on(
+      table.workItemId,
+      table.status,
+    ),
+    createdIndex: index('work_item_issues_created_idx').on(table.createdAt),
   }),
 )
 
@@ -234,7 +260,8 @@ export const telegramDeliveryOutbox = pgTable(
     workItemId: integer('work_item_id')
       .notNull()
       .references(() => workItems.id, { onDelete: 'restrict' }),
-    issueVersion: integer('issue_version').notNull(),
+    issueId: integer('issue_id').references(() => workItemIssues.id, { onDelete: 'restrict' }),
+    legacyIssueVersion: integer('issue_version'),
     requestedBy: uuid('requested_by').references(() => appUsers.authUserId, {
       onDelete: 'set null',
     }),
@@ -252,10 +279,7 @@ export const telegramDeliveryOutbox = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   table => ({
-    itemVersionUnique: uniqueIndex('telegram_delivery_outbox_item_version_idx').on(
-      table.workItemId,
-      table.issueVersion,
-    ),
+    issueUnique: uniqueIndex('telegram_delivery_outbox_issue_idx').on(table.issueId),
     dispatchIndex: index('telegram_delivery_outbox_dispatch_idx').on(
       table.status,
       table.nextAttemptAt,
@@ -269,6 +293,8 @@ export const telegramDeliveryOutbox = pgTable(
 
 export type WorkItem = typeof workItems.$inferSelect
 export type NewWorkItem = typeof workItems.$inferInsert
+export type WorkItemIssue = typeof workItemIssues.$inferSelect
+export type NewWorkItemIssue = typeof workItemIssues.$inferInsert
 export type WorkItemStatusEvent = typeof workItemStatusEvents.$inferSelect
 export type NewWorkItemStatusEvent = typeof workItemStatusEvents.$inferInsert
 export type AppUser = typeof appUsers.$inferSelect

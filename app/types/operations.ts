@@ -1,14 +1,15 @@
 import type { AppRole } from '@/stores/auth'
 import type {
-  IssueSeverity as ApiIssueSeverity,
+  WorkItemIssueCategory as ApiWorkItemIssueCategory,
+  WorkItemIssueStatus as ApiWorkItemIssueStatus,
   WorkItemRestoreTarget,
   WorkItemStatus as ApiWorkItemStatus,
 } from '#shared/api/work-items/work-item.contract'
 
 export type WorkItemStatus = ApiWorkItemStatus
 export type CompletedWorkItemRestoreTarget = WorkItemRestoreTarget
-export type IssueStatus = 'open' | 'resolved'
-export type IssueSeverity = ApiIssueSeverity
+export type WorkItemIssueCategory = ApiWorkItemIssueCategory
+export type WorkItemIssueStatus = ApiWorkItemIssueStatus
 export type WorkItemEventAction = 'start' | 'complete' | 'cancel_start' | 'restore' | 'void'
 export type OperationMode = 'regular' | 'extension' | 'closed'
 
@@ -54,15 +55,29 @@ export interface OperationWorkItem {
   completedAt: string | null
   worker: string | null
   hasIssue: boolean
-  issueStatus: IssueStatus | null
-  issueSeverity: IssueSeverity | null
-  issueNote: string | null
+  openIssueCount: number
+  issues: OperationWorkItemIssue[]
   isHighAltitude: boolean
   safetyNote: string | null
   version: number
   updatedAt: string
   startedByName: string | null
   startedByEmail: string | null
+}
+
+export interface OperationWorkItemIssue {
+  id: number
+  workItemId: number
+  category: WorkItemIssueCategory
+  status: WorkItemIssueStatus
+  note: string
+  createdBy: string | null
+  createdByName: string | null
+  createdByEmail: string | null
+  statusUpdatedBy: string | null
+  statusUpdatedAt: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface WorkItemSearchFilters {
@@ -109,12 +124,14 @@ export interface OperationsDashboardSummary {
 
 export interface DashboardIssue {
   id: number
+  workItemId: number
   bayId: string
   bayCode: string
   workName: string | null
   workDetail: string | null
-  issueNote: string | null
-  severity: IssueSeverity | null
+  note: string
+  category: WorkItemIssueCategory
+  status: WorkItemIssueStatus
   createdAt: string | null
   workerName: string | null
   workerEmail: string | null

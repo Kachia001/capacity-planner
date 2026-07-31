@@ -14,7 +14,7 @@ const issuePayloadSchema = z.object({
   workDetail: z.string().nullable(),
   partNo: z.string().nullable(),
   isHighAltitude: z.boolean(),
-  severity: z.enum(['low', 'medium', 'high', 'critical']),
+  category: z.enum(['material_shortage', 'work_delay', 'quality_issue', 'other']),
   note: z.string().min(3).max(1000),
   reporterName: z.string().min(1),
   reporterRole: z.enum(['admin', 'manager', 'worker']),

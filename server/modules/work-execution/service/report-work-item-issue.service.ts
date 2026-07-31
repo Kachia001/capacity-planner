@@ -36,14 +36,18 @@ export class ReportWorkItemIssueService {
         throw new WorkItemNotFoundError(command.workItemId)
       }
 
-      workItem.reportIssue(command.actor, command.severity, command.note, now)
-      await repositories.workItems.save(workItem)
-
       const snapshot = workItem.snapshot()
+      const issueDraft = workItem.reportIssue(command.actor, command.category, command.note, now)
+      const issue = await repositories.issues.create(issueDraft)
+
+      if (!issue) {
+        throw new NotificationOutboxFailedError()
+      }
+
       const mode = await repositories.issueNotifications.getMode()
       const delivery = await repositories.issueNotifications.enqueue({
         workItemId: snapshot.id,
-        issueVersion: snapshot.version,
+        issueId: issue.id,
         requestedBy: command.actor.userId,
         mode,
         payload: {
@@ -54,7 +58,7 @@ export class ReportWorkItemIssueService {
           workDetail: snapshot.workDetail,
           partNo: snapshot.partNo,
           isHighAltitude: snapshot.isHighAltitude,
-          severity: command.severity,
+          category: command.category,
           note: command.note,
           reporterName: command.actor.displayName,
           reporterRole: command.actor.role,
@@ -75,25 +79,10 @@ export class ReportWorkItemIssueService {
               deliveryId: delivery.id,
             }
 
-      if (
-        !snapshot.hasIssue ||
-        snapshot.issueStatus !== 'open' ||
-        !snapshot.issueSeverity ||
-        !snapshot.issueNote ||
-        !snapshot.issueCreatedAt
-      ) {
-        throw new NotificationOutboxFailedError()
-      }
-
       return {
-        item: {
-          id: snapshot.id,
-          hasIssue: true,
-          issueStatus: 'open',
-          issueSeverity: snapshot.issueSeverity,
-          issueNote: snapshot.issueNote,
-          issueCreatedAt: snapshot.issueCreatedAt,
-          version: snapshot.version,
+        issue: {
+          ...issue,
+          createdByName: command.actor.displayName,
         },
         notification,
       }
