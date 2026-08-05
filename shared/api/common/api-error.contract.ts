@@ -4,6 +4,8 @@ export const ApiErrorCodeSchema = z.enum([
   'REQUEST_VALIDATION_FAILED',
   'UNAUTHENTICATED',
   'ACCOUNT_DISABLED',
+  'PASSWORD_CHANGE_REQUIRED',
+  'PASSWORD_RESET_REQUIRED_LOGIN',
   'FORBIDDEN',
   'WORK_ITEM_NOT_FOUND',
   'WORK_ITEM_INVALID_TRANSITION',
@@ -20,7 +22,8 @@ export const ApiErrorCodeSchema = z.enum([
 
 export const ApiErrorResponseSchema = z.object({
   statusCode: z.number().int(),
-  statusMessage: z.string(),
+  message: z.string(),
+  statusMessage: z.string().optional(),
   data: z
     .object({
       code: ApiErrorCodeSchema,

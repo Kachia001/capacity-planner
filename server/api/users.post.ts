@@ -16,13 +16,13 @@ export default defineEventHandler(async event => {
   if (profile.role === 'manager' && body.role !== 'worker') {
     throw createError({
       statusCode: 403,
-      statusMessage: '매니저는 작업자만 생성 할 수 있습니다.',
+      message: '매니저는 작업자만 생성 할 수 있습니다.',
     })
   }
   if (body.role === 'admin') {
     throw createError({
       statusCode: 400,
-      statusMessage: '어드민은 생성할 수 없습니다.',
+      message: '어드민은 생성할 수 없습니다.',
     })
   }
 
@@ -37,7 +37,7 @@ export default defineEventHandler(async event => {
   if (existing) {
     throw createError({
       statusCode: 409,
-      statusMessage: '이미 등록된 로그인 ID입니다.',
+      message: '이미 등록된 로그인 ID입니다.',
     })
   }
 
@@ -56,7 +56,7 @@ export default defineEventHandler(async event => {
   if (!created) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to create the app user.',
+      message: 'Failed to create the app user.',
     })
   }
 
@@ -66,6 +66,9 @@ export default defineEventHandler(async event => {
     displayName: created.displayName,
     role: created.role,
     isActive: created.isActive,
+    mustChangePassword: created.mustChangePassword,
+    passwordResetAt: created.passwordResetAt,
+    passwordChangedAt: created.passwordChangedAt,
     createdAt: created.createdAt,
   }
 })

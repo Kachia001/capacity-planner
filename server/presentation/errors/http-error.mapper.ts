@@ -8,6 +8,8 @@ const statusByErrorCode: Partial<Record<ApiErrorCode, number>> = {
   REQUEST_VALIDATION_FAILED: 400,
   UNAUTHENTICATED: 401,
   ACCOUNT_DISABLED: 401,
+  PASSWORD_CHANGE_REQUIRED: 403,
+  PASSWORD_RESET_REQUIRED_LOGIN: 401,
   FORBIDDEN: 403,
   WORK_ITEM_NOT_FOUND: 404,
   WORK_ITEM_INVALID_TRANSITION: 409,
@@ -30,7 +32,7 @@ export function toHttpError(error: unknown): H3Error {
   if (error instanceof RequestValidationError) {
     return createError({
       statusCode: 400,
-      statusMessage: error.message,
+      message: error.message,
       data: {
         code: error.code satisfies ApiErrorCode,
         details: error.issues,
@@ -41,7 +43,7 @@ export function toHttpError(error: unknown): H3Error {
   if (error instanceof ZodError) {
     return createError({
       statusCode: 400,
-      statusMessage: error.issues[0]?.message ?? '요청 입력값을 확인해 주세요.',
+      message: error.issues[0]?.message ?? '요청 입력값을 확인해 주세요.',
       data: {
         code: 'REQUEST_VALIDATION_FAILED' satisfies ApiErrorCode,
         details: error.issues,
@@ -54,7 +56,7 @@ export function toHttpError(error: unknown): H3Error {
 
     return createError({
       statusCode: statusByErrorCode[code] ?? 500,
-      statusMessage: error.message,
+      message: error.message,
       data: { code },
     })
   }
@@ -63,7 +65,7 @@ export function toHttpError(error: unknown): H3Error {
 
   return createError({
     statusCode: 500,
-    statusMessage: '요청 처리 중 오류가 발생했습니다.',
+    message: '요청 처리 중 오류가 발생했습니다.',
     data: {
       code: 'INTERNAL_SERVER_ERROR' satisfies ApiErrorCode,
     },

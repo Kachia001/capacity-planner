@@ -1,0 +1,93 @@
+import { and, desc, eq, isNull, sql } from 'drizzle-orm'
+import { z } from 'zod'
+import { appUsers, passwordResetEvents } from '../../db/schema'
+
+const changePasswordSchema = z.object({
+  newPassword: z.string().min(8, '새 비밀번호는 8자 이상이어야 합니다.').max(256),
+})
+
+export default defineEventHandler(async event => {
+  const profile = await requireSessionUser(event)
+  const body = changePasswordSchema.parse(await readBody(event))
+
+  if (!profile.mustChangePassword) {
+    throw createError({ statusCode: 409, message: '비밀번호 변경이 필요한 상태가 아닙니다.' })
+  }
+
+  if (await verifyPassword(profile.passwordHash, body.newPassword)) {
+    throw createError({
+      statusCode: 400,
+      message: '임시 비밀번호와 다른 새 비밀번호를 입력해 주세요.',
+    })
+  }
+
+  const passwordHash = await hashPassword(body.newPassword)
+  const changedAt = new Date()
+  const db = useDb()
+
+  const updated = await db.transaction(async tx => {
+    const [nextProfile] = await tx
+      .update(appUsers)
+      .set({
+        passwordHash,
+        mustChangePassword: false,
+        passwordChangedAt: changedAt,
+        authVersion: sql`${appUsers.authVersion} + 1`,
+        failedLoginCount: 0,
+        lockedUntil: null,
+        updatedAt: changedAt,
+      })
+      .where(
+        and(
+          eq(appUsers.authUserId, profile.authUserId),
+          eq(appUsers.authVersion, profile.authVersion),
+          eq(appUsers.mustChangePassword, true),
+        ),
+      )
+      .returning()
+
+    if (!nextProfile) {
+      throw createError({
+        statusCode: 409,
+        message: '비밀번호 상태가 변경되었습니다. 다시 로그인해 주세요.',
+      })
+    }
+
+    const [openReset] = await tx
+      .select({ id: passwordResetEvents.id })
+      .from(passwordResetEvents)
+      .where(
+        and(
+          eq(passwordResetEvents.userId, profile.authUserId),
+          isNull(passwordResetEvents.changedAt),
+          isNull(passwordResetEvents.supersededAt),
+        ),
+      )
+      .orderBy(desc(passwordResetEvents.resetAt))
+      .limit(1)
+
+    if (openReset) {
+      await tx
+        .update(passwordResetEvents)
+        .set({ changedAt })
+        .where(eq(passwordResetEvents.id, openReset.id))
+    }
+
+    return nextProfile
+  })
+
+  const token = await createSessionToken({
+    userId: updated.authUserId,
+    authVersion: updated.authVersion,
+  })
+  setSessionCookie(event, token)
+
+  return {
+    id: updated.authUserId,
+    email: updated.email,
+    displayName: updated.displayName,
+    role: updated.role,
+    authEmail: updated.email,
+    mustChangePassword: false,
+  }
+})

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { hashPassword, normalizeLoginEmail, verifyPassword } from './password'
+import {
+  generateTemporaryPassword,
+  hashPassword,
+  normalizeLoginEmail,
+  verifyPassword,
+} from './password'
 
 describe('password utilities', () => {
   it('normalizes a local login ID to the internal email format', () => {
@@ -16,5 +21,16 @@ describe('password utilities', () => {
     expect(passwordHash).toMatch(/^\$argon2id\$/)
     await expect(verifyPassword(passwordHash, 'correct horse battery staple')).resolves.toBe(true)
     await expect(verifyPassword(passwordHash, 'wrong password')).resolves.toBe(false)
+  })
+
+  it('generates a strong temporary password without ambiguous characters', () => {
+    const password = generateTemporaryPassword()
+
+    expect(password).toHaveLength(14)
+    expect(password).toMatch(/[A-Z]/)
+    expect(password).toMatch(/[a-z]/)
+    expect(password).toMatch(/[2-9]/)
+    expect(password).toMatch(/[!@#$%*+\-_]/)
+    expect(password).not.toMatch(/[01IlO]/)
   })
 })

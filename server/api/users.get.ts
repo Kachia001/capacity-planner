@@ -11,6 +11,9 @@ export default defineEventHandler(async event => {
     displayName: appUsers.displayName,
     role: appUsers.role,
     isActive: appUsers.isActive,
+    mustChangePassword: appUsers.mustChangePassword,
+    passwordResetAt: appUsers.passwordResetAt,
+    passwordChangedAt: appUsers.passwordChangedAt,
     createdAt: appUsers.createdAt,
   }
   const rows =
@@ -31,6 +34,9 @@ export default defineEventHandler(async event => {
     displayName: user.displayName,
     role: user.role,
     isActive: user.isActive,
+    mustChangePassword: user.mustChangePassword,
+    passwordResetAt: user.passwordResetAt,
+    passwordChangedAt: user.passwordChangedAt,
     createdAt: user.createdAt,
   }))
 })

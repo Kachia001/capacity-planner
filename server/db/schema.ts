@@ -52,6 +52,12 @@ export const appUsers = pgTable('app_users', {
   role: appRole('role').notNull().default('worker'),
   isActive: boolean('is_active').notNull().default(true),
   authVersion: integer('auth_version').notNull().default(1),
+  mustChangePassword: boolean('must_change_password').notNull().default(false),
+  passwordResetAt: timestamp('password_reset_at', { withTimezone: true }),
+  passwordChangedAt: timestamp('password_changed_at', { withTimezone: true }),
+  passwordResetBy: uuid('password_reset_by').references((): AnyPgColumn => appUsers.authUserId, {
+    onDelete: 'set null',
+  }),
   failedLoginCount: integer('failed_login_count').notNull().default(0),
   lockedUntil: timestamp('locked_until', { withTimezone: true }),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
@@ -61,6 +67,23 @@ export const appUsers = pgTable('app_users', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+export const passwordResetEvents = pgTable(
+  'password_reset_events',
+  {
+    id: serial('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => appUsers.authUserId, { onDelete: 'cascade' }),
+    resetBy: uuid('reset_by').references(() => appUsers.authUserId, { onDelete: 'set null' }),
+    resetAt: timestamp('reset_at', { withTimezone: true }).notNull().defaultNow(),
+    changedAt: timestamp('changed_at', { withTimezone: true }),
+    supersededAt: timestamp('superseded_at', { withTimezone: true }),
+  },
+  table => ({
+    userResetIndex: index('password_reset_events_user_reset_idx').on(table.userId, table.resetAt),
+  }),
+)
 
 export const bayTemplates = pgTable('bay_templates', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -299,6 +322,7 @@ export type WorkItemStatusEvent = typeof workItemStatusEvents.$inferSelect
 export type NewWorkItemStatusEvent = typeof workItemStatusEvents.$inferInsert
 export type AppUser = typeof appUsers.$inferSelect
 export type NewAppUser = typeof appUsers.$inferInsert
+export type PasswordResetEvent = typeof passwordResetEvents.$inferSelect
 export type Bay = typeof bays.$inferSelect
 export type NewBay = typeof bays.$inferInsert
 export type OperationControl = typeof operationControl.$inferSelect
