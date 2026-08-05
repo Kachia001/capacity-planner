@@ -10,7 +10,7 @@ export function useDb() {
   if (!databaseUrl) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'NUXT_DATABASE_URL is not configured.',
+      message: 'NUXT_DATABASE_URL is not configured.',
     })
   }
 

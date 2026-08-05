@@ -22,7 +22,7 @@ function parseOptionalBoolean(value: unknown, name: string) {
     return false
   }
 
-  throw createError({ statusCode: 400, statusMessage: `${name} 필터 값이 올바르지 않습니다.` })
+  throw createError({ statusCode: 400, message: `${name} 필터 값이 올바르지 않습니다.` })
 }
 
 export default defineEventHandler(async event => {
@@ -36,14 +36,14 @@ export default defineEventHandler(async event => {
   const workItemId = requestedWorkItemId ? Number.parseInt(requestedWorkItemId, 10) : null
 
   if (requestedStatus && !status) {
-    throw createError({ statusCode: 400, statusMessage: '작업 상태 필터가 올바르지 않습니다.' })
+    throw createError({ statusCode: 400, message: '작업 상태 필터가 올바르지 않습니다.' })
   }
 
   if (
     requestedWorkItemId &&
     (workItemId === null || !Number.isSafeInteger(workItemId) || workItemId <= 0)
   ) {
-    throw createError({ statusCode: 400, statusMessage: '작업 항목 식별자가 올바르지 않습니다.' })
+    throw createError({ statusCode: 400, message: '작업 항목 식별자가 올바르지 않습니다.' })
   }
 
   const highAltitude = parseOptionalBoolean(query.highAltitude, '고소작업')
@@ -64,7 +64,7 @@ export default defineEventHandler(async event => {
     .limit(1)
 
   if (!bay) {
-    throw createError({ statusCode: 404, statusMessage: 'BAY를 찾을 수 없습니다.' })
+    throw createError({ statusCode: 404, message: 'BAY를 찾을 수 없습니다.' })
   }
 
   const conditions = [eq(workItems.bayId, bayId), isNull(workItems.voidedAt)]

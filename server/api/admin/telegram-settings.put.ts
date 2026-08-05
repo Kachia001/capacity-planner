@@ -32,7 +32,7 @@ export default defineEventHandler(async event => {
   if (!parsedBody.success) {
     throw createError({
       statusCode: 400,
-      statusMessage: parsedBody.error.issues[0]?.message ?? 'Telegram 설정값을 확인해 주세요.',
+      message: parsedBody.error.issues[0]?.message ?? 'Telegram 설정값을 확인해 주세요.',
     })
   }
 
@@ -47,7 +47,7 @@ export default defineEventHandler(async event => {
   if (!current && !body.botToken) {
     throw createError({
       statusCode: 400,
-      statusMessage: '처음 설정할 때는 Telegram Bot Token이 필요합니다.',
+      message: '처음 설정할 때는 Telegram Bot Token이 필요합니다.',
     })
   }
 
@@ -61,7 +61,7 @@ export default defineEventHandler(async event => {
     } catch {
       throw createError({
         statusCode: 500,
-        statusMessage:
+        message:
           '서버의 NUXT_TELEGRAM_ENCRYPTION_KEY를 32자 이상으로 설정한 뒤 다시 시도해 주세요.',
       })
     }
@@ -71,7 +71,7 @@ export default defineEventHandler(async event => {
     } catch {
       throw createError({
         statusCode: 409,
-        statusMessage:
+        message:
           '현재 암호화 키로 기존 Bot Token을 읽을 수 없습니다. Bot Token을 다시 입력해 주세요.',
       })
     }
@@ -80,7 +80,7 @@ export default defineEventHandler(async event => {
   if (!botTokenEncrypted) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Telegram Bot Token이 필요합니다.',
+      message: 'Telegram Bot Token이 필요합니다.',
     })
   }
 
@@ -118,7 +118,7 @@ export default defineEventHandler(async event => {
   if (!saved) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'Telegram 설정을 저장하지 못했습니다.',
+      message: 'Telegram 설정을 저장하지 못했습니다.',
     })
   }
 

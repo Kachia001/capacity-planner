@@ -43,7 +43,7 @@ export default defineEventHandler(async event => {
     .limit(1)
 
   if (!currentIssue) {
-    throw createError({ statusCode: 404, statusMessage: '작업 이슈를 찾을 수 없습니다.' })
+    throw createError({ statusCode: 404, message: '작업 이슈를 찾을 수 없습니다.' })
   }
 
   if (currentIssue.status === body.status) {
@@ -51,11 +51,11 @@ export default defineEventHandler(async event => {
   }
 
   if (currentIssue.status === 'resolved') {
-    throw createError({ statusCode: 409, statusMessage: '처리완료된 이슈는 변경할 수 없습니다.' })
+    throw createError({ statusCode: 409, message: '처리완료된 이슈는 변경할 수 없습니다.' })
   }
 
   if (!canTransitionWorkItemIssueStatus(currentIssue.status, body.status)) {
-    throw createError({ statusCode: 409, statusMessage: '허용되지 않은 이슈 상태 변경입니다.' })
+    throw createError({ statusCode: 409, message: '허용되지 않은 이슈 상태 변경입니다.' })
   }
 
   const now = new Date()
@@ -79,7 +79,7 @@ export default defineEventHandler(async event => {
   if (!issue) {
     throw createError({
       statusCode: 409,
-      statusMessage: '다른 사용자가 먼저 이슈 상태를 변경했습니다.',
+      message: '다른 사용자가 먼저 이슈 상태를 변경했습니다.',
     })
   }
 

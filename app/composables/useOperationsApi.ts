@@ -40,6 +40,13 @@ export function getRequestErrorMessage(error: unknown, fallback: string) {
   if (typeof error === 'object' && error) {
     const data = 'data' in error ? error.data : null
 
+    if (typeof data === 'object' && data && 'message' in data) {
+      const message = data.message
+      if (typeof message === 'string' && message.trim()) {
+        return message
+      }
+    }
+
     if (typeof data === 'object' && data && 'statusMessage' in data) {
       const statusMessage = data.statusMessage
       if (typeof statusMessage === 'string' && statusMessage.trim()) {

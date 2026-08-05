@@ -50,11 +50,11 @@ export default defineEventHandler(async event =>
       if (existingIssue?.status === 'resolved') {
         throw createError({
           statusCode: 409,
-          statusMessage: '처리완료된 이슈는 변경할 수 없습니다.',
+          message: '처리완료된 이슈는 변경할 수 없습니다.',
         })
       }
 
-      throw createError({ statusCode: 404, statusMessage: '작업 이슈를 찾을 수 없습니다.' })
+      throw createError({ statusCode: 404, message: '작업 이슈를 찾을 수 없습니다.' })
     }
 
     return {

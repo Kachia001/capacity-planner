@@ -106,7 +106,7 @@ export default defineEventHandler(async event => {
     })
   } catch (error) {
     if (typeof error === 'object' && error && 'code' in error && error.code === '23505') {
-      throw createError({ statusCode: 409, statusMessage: '이미 존재하는 BAY 코드입니다.' })
+      throw createError({ statusCode: 409, message: '이미 존재하는 BAY 코드입니다.' })
     }
     throw error
   }

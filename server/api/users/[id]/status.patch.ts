@@ -12,20 +12,20 @@ export default defineEventHandler(async event => {
   const body = statusSchema.parse(await readBody(event))
 
   if (!userId) {
-    throw createError({ statusCode: 400, statusMessage: '계정 ID가 필요합니다.' })
+    throw createError({ statusCode: 400, message: '계정 ID가 필요합니다.' })
   }
 
   const db = useDb()
   const [target] = await db.select().from(appUsers).where(eq(appUsers.authUserId, userId)).limit(1)
 
   if (!target) {
-    throw createError({ statusCode: 404, statusMessage: '계정을 찾을 수 없습니다.' })
+    throw createError({ statusCode: 404, message: '계정을 찾을 수 없습니다.' })
   }
 
   if (!canManageAccount(profile.role, target.role)) {
     throw createError({
       statusCode: 403,
-      statusMessage: '해당 계정의 이용 상태를 변경할 권한이 없습니다.',
+      message: '해당 계정의 이용 상태를 변경할 권한이 없습니다.',
     })
   }
 

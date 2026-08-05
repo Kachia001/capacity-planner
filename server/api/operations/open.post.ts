@@ -13,7 +13,7 @@ export default defineEventHandler(async event => {
   if (!parsedBody.success) {
     throw createError({
       statusCode: 400,
-      statusMessage: '작업 연장 설정이 올바르지 않습니다.',
+      message: '작업 연장 설정이 올바르지 않습니다.',
     })
   }
 
@@ -24,7 +24,7 @@ export default defineEventHandler(async event => {
   if (body.extensionMinutes !== undefined && body.extensionUntil !== undefined) {
     throw createError({
       statusCode: 400,
-      statusMessage: '연장 시간과 종료 시각 중 하나만 선택할 수 있습니다.',
+      message: '연장 시간과 종료 시각 중 하나만 선택할 수 있습니다.',
     })
   }
 
@@ -35,7 +35,7 @@ export default defineEventHandler(async event => {
   ) {
     throw createError({
       statusCode: 400,
-      statusMessage: '정규 운영시간 외 Open에는 연장 시간 또는 종료 시각이 필요합니다.',
+      message: '정규 운영시간 외 Open에는 연장 시간 또는 종료 시각이 필요합니다.',
     })
   }
 
@@ -50,14 +50,14 @@ export default defineEventHandler(async event => {
     if (extensionUntil.getTime() <= now.getTime()) {
       throw createError({
         statusCode: 400,
-        statusMessage: '종료 시각은 현재보다 이후여야 합니다.',
+        message: '종료 시각은 현재보다 이후여야 합니다.',
       })
     }
 
     if (extensionUntil.getTime() > now.getTime() + 24 * 60 * 60 * 1000) {
       throw createError({
         statusCode: 400,
-        statusMessage: '종료 시각은 현재부터 24시간 이내여야 합니다.',
+        message: '종료 시각은 현재부터 24시간 이내여야 합니다.',
       })
     }
   }

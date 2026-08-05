@@ -11,7 +11,7 @@ export default defineEventHandler(event => {
   if (origin && origin !== getRequestURL(event).origin) {
     throw createError({
       statusCode: 403,
-      statusMessage: 'Cross-origin requests are not allowed.',
+      message: 'Cross-origin requests are not allowed.',
     })
   }
 })

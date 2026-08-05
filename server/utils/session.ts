@@ -18,7 +18,7 @@ function getSessionSecret() {
   if (typeof secret !== 'string' || secret.length < 32) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'NUXT_AUTH_SESSION_SECRET must be at least 32 characters.',
+      message: 'NUXT_AUTH_SESSION_SECRET must be at least 32 characters.',
     })
   }
 

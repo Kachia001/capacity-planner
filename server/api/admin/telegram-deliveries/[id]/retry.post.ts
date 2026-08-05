@@ -5,7 +5,7 @@ export default defineEventHandler(async event => {
   const id = Number.parseInt(getRouterParam(event, 'id') ?? '', 10)
 
   if (!Number.isSafeInteger(id) || id <= 0) {
-    throw createError({ statusCode: 400, statusMessage: '올바른 전송 ID가 필요합니다.' })
+    throw createError({ statusCode: 400, message: '올바른 전송 ID가 필요합니다.' })
   }
 
   const result = await retryTelegramDelivery(id)
@@ -13,7 +13,7 @@ export default defineEventHandler(async event => {
   if (!result) {
     throw createError({
       statusCode: 409,
-      statusMessage: '실패하거나 건너뛴 전송만 다시 시도할 수 있습니다.',
+      message: '실패하거나 건너뛴 전송만 다시 시도할 수 있습니다.',
     })
   }
 

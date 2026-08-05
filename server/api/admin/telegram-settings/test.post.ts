@@ -24,7 +24,7 @@ export default defineEventHandler(async event => {
 
   throw createError({
     statusCode: result.status === 'skipped' ? 409 : 502,
-    statusMessage:
+    message:
       result.status === 'skipped'
         ? result.reason === 'disabled'
           ? 'Telegram 알림이 비활성화되어 있습니다.'
