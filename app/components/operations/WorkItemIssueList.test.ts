@@ -15,9 +15,9 @@ const issue: OperationWorkItemIssue = {
   createdByName: '테스트 작업자',
   createdByEmail: 'worker@capacity-planner.local',
   statusUpdatedBy: null,
-  statusUpdatedAt: null,
   createdAt: '2026-07-31T00:00:00.000Z',
   updatedAt: '2026-07-31T00:00:00.000Z',
+  closedAt: null,
 }
 
 describe('WorkItemIssueList permissions', () => {
@@ -49,5 +49,27 @@ describe('WorkItemIssueList permissions', () => {
 
     expect(wrapper.emitted('editContent')).toEqual([[issue]])
     expect(wrapper.emitted('updateStatus')).toEqual([[41, 'in_review']])
+    expect(wrapper.find('option[value="resolved"]').exists()).toBe(false)
+  })
+
+  it('locks a resolved issue and displays its closing time', () => {
+    const resolvedIssue: OperationWorkItemIssue = {
+      ...issue,
+      status: 'resolved',
+      updatedAt: '2026-07-31T01:30:00.000Z',
+      closedAt: '2026-07-31T01:30:00.000Z',
+    }
+    const wrapper = mount(WorkItemIssueList, {
+      props: {
+        issues: [resolvedIssue],
+        canManage: true,
+        pending: false,
+      },
+    })
+
+    expect(wrapper.find('select').exists()).toBe(false)
+    expect(wrapper.find('button').exists()).toBe(false)
+    expect(wrapper.text()).toContain('처리완료된 이슈는 변경할 수 없습니다.')
+    expect(wrapper.text()).toContain('마감')
   })
 })
