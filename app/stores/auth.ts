@@ -6,11 +6,32 @@ export type AppUserProfile = {
   displayName: string | null
   role: AppRole
   authEmail?: string
+  mustChangePassword: boolean
 }
 
 type AuthUser = {
   id: string
   email: string
+}
+
+function getAuthErrorMessage(error: unknown, fallback: string) {
+  if (typeof error === 'object' && error && 'data' in error) {
+    const data = error.data
+    if (typeof data === 'object' && data) {
+      if ('message' in data && typeof data.message === 'string' && data.message.trim()) {
+        return data.message
+      }
+      if (
+        'statusMessage' in data &&
+        typeof data.statusMessage === 'string' &&
+        data.statusMessage.trim()
+      ) {
+        return data.statusMessage
+      }
+    }
+  }
+
+  return fallback
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -24,6 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isSupervisor = computed(
     () => profile.value?.role === 'admin' || profile.value?.role === 'manager',
   )
+  const requiresPasswordChange = computed(() => profile.value?.mustChangePassword === true)
 
   function setProfile(nextProfile: AppUserProfile | null) {
     profile.value = nextProfile
@@ -62,18 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
       initialized.value = true
     } catch (error) {
       setProfile(null)
-      errorMessage.value =
-        typeof error === 'object' &&
-        error &&
-        'data' in error &&
-        typeof error.data === 'object' &&
-        error.data &&
-        'statusMessage' in error.data &&
-        typeof error.data.statusMessage === 'string'
-          ? error.data.statusMessage
-          : error instanceof Error
-            ? error.message
-            : '로그인에 실패했습니다.'
+      errorMessage.value = getAuthErrorMessage(error, '로그인에 실패했습니다.')
       throw error
     } finally {
       pending.value = false
@@ -93,6 +104,25 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function changePassword(newPassword: string) {
+    pending.value = true
+    errorMessage.value = null
+
+    try {
+      const nextProfile = await $fetch<AppUserProfile>('/api/auth/change-password', {
+        method: 'POST',
+        body: { newPassword },
+      })
+      setProfile(nextProfile)
+      initialized.value = true
+    } catch (error) {
+      errorMessage.value = getAuthErrorMessage(error, '비밀번호를 변경하지 못했습니다.')
+      throw error
+    } finally {
+      pending.value = false
+    }
+  }
+
   function forceSignOut() {
     setProfile(null)
     initialized.value = true
@@ -107,9 +137,11 @@ export const useAuthStore = defineStore('auth', () => {
     errorMessage,
     isAdmin,
     isSupervisor,
+    requiresPasswordChange,
     initialize,
     signIn,
     signOut,
+    changePassword,
     forceSignOut,
   }
 })

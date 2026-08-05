@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import {
   Ban,
+  Eye,
+  KeyRound,
   Loader2,
   RefreshCw,
   RotateCcw,
@@ -33,6 +35,9 @@ interface AccountRow {
   displayName: string | null
   role: AppRole
   isActive: boolean
+  mustChangePassword: boolean
+  passwordResetAt: string | null
+  passwordChangedAt: string | null
   createdAt: string
 }
 
@@ -50,6 +55,8 @@ const createError = ref<string | null>(null)
 const createNotice = ref<string | null>(null)
 const createPending = ref(false)
 const statusPendingId = ref<string | null>(null)
+const passwordResetPendingId = ref<string | null>(null)
+const temporaryPassword = ref<{ accountId: string; loginId: string; value: string } | null>(null)
 const showCreatePanel = ref(false)
 const formFilters = reactive<AccountFilters>({ query: '', role: 'all' })
 const activeFilters = ref<AccountFilters>({ query: '', role: 'all' })
@@ -124,7 +131,7 @@ const accountTableColumns: DataTableColumn<AccountRow>[] = [
     key: 'login',
     header: '로그인 ID',
     accessor: account => getLoginId(account.email),
-    width: '22%',
+    width: '19%',
     headerClass: 'px-5 py-3.5 text-[11px] font-semibold text-[#697067]',
     cellClass: 'px-5 py-4',
   },
@@ -133,7 +140,7 @@ const accountTableColumns: DataTableColumn<AccountRow>[] = [
     header: '이름',
     accessor: 'displayName',
     format: value => value || '이름 미등록',
-    width: '20%',
+    width: '17%',
     headerClass: 'px-4 py-3.5 text-[11px] font-semibold text-[#697067]',
     cellClass: 'px-4 py-4 text-sm font-medium text-[#353b34]',
   },
@@ -141,7 +148,7 @@ const accountTableColumns: DataTableColumn<AccountRow>[] = [
     key: 'role',
     header: '직책',
     accessor: 'role',
-    width: '15%',
+    width: '13%',
     headerClass: 'px-4 py-3.5 text-[11px] font-semibold text-[#697067]',
     cellClass: 'px-4 py-4',
   },
@@ -150,7 +157,7 @@ const accountTableColumns: DataTableColumn<AccountRow>[] = [
     header: '등록일',
     accessor: 'createdAt',
     format: value => formatCreatedAt(String(value)),
-    width: '15%',
+    width: '13%',
     headerClass: 'px-4 py-3.5 text-[11px] font-semibold text-[#697067]',
     cellClass: 'px-4 py-4 font-mono text-[11px] text-[#6f766d]',
   },
@@ -158,7 +165,7 @@ const accountTableColumns: DataTableColumn<AccountRow>[] = [
     key: 'status',
     header: '상태',
     accessor: account => account.isActive,
-    width: '12%',
+    width: '14%',
     headerClass: 'px-5 py-3.5 text-[11px] font-semibold text-[#697067]',
     cellClass: 'px-5 py-4',
   },
@@ -167,7 +174,7 @@ const accountTableColumns: DataTableColumn<AccountRow>[] = [
     header: '관리',
     accessor: account => account.id,
     align: 'right',
-    width: '16%',
+    width: '24%',
     headerClass: 'px-5 py-3.5 text-[11px] font-semibold text-[#697067]',
     cellClass: 'px-5 py-4',
   },
@@ -297,6 +304,66 @@ async function changeAccountStatus(account: AccountRow) {
   } finally {
     statusPendingId.value = null
   }
+}
+
+async function resetAccountPassword(account: AccountRow) {
+  if (!canChangeStatus(account) || passwordResetPendingId.value) return
+
+  const loginId = getLoginId(account.email)
+  const confirmed = await useGlobalAlertStore().confirm({
+    variant: 'warning',
+    title: '비밀번호 초기화',
+    message: `${loginId} 계정의 비밀번호를 초기화하시겠습니까? 기존 세션과 비밀번호는 즉시 무효화됩니다.`,
+    confirmLabel: '초기화',
+    cancelLabel: '취소',
+  })
+
+  if (!confirmed) return
+
+  passwordResetPendingId.value = account.id
+  createNotice.value = null
+  temporaryPassword.value = null
+  errorMessage.value = null
+
+  try {
+    const result = await $fetch<{
+      id: string
+      temporaryPassword: string
+      mustChangePassword: boolean
+      passwordResetAt: string
+    }>(`/api/users/${account.id}/password-reset`, { method: 'POST' })
+
+    account.mustChangePassword = result.mustChangePassword
+    account.passwordResetAt = result.passwordResetAt
+    account.passwordChangedAt = null
+    temporaryPassword.value = {
+      accountId: account.id,
+      loginId,
+      value: result.temporaryPassword,
+    }
+    createNotice.value = `${loginId} 계정의 비밀번호를 초기화했습니다.`
+  } catch (error) {
+    errorMessage.value = getRequestErrorMessage(error, '비밀번호를 초기화하지 못했습니다.')
+  } finally {
+    passwordResetPendingId.value = null
+  }
+}
+
+function showTemporaryPassword() {
+  if (!temporaryPassword.value) return
+
+  void useGlobalAlertStore().confirm({
+    variant: 'warning',
+    title: '임시 비밀번호',
+    message:
+      '이 비밀번호는 현재 화면을 벗어나면 다시 확인할 수 없습니다. 사용자에게 안전하게 전달해 주세요.',
+    confirmLabel: '확인',
+    cancelLabel: '닫기',
+    details: [
+      { label: '로그인 ID', value: temporaryPassword.value.loginId },
+      { label: '임시 비밀번호', value: temporaryPassword.value.value, tone: 'warning' },
+    ],
+  })
 }
 
 onMounted(() => {
@@ -433,13 +500,13 @@ onMounted(() => {
         </Button>
       </div>
 
-      <p
+      <div
         v-if="createNotice"
         class="mb-5 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-800"
         role="status"
       >
         <ShieldCheck class="size-4" /> {{ createNotice }}
-      </p>
+      </div>
 
       <section
         v-if="showCreatePanel"
@@ -624,20 +691,55 @@ onMounted(() => {
                 />
                 {{ account.isActive ? '활성' : '이용 정지' }}
               </p>
-              <Button
-                v-if="canChangeStatus(account)"
-                type="button"
-                :variant="account.isActive ? 'outline' : 'solid'"
-                :tone="account.isActive ? 'danger' : 'success'"
-                size="sm"
-                class="mt-3 w-full text-xs"
-                :loading="statusPendingId === account.id"
-                @click="changeAccountStatus(account)"
+              <p
+                v-if="account.mustChangePassword"
+                class="mt-1 text-[10px] font-semibold text-amber-700"
               >
-                <Ban v-if="account.isActive" class="size-3.5" />
-                <UserCheck v-else class="size-3.5" />
-                {{ account.isActive ? '이용 정지' : '이용 재개' }}
-              </Button>
+                임시 비밀번호 변경 대기
+              </p>
+              <p
+                v-else-if="account.passwordResetAt && account.passwordChangedAt"
+                class="mt-1 text-[10px] font-semibold text-sky-700"
+              >
+                초기화 후 변경 완료
+              </p>
+              <div v-if="canChangeStatus(account)" class="mt-3 grid grid-cols-2 gap-2">
+                <Button
+                  v-if="temporaryPassword?.accountId === account.id"
+                  type="button"
+                  variant="solid"
+                  tone="success"
+                  size="sm"
+                  class="col-span-2 text-xs"
+                  @click="showTemporaryPassword"
+                >
+                  <Eye class="size-3.5" /> 임시 비밀번호 보기
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  tone="warning"
+                  size="sm"
+                  class="text-xs"
+                  :loading="passwordResetPendingId === account.id"
+                  @click="resetAccountPassword(account)"
+                >
+                  <KeyRound class="size-3.5" /> 비밀번호 초기화
+                </Button>
+                <Button
+                  type="button"
+                  :variant="account.isActive ? 'outline' : 'solid'"
+                  :tone="account.isActive ? 'danger' : 'success'"
+                  size="sm"
+                  class="text-xs"
+                  :loading="statusPendingId === account.id"
+                  @click="changeAccountStatus(account)"
+                >
+                  <Ban v-if="account.isActive" class="size-3.5" />
+                  <UserCheck v-else class="size-3.5" />
+                  {{ account.isActive ? '이용 정지' : '이용 재개' }}
+                </Button>
+              </div>
             </article>
           </section>
 
@@ -675,23 +777,58 @@ onMounted(() => {
                   />
                   {{ row.isActive ? '활성' : '이용 정지' }}
                 </span>
+                <p
+                  v-if="row.mustChangePassword"
+                  class="mt-1 text-[10px] font-semibold text-amber-700"
+                >
+                  변경 대기
+                </p>
+                <p
+                  v-else-if="row.passwordResetAt && row.passwordChangedAt"
+                  class="mt-1 text-[10px] font-semibold text-sky-700"
+                >
+                  변경 완료
+                </p>
               </template>
 
               <template #cell-actions="{ row }">
-                <Button
-                  v-if="canChangeStatus(row)"
-                  type="button"
-                  :variant="row.isActive ? 'outline' : 'solid'"
-                  :tone="row.isActive ? 'danger' : 'success'"
-                  size="sm"
-                  class="text-[11px]"
-                  :loading="statusPendingId === row.id"
-                  @click="changeAccountStatus(row)"
-                >
-                  <Ban v-if="row.isActive" class="size-3.5" />
-                  <UserCheck v-else class="size-3.5" />
-                  {{ row.isActive ? '이용 정지' : '이용 재개' }}
-                </Button>
+                <div v-if="canChangeStatus(row)" class="flex flex-wrap justify-end gap-2">
+                  <Button
+                    v-if="temporaryPassword?.accountId === row.id"
+                    type="button"
+                    variant="solid"
+                    tone="success"
+                    size="sm"
+                    class="text-[11px]"
+                    @click="showTemporaryPassword"
+                  >
+                    <Eye class="size-3.5" /> 임시 비밀번호 보기
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    tone="warning"
+                    size="sm"
+                    class="text-[11px]"
+                    :loading="passwordResetPendingId === row.id"
+                    @click="resetAccountPassword(row)"
+                  >
+                    <KeyRound class="size-3.5" /> 비밀번호 초기화
+                  </Button>
+                  <Button
+                    type="button"
+                    :variant="row.isActive ? 'outline' : 'solid'"
+                    :tone="row.isActive ? 'danger' : 'success'"
+                    size="sm"
+                    class="text-[11px]"
+                    :loading="statusPendingId === row.id"
+                    @click="changeAccountStatus(row)"
+                  >
+                    <Ban v-if="row.isActive" class="size-3.5" />
+                    <UserCheck v-else class="size-3.5" />
+                    {{ row.isActive ? '이용 정지' : '이용 재개' }}
+                  </Button>
+                </div>
               </template>
             </DataTable>
           </section>

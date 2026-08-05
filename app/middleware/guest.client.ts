@@ -4,6 +4,9 @@ export default defineNuxtRouteMiddleware(async () => {
   await auth.initialize()
 
   if (auth.user && auth.profile) {
+    if (auth.requiresPasswordChange) {
+      return navigateTo('/change-password')
+    }
     return navigateTo(auth.isSupervisor ? '/admin' : '/bay')
   }
 

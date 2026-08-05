@@ -1,9 +1,16 @@
-const DEFAULT_LAYOUT_ROUTES = new Set(['/login', '/unauthorized'])
+const DEFAULT_LAYOUT_ROUTES = new Set(['/login', '/change-password', '/unauthorized'])
 
 export default defineNuxtRouteMiddleware(async to => {
   const auth = useAuthStore()
 
   await auth.initialize()
+
+  if (auth.requiresPasswordChange && to.path !== '/change-password') {
+    return navigateTo({
+      path: '/change-password',
+      query: to.path === '/login' ? undefined : { redirect: to.fullPath },
+    })
+  }
 
   if (DEFAULT_LAYOUT_ROUTES.has(to.path)) {
     setPageLayout('default')

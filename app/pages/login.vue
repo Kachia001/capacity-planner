@@ -30,11 +30,18 @@ async function submit() {
     await auth.signIn(loginId.value, password.value)
 
     const defaultDestination = auth.isSupervisor ? '/admin' : '/bay'
+    if (auth.requiresPasswordChange) {
+      await router.push({
+        path: '/change-password',
+        query: typeof route.query.redirect === 'string' ? { redirect: route.query.redirect } : {},
+      })
+      return
+    }
     await router.push(
       typeof route.query.redirect === 'string' ? route.query.redirect : defaultDestination,
     )
-  } catch (error) {
-    formError.value = error instanceof Error ? error.message : '인증 요청에 실패했습니다.'
+  } catch {
+    formError.value = auth.errorMessage || '인증 요청에 실패했습니다.'
   }
 }
 </script>
