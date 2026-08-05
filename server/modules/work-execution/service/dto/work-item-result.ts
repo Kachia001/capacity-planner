@@ -26,6 +26,7 @@ export type ReportWorkItemIssueResult = {
     createdByName: string | null
     createdAt: Date
     updatedAt: Date
+    closedAt: Date | null
   }
   notification:
     | {

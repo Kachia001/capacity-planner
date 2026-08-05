@@ -37,7 +37,7 @@ export type WorkItemIssueRecord = Omit<NewWorkItemIssue, 'status' | 'createdBy'>
   status: WorkItemIssueStatus
   createdBy: string | null
   statusUpdatedBy: string | null
-  statusUpdatedAt: Date | null
+  closedAt: Date | null
 }
 
 export type WorkItemProps = {

@@ -31,6 +31,7 @@ export class ReportWorkItemIssueController {
           ...result.issue,
           createdAt: result.issue.createdAt.toISOString(),
           updatedAt: result.issue.updatedAt.toISOString(),
+          closedAt: result.issue.closedAt?.toISOString() ?? null,
         },
         telegram: result.notification,
       }

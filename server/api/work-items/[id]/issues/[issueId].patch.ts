@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm'
+import { and, eq, ne } from 'drizzle-orm'
 import { z } from 'zod'
 import {
   UpdateWorkItemIssueContentRequestSchema,
@@ -19,13 +19,20 @@ export default defineEventHandler(async event =>
       await readBody(event),
       '이슈 내용을 확인해 주세요.',
     )
-    const [issue] = await useDb()
+    const db = useDb()
+    const [issue] = await db
       .update(workItemIssues)
       .set({
         note: body.note,
         updatedAt: new Date(),
       })
-      .where(and(eq(workItemIssues.id, issueId), eq(workItemIssues.workItemId, workItemId)))
+      .where(
+        and(
+          eq(workItemIssues.id, issueId),
+          eq(workItemIssues.workItemId, workItemId),
+          ne(workItemIssues.status, 'resolved'),
+        ),
+      )
       .returning({
         id: workItemIssues.id,
         workItemId: workItemIssues.workItemId,
@@ -34,6 +41,19 @@ export default defineEventHandler(async event =>
       })
 
     if (!issue) {
+      const [existingIssue] = await db
+        .select({ status: workItemIssues.status })
+        .from(workItemIssues)
+        .where(and(eq(workItemIssues.id, issueId), eq(workItemIssues.workItemId, workItemId)))
+        .limit(1)
+
+      if (existingIssue?.status === 'resolved') {
+        throw createError({
+          statusCode: 409,
+          statusMessage: '처리완료된 이슈는 변경할 수 없습니다.',
+        })
+      }
+
       throw createError({ statusCode: 404, statusMessage: '작업 이슈를 찾을 수 없습니다.' })
     }
 

@@ -10,9 +10,10 @@ export const UpdateWorkItemIssueStatusResponseSchema = z.object({
     id: z.number().int().positive(),
     workItemId: z.number().int().positive(),
     status: WorkItemIssueStatusSchema,
-    statusUpdatedBy: z.string().uuid(),
-    statusUpdatedAt: z.string().datetime(),
+    statusUpdatedBy: z.string().uuid().nullable(),
+    createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
+    closedAt: z.string().datetime().nullable(),
   }),
 })
 

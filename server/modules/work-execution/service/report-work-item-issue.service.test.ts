@@ -69,7 +69,7 @@ class InMemoryIssueRepository implements WorkItemIssueRepository {
       ...issue,
       id: this.issues.length + 1,
       statusUpdatedBy: null,
-      statusUpdatedAt: null,
+      closedAt: null,
     }
     this.issues.push(created)
     return created

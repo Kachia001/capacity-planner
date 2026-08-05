@@ -1,0 +1,1 @@
+ALTER TABLE "work_item_issues" DROP COLUMN "status_updated_at";

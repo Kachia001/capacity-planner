@@ -214,9 +214,9 @@ export const workItemIssues = pgTable(
     statusUpdatedBy: uuid('status_updated_by').references(() => appUsers.authUserId, {
       onDelete: 'set null',
     }),
-    statusUpdatedAt: timestamp('status_updated_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    closedAt: timestamp('closed_at', { withTimezone: true }),
   },
   table => ({
     workItemStatusIndex: index('work_item_issues_item_status_idx').on(

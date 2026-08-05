@@ -75,9 +75,9 @@ export interface OperationWorkItemIssue {
   createdByName: string | null
   createdByEmail: string | null
   statusUpdatedBy: string | null
-  statusUpdatedAt: string | null
   createdAt: string
   updatedAt: string
+  closedAt: string | null
 }
 
 export interface WorkItemSearchFilters {

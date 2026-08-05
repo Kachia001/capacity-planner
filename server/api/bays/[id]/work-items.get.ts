@@ -162,9 +162,9 @@ export default defineEventHandler(async event => {
             createdByName: appUsers.displayName,
             createdByEmail: appUsers.email,
             statusUpdatedBy: workItemIssues.statusUpdatedBy,
-            statusUpdatedAt: workItemIssues.statusUpdatedAt,
             createdAt: workItemIssues.createdAt,
             updatedAt: workItemIssues.updatedAt,
+            closedAt: workItemIssues.closedAt,
           })
           .from(workItemIssues)
           .leftJoin(appUsers, eq(workItemIssues.createdBy, appUsers.authUserId))

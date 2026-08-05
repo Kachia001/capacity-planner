@@ -22,6 +22,20 @@
       "when": 1785439745830,
       "tag": "0002_remove_legacy_work_item_issue_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785944521623,
+      "tag": "0003_exotic_chamber",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785944536431,
+      "tag": "0004_smiling_cammi",
+      "breakpoints": true
     }
   ]
 }

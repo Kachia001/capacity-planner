@@ -17,6 +17,7 @@ export const ReportWorkItemIssueResponseSchema = z.object({
     createdByName: z.string().nullable(),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
+    closedAt: z.string().datetime().nullable(),
   }),
   telegram: z.discriminatedUnion('status', [
     z.object({
