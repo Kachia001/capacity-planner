@@ -104,14 +104,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function changePassword(newPassword: string) {
+  async function changePassword(newPassword: string, currentPassword?: string) {
     pending.value = true
     errorMessage.value = null
 
     try {
       const nextProfile = await $fetch<AppUserProfile>('/api/auth/change-password', {
         method: 'POST',
-        body: { newPassword },
+        body: { currentPassword, newPassword },
       })
       setProfile(nextProfile)
       initialized.value = true

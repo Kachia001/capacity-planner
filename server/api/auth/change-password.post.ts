@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { appUsers, passwordResetEvents } from '../../db/schema'
 
 const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1).max(256).optional(),
   newPassword: z.string().min(8, '새 비밀번호는 8자 이상이어야 합니다.').max(256),
 })
 
@@ -10,14 +11,28 @@ export default defineEventHandler(async event => {
   const profile = await requireSessionUser(event)
   const body = changePasswordSchema.parse(await readBody(event))
 
-  if (!profile.mustChangePassword) {
-    throw createError({ statusCode: 409, message: '비밀번호 변경이 필요한 상태가 아닙니다.' })
+  const isForcedChange = profile.mustChangePassword
+
+  if (!isForcedChange && profile.role !== 'manager' && profile.role !== 'worker') {
+    throw createError({ statusCode: 403, message: '비밀번호를 직접 변경할 권한이 없습니다.' })
+  }
+
+  if (!isForcedChange) {
+    if (!body.currentPassword) {
+      throw createError({ statusCode: 400, message: '현재 비밀번호를 입력해 주세요.' })
+    }
+
+    if (!(await verifyPassword(profile.passwordHash, body.currentPassword))) {
+      throw createError({ statusCode: 400, message: '현재 비밀번호가 올바르지 않습니다.' })
+    }
   }
 
   if (await verifyPassword(profile.passwordHash, body.newPassword)) {
     throw createError({
       statusCode: 400,
-      message: '임시 비밀번호와 다른 새 비밀번호를 입력해 주세요.',
+      message: isForcedChange
+        ? '임시 비밀번호와 다른 새 비밀번호를 입력해 주세요.'
+        : '현재 비밀번호와 다른 새 비밀번호를 입력해 주세요.',
     })
   }
 
@@ -41,7 +56,7 @@ export default defineEventHandler(async event => {
         and(
           eq(appUsers.authUserId, profile.authUserId),
           eq(appUsers.authVersion, profile.authVersion),
-          eq(appUsers.mustChangePassword, true),
+          eq(appUsers.mustChangePassword, isForcedChange),
         ),
       )
       .returning()
@@ -53,24 +68,26 @@ export default defineEventHandler(async event => {
       })
     }
 
-    const [openReset] = await tx
-      .select({ id: passwordResetEvents.id })
-      .from(passwordResetEvents)
-      .where(
-        and(
-          eq(passwordResetEvents.userId, profile.authUserId),
-          isNull(passwordResetEvents.changedAt),
-          isNull(passwordResetEvents.supersededAt),
-        ),
-      )
-      .orderBy(desc(passwordResetEvents.resetAt))
-      .limit(1)
+    if (isForcedChange) {
+      const [openReset] = await tx
+        .select({ id: passwordResetEvents.id })
+        .from(passwordResetEvents)
+        .where(
+          and(
+            eq(passwordResetEvents.userId, profile.authUserId),
+            isNull(passwordResetEvents.changedAt),
+            isNull(passwordResetEvents.supersededAt),
+          ),
+        )
+        .orderBy(desc(passwordResetEvents.resetAt))
+        .limit(1)
 
-    if (openReset) {
-      await tx
-        .update(passwordResetEvents)
-        .set({ changedAt })
-        .where(eq(passwordResetEvents.id, openReset.id))
+      if (openReset) {
+        await tx
+          .update(passwordResetEvents)
+          .set({ changedAt })
+          .where(eq(passwordResetEvents.id, openReset.id))
+      }
     }
 
     return nextProfile
