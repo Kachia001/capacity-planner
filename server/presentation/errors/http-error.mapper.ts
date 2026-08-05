@@ -7,6 +7,7 @@ import { RequestValidationError } from './request-validation.error'
 const statusByErrorCode: Partial<Record<ApiErrorCode, number>> = {
   REQUEST_VALIDATION_FAILED: 400,
   UNAUTHENTICATED: 401,
+  ACCOUNT_DISABLED: 401,
   FORBIDDEN: 403,
   WORK_ITEM_NOT_FOUND: 404,
   WORK_ITEM_INVALID_TRANSITION: 409,

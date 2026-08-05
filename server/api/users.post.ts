@@ -65,6 +65,7 @@ export default defineEventHandler(async event => {
     email: created.email,
     displayName: created.displayName,
     role: created.role,
+    isActive: created.isActive,
     createdAt: created.createdAt,
   }
 })

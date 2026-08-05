@@ -17,10 +17,18 @@ export default defineEventHandler(async event => {
   const [user] = await db.select().from(appUsers).where(eq(appUsers.email, email)).limit(1)
   const now = new Date()
 
-  if (!user || !user.isActive) {
+  if (!user) {
     throw createError({
       statusCode: 401,
       statusMessage: '아이디 또는 비밀번호가 올바르지 않습니다.',
+    })
+  }
+
+  if (!user.isActive) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: '이용이 정지된 계정입니다.',
+      data: { code: 'ACCOUNT_DISABLED' },
     })
   }
 

@@ -37,7 +37,16 @@ export async function requireSessionUser(event: H3Event) {
     .where(eq(appUsers.authUserId, session.userId))
     .limit(1)
 
-  if (!profile || !profile.isActive || profile.authVersion !== session.authVersion) {
+  if (profile && !profile.isActive) {
+    clearSessionCookie(event)
+    throw createError({
+      statusCode: 401,
+      statusMessage: '이용이 정지된 계정입니다.',
+      data: { code: 'ACCOUNT_DISABLED' },
+    })
+  }
+
+  if (!profile || profile.authVersion !== session.authVersion) {
     clearSessionCookie(event)
     throw createError({
       statusCode: 401,
