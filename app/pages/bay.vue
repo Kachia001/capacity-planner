@@ -2,6 +2,7 @@
 import { Loader2, ShieldAlert } from '@lucide/vue'
 import IssueContentEditDialog from '@/components/operations/IssueContentEditDialog.vue'
 import IssueReportDialog from '@/components/operations/IssueReportDialog.vue'
+import IssueResolutionDialog from '@/components/operations/IssueResolutionDialog.vue'
 import ManagementOverview from '@/components/operations/ManagementOverview.vue'
 import OperationControlPanel from '@/components/operations/OperationControlPanel.vue'
 import WorkerOperationsHeader from '@/components/operations/WorkerOperationsHeader.vue'
@@ -75,6 +76,12 @@ const issueEditTarget = ref<{
 } | null>(null)
 const issueEditPending = ref(false)
 const issueEditError = ref<string | null>(null)
+const issueResolutionTarget = ref<{
+  item: OperationWorkItem
+  issue: OperationWorkItemIssue
+} | null>(null)
+const issueResolutionPending = ref(false)
+const issueResolutionError = ref<string | null>(null)
 const filters = reactive<WorkItemSearchFilters>({
   q: '',
   status: 'all',
@@ -691,19 +698,70 @@ async function updateIssueStatus(
   issueId: number,
   status: WorkItemIssueStatus,
 ) {
+  const issue = item.issues.find(candidate => candidate.id === issueId)
+
+  if (issue?.status === 'in_review' && status === 'resolved') {
+    issueResolutionError.value = null
+    issueResolutionTarget.value = { item, issue }
+    return
+  }
+
+  await persistIssueStatus(item, issueId, status)
+}
+
+async function persistIssueStatus(
+  item: OperationWorkItem,
+  issueId: number,
+  status: WorkItemIssueStatus,
+  resolutionNote?: string | null,
+) {
   mutationItemId.value = item.id
 
   try {
     await requireAuthenticated()
-    await updateWorkItemIssueStatus(item.id, issueId, status)
+    await updateWorkItemIssueStatus(item.id, issueId, status, resolutionNote)
     showNotice('이슈 상태를 변경했습니다.', 'success')
     await refreshAfterMutation()
     await revealWorkItem(item.id)
+    return null
   } catch (error) {
-    showNotice(getRequestErrorMessage(error, '이슈 상태를 변경하지 못했습니다.'), 'error')
+    const message = getRequestErrorMessage(error, '이슈 상태를 변경하지 못했습니다.')
+    showNotice(message, 'error')
     await loadWorkItems()
+    return message
   } finally {
     mutationItemId.value = null
+  }
+}
+
+function closeIssueResolution() {
+  if (!issueResolutionPending.value) {
+    issueResolutionTarget.value = null
+    issueResolutionError.value = null
+  }
+}
+
+async function submitIssueResolution(resolutionNote: string | null) {
+  const target = issueResolutionTarget.value
+  if (!target) return
+
+  issueResolutionPending.value = true
+  issueResolutionError.value = null
+
+  try {
+    const errorMessage = await persistIssueStatus(
+      target.item,
+      target.issue.id,
+      'resolved',
+      resolutionNote,
+    )
+    if (errorMessage) {
+      issueResolutionError.value = errorMessage
+      return
+    }
+    issueResolutionTarget.value = null
+  } finally {
+    issueResolutionPending.value = false
   }
 }
 
@@ -901,6 +959,15 @@ onBeforeUnmount(() => {
       :error-message="issueEditError"
       @submit="submitIssueContentEdit"
       @close="closeIssueContentEdit"
+    />
+
+    <IssueResolutionDialog
+      v-if="issueResolutionTarget"
+      :issue="issueResolutionTarget.issue"
+      :pending="issueResolutionPending"
+      :error-message="issueResolutionError"
+      @submit="submitIssueResolution"
+      @close="closeIssueResolution"
     />
   </template>
 </template>

@@ -58,8 +58,11 @@ function availableStatusOptions(status: WorkItemIssueStatus) {
   ] satisfies { value: WorkItemIssueStatus; label: string }[]
 }
 
-function updateStatus(issueId: number, event: Event) {
-  emit('updateStatus', issueId, (event.target as HTMLSelectElement).value as WorkItemIssueStatus)
+function updateStatus(issue: OperationWorkItemIssue, event: Event) {
+  const select = event.target as HTMLSelectElement
+  const status = select.value as WorkItemIssueStatus
+  select.value = issue.status
+  emit('updateStatus', issue.id, status)
 }
 </script>
 
@@ -86,6 +89,15 @@ function updateStatus(issueId: number, event: Event) {
         <span class="ml-auto font-mono text-[10px] text-zinc-400">#{{ issue.id }}</span>
       </div>
       <p class="mt-2 whitespace-pre-wrap leading-5 text-zinc-700">{{ issue.note }}</p>
+      <div
+        v-if="issue.status === 'resolved' && issue.resolutionNote"
+        class="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5"
+      >
+        <p class="font-semibold text-emerald-900">처리 내용</p>
+        <p class="mt-1 whitespace-pre-wrap leading-5 text-emerald-800">
+          {{ issue.resolutionNote }}
+        </p>
+      </div>
       <div class="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-zinc-500">
         <span>{{ issue.createdByName || issue.createdByEmail || '등록자 미확인' }}</span>
         <span>생성 {{ formatDateTime(issue.createdAt) }}</span>
@@ -104,7 +116,7 @@ function updateStatus(issueId: number, event: Event) {
             :value="issue.status"
             :disabled="props.pending"
             class="h-9 rounded-md border border-zinc-300 bg-white px-2 text-xs font-semibold text-zinc-800 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:cursor-wait disabled:bg-zinc-100"
-            @change="updateStatus(issue.id, $event)"
+            @change="updateStatus(issue, $event)"
           >
             <option
               v-for="option in availableStatusOptions(issue.status)"

@@ -11,6 +11,7 @@ const issue: OperationWorkItemIssue = {
   category: 'work_delay',
   status: 'unconfirmed',
   note: '후속 자재 입고까지 작업이 지연됩니다.',
+  resolutionNote: null,
   createdBy: 'bf83ac93-8ed3-41f8-b6a6-071e47dc40df',
   createdByName: '테스트 작업자',
   createdByEmail: 'worker@capacity-planner.local',
@@ -58,6 +59,7 @@ describe('WorkItemIssueList permissions', () => {
       status: 'resolved',
       updatedAt: '2026-07-31T01:30:00.000Z',
       closedAt: '2026-07-31T01:30:00.000Z',
+      resolutionNote: '대체 자재로 교체하여 작업을 마무리했습니다.',
     }
     const wrapper = mount(WorkItemIssueList, {
       props: {
@@ -71,5 +73,7 @@ describe('WorkItemIssueList permissions', () => {
     expect(wrapper.find('button').exists()).toBe(false)
     expect(wrapper.text()).toContain('처리완료된 이슈는 변경할 수 없습니다.')
     expect(wrapper.text()).toContain('마감')
+    expect(wrapper.text()).toContain('처리 내용')
+    expect(wrapper.text()).toContain(resolvedIssue.resolutionNote)
   })
 })

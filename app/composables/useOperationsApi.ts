@@ -169,8 +169,9 @@ export async function updateWorkItemIssueStatus(
   workItemId: number,
   issueId: number,
   status: WorkItemIssueStatus,
+  resolutionNote?: string | null,
 ) {
-  const body: UpdateWorkItemIssueStatusRequest = { status }
+  const body: UpdateWorkItemIssueStatusRequest = { status, resolutionNote }
 
   return await $fetch<UpdateWorkItemIssueStatusResponse>(
     `/api/work-items/${workItemId}/issues/${issueId}/status`,

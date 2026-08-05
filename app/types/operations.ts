@@ -71,6 +71,7 @@ export interface OperationWorkItemIssue {
   category: WorkItemIssueCategory
   status: WorkItemIssueStatus
   note: string
+  resolutionNote: string | null
   createdBy: string | null
   createdByName: string | null
   createdByEmail: string | null
