@@ -1,0 +1,1 @@
+ALTER TABLE "work_item_issues" ADD COLUMN "resolution_note" text;

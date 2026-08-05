@@ -158,6 +158,7 @@ export default defineEventHandler(async event => {
             category: workItemIssues.category,
             status: workItemIssues.status,
             note: workItemIssues.note,
+            resolutionNote: workItemIssues.resolutionNote,
             createdBy: workItemIssues.createdBy,
             createdByName: appUsers.displayName,
             createdByEmail: appUsers.email,

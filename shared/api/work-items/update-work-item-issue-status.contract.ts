@@ -3,6 +3,7 @@ import { WorkItemIssueStatusSchema } from './work-item.contract'
 
 export const UpdateWorkItemIssueStatusRequestSchema = z.object({
   status: WorkItemIssueStatusSchema,
+  resolutionNote: z.string().trim().max(1000).nullable().optional(),
 })
 
 export const UpdateWorkItemIssueStatusResponseSchema = z.object({
@@ -10,6 +11,7 @@ export const UpdateWorkItemIssueStatusResponseSchema = z.object({
     id: z.number().int().positive(),
     workItemId: z.number().int().positive(),
     status: WorkItemIssueStatusSchema,
+    resolutionNote: z.string().nullable(),
     statusUpdatedBy: z.string().uuid().nullable(),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),

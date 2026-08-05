@@ -10,6 +10,7 @@ const issueSelection = {
   id: workItemIssues.id,
   workItemId: workItemIssues.workItemId,
   status: workItemIssues.status,
+  resolutionNote: workItemIssues.resolutionNote,
   statusUpdatedBy: workItemIssues.statusUpdatedBy,
   createdAt: workItemIssues.createdAt,
   updatedAt: workItemIssues.updatedAt,
@@ -18,7 +19,14 @@ const issueSelection = {
 
 type SelectedIssue = Pick<
   WorkItemIssue,
-  'id' | 'workItemId' | 'status' | 'statusUpdatedBy' | 'createdAt' | 'updatedAt' | 'closedAt'
+  | 'id'
+  | 'workItemId'
+  | 'status'
+  | 'resolutionNote'
+  | 'statusUpdatedBy'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'closedAt'
 >
 
 function serializeIssue(issue: SelectedIssue) {
@@ -63,6 +71,7 @@ export default defineEventHandler(async event => {
     .update(workItemIssues)
     .set({
       status: body.status,
+      resolutionNote: body.status === 'resolved' ? body.resolutionNote?.trim() || null : null,
       statusUpdatedBy: profile.authUserId,
       updatedAt: now,
       closedAt: body.status === 'resolved' ? now : null,

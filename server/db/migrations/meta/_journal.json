@@ -43,6 +43,13 @@
       "when": 1785948833245,
       "tag": "0005_quick_imperial_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785965631718,
+      "tag": "0006_bouncy_amazoness",
+      "breakpoints": true
     }
   ]
 }

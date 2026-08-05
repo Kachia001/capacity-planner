@@ -231,6 +231,7 @@ export const workItemIssues = pgTable(
     category: workItemIssueCategory('category').notNull(),
     status: workItemIssueStatus('status').notNull().default('unconfirmed'),
     note: text('note').notNull(),
+    resolutionNote: text('resolution_note'),
     createdBy: uuid('created_by').references(() => appUsers.authUserId, {
       onDelete: 'set null',
     }),
