@@ -644,7 +644,6 @@ async function submitIssueReport(category: WorkItemIssueCategory, note: string) 
   } catch (error) {
     issueReportError.value = getRequestErrorMessage(error, '이슈를 등록하지 못했습니다.')
   } finally {
-    showNotice('ㅇㅁㄴㅇㄴㅁ', 'success')
     mutationItemId.value = null
     issueReportPending.value = false
   }
