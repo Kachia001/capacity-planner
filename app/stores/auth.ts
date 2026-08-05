@@ -93,6 +93,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  function forceSignOut() {
+    setProfile(null)
+    initialized.value = true
+    pending.value = false
+  }
+
   return {
     user,
     profile,
@@ -104,5 +110,6 @@ export const useAuthStore = defineStore('auth', () => {
     initialize,
     signIn,
     signOut,
+    forceSignOut,
   }
 })

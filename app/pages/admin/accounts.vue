@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  Ban,
   Loader2,
   RefreshCw,
   RotateCcw,
@@ -7,6 +8,7 @@ import {
   ShieldCheck,
   TriangleAlert,
   UserPlus,
+  UserCheck,
   UsersRound,
   X,
 } from '@lucide/vue'
@@ -30,6 +32,7 @@ interface AccountRow {
   email: string
   displayName: string | null
   role: AppRole
+  isActive: boolean
   createdAt: string
 }
 
@@ -46,6 +49,7 @@ const errorMessage = ref<string | null>(null)
 const createError = ref<string | null>(null)
 const createNotice = ref<string | null>(null)
 const createPending = ref(false)
+const statusPendingId = ref<string | null>(null)
 const showCreatePanel = ref(false)
 const formFilters = reactive<AccountFilters>({ query: '', role: 'all' })
 const activeFilters = ref<AccountFilters>({ query: '', role: 'all' })
@@ -120,7 +124,7 @@ const accountTableColumns: DataTableColumn<AccountRow>[] = [
     key: 'login',
     header: '로그인 ID',
     accessor: account => getLoginId(account.email),
-    width: '25%',
+    width: '22%',
     headerClass: 'px-5 py-3.5 text-[11px] font-semibold text-[#697067]',
     cellClass: 'px-5 py-4',
   },
@@ -129,7 +133,7 @@ const accountTableColumns: DataTableColumn<AccountRow>[] = [
     header: '이름',
     accessor: 'displayName',
     format: value => value || '이름 미등록',
-    width: '23%',
+    width: '20%',
     headerClass: 'px-4 py-3.5 text-[11px] font-semibold text-[#697067]',
     cellClass: 'px-4 py-4 text-sm font-medium text-[#353b34]',
   },
@@ -137,7 +141,7 @@ const accountTableColumns: DataTableColumn<AccountRow>[] = [
     key: 'role',
     header: '직책',
     accessor: 'role',
-    width: '18%',
+    width: '15%',
     headerClass: 'px-4 py-3.5 text-[11px] font-semibold text-[#697067]',
     cellClass: 'px-4 py-4',
   },
@@ -146,14 +150,22 @@ const accountTableColumns: DataTableColumn<AccountRow>[] = [
     header: '등록일',
     accessor: 'createdAt',
     format: value => formatCreatedAt(String(value)),
-    width: '18%',
+    width: '15%',
     headerClass: 'px-4 py-3.5 text-[11px] font-semibold text-[#697067]',
     cellClass: 'px-4 py-4 font-mono text-[11px] text-[#6f766d]',
   },
   {
     key: 'status',
     header: '상태',
-    accessor: () => 'active',
+    accessor: account => account.isActive,
+    width: '12%',
+    headerClass: 'px-5 py-3.5 text-[11px] font-semibold text-[#697067]',
+    cellClass: 'px-5 py-4',
+  },
+  {
+    key: 'actions',
+    header: '관리',
+    accessor: account => account.id,
     align: 'right',
     width: '16%',
     headerClass: 'px-5 py-3.5 text-[11px] font-semibold text-[#697067]',
@@ -240,6 +252,50 @@ async function createAccount() {
     createError.value = getRequestErrorMessage(error, '계정을 생성하지 못했습니다.')
   } finally {
     createPending.value = false
+  }
+}
+
+function canChangeStatus(account: AccountRow) {
+  return auth.profile?.role === 'admin'
+    ? account.role === 'manager' || account.role === 'worker'
+    : auth.profile?.role === 'manager' && account.role === 'worker'
+}
+
+async function changeAccountStatus(account: AccountRow) {
+  if (!canChangeStatus(account) || statusPendingId.value) return
+
+  const nextIsActive = !account.isActive
+  const loginId = getLoginId(account.email)
+  const confirmed = await useGlobalAlertStore().confirm({
+    variant: nextIsActive ? 'default' : 'warning',
+    title: nextIsActive ? '계정 이용 재개' : '계정 이용 정지',
+    message: nextIsActive
+      ? `${loginId} 계정의 이용을 다시 허용하시겠습니까?`
+      : `${loginId} 계정을 즉시 이용 정지하시겠습니까? 현재 로그인되어 있다면 다음 API 요청에서 강제로 로그아웃됩니다.`,
+    confirmLabel: nextIsActive ? '이용 재개' : '이용 정지',
+    cancelLabel: '취소',
+  })
+
+  if (!confirmed) return
+
+  statusPendingId.value = account.id
+  createNotice.value = null
+  errorMessage.value = null
+
+  try {
+    const updated = await $fetch<{ id: string; isActive: boolean }>(
+      `/api/users/${account.id}/status`,
+      {
+        method: 'PATCH',
+        body: { isActive: nextIsActive },
+      },
+    )
+    account.isActive = updated.isActive
+    createNotice.value = `${loginId} 계정의 이용을 ${updated.isActive ? '재개' : '정지'}했습니다.`
+  } catch (error) {
+    errorMessage.value = getRequestErrorMessage(error, '계정 상태를 변경하지 못했습니다.')
+  } finally {
+    statusPendingId.value = null
   }
 }
 
@@ -559,10 +615,29 @@ onMounted(() => {
                 </div>
               </dl>
               <p
-                class="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700"
+                class="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold"
+                :class="account.isActive ? 'text-emerald-700' : 'text-red-700'"
               >
-                <span class="size-1.5 rounded-full bg-emerald-500" /> 활성
+                <span
+                  class="size-1.5 rounded-full"
+                  :class="account.isActive ? 'bg-emerald-500' : 'bg-red-500'"
+                />
+                {{ account.isActive ? '활성' : '이용 정지' }}
               </p>
+              <Button
+                v-if="canChangeStatus(account)"
+                type="button"
+                :variant="account.isActive ? 'outline' : 'solid'"
+                :tone="account.isActive ? 'danger' : 'success'"
+                size="sm"
+                class="mt-3 w-full text-xs"
+                :loading="statusPendingId === account.id"
+                @click="changeAccountStatus(account)"
+              >
+                <Ban v-if="account.isActive" class="size-3.5" />
+                <UserCheck v-else class="size-3.5" />
+                {{ account.isActive ? '이용 정지' : '이용 재개' }}
+              </Button>
             </article>
           </section>
 
@@ -589,12 +664,34 @@ onMounted(() => {
                 </span>
               </template>
 
-              <template #cell-status>
+              <template #cell-status="{ row }">
                 <span
-                  class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700"
+                  class="inline-flex items-center gap-1.5 text-[11px] font-semibold"
+                  :class="row.isActive ? 'text-emerald-700' : 'text-red-700'"
                 >
-                  <span class="size-1.5 rounded-full bg-emerald-500" /> 활성
+                  <span
+                    class="size-1.5 rounded-full"
+                    :class="row.isActive ? 'bg-emerald-500' : 'bg-red-500'"
+                  />
+                  {{ row.isActive ? '활성' : '이용 정지' }}
                 </span>
+              </template>
+
+              <template #cell-actions="{ row }">
+                <Button
+                  v-if="canChangeStatus(row)"
+                  type="button"
+                  :variant="row.isActive ? 'outline' : 'solid'"
+                  :tone="row.isActive ? 'danger' : 'success'"
+                  size="sm"
+                  class="text-[11px]"
+                  :loading="statusPendingId === row.id"
+                  @click="changeAccountStatus(row)"
+                >
+                  <Ban v-if="row.isActive" class="size-3.5" />
+                  <UserCheck v-else class="size-3.5" />
+                  {{ row.isActive ? '이용 정지' : '이용 재개' }}
+                </Button>
               </template>
             </DataTable>
           </section>
