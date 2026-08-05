@@ -198,8 +198,11 @@ function cancelAlert() {
       </label>
 
       <div class="mt-6 flex justify-end gap-2 border-t border-zinc-100 pt-4">
-        <Button autofocus variant="outline" @click="cancelAlert">{{ props.cancelLabel }}</Button>
+        <Button v-if="props.cancelLabel" autofocus variant="outline" @click="cancelAlert">
+          {{ props.cancelLabel }}
+        </Button>
         <Button
+          :autofocus="!props.cancelLabel"
           :variant="variantPresentation.buttonVariant"
           :disabled="!canAccept"
           @click="acceptAlert"

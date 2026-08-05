@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import { BellRing, Boxes, ChevronRight, PanelsTopLeft, UsersRound } from '@lucide/vue'
+import { BellRing, Boxes, ChevronRight, KeyRound, PanelsTopLeft, UsersRound } from '@lucide/vue'
 
 const route = useRoute()
 const auth = useAuthStore()
 
 const navigationItems = [
+  {
+    label: '비밀번호 변경',
+    caption: 'Password security',
+    to: '/change-password',
+    icon: KeyRound,
+    roles: ['manager'],
+  },
   {
     label: 'Bay 조회',
     caption: 'Bay registry',

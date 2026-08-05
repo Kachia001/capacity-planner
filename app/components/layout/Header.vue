@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LogOut } from '@lucide/vue'
+import { KeyRound, LogOut } from '@lucide/vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -59,6 +59,28 @@ async function signOut() {
             >
               {{ roleLabel }}
             </Badge>
+            <Button
+              v-if="auth.profile?.role === 'worker'"
+              data-layout="mobile"
+              as-child
+              variant="secondary"
+              size="icon-md"
+              class="sm:hidden"
+            >
+              <NuxtLink to="/change-password" aria-label="비밀번호 변경">
+                <KeyRound class="size-4" />
+              </NuxtLink>
+            </Button>
+            <Button
+              v-if="auth.profile?.role === 'worker'"
+              data-layout="desktop"
+              as-child
+              variant="secondary"
+              size="sm"
+              class="hidden sm:inline-flex"
+            >
+              <NuxtLink to="/change-password"> <KeyRound class="size-4" /> 비밀번호 변경 </NuxtLink>
+            </Button>
             <Button
               v-if="auth.user"
               data-layout="mobile"
