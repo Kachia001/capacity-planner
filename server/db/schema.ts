@@ -124,14 +124,34 @@ export const bayTemplateRows = pgTable(
   }),
 )
 
-export const bays = pgTable('bays', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  code: text('code').notNull().unique(),
-  description: text('description'),
-  status: text('status').notNull().default('active'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const workTables = pgTable(
+  'work_tables',
+  {
+    number: integer('number').primaryKey(),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => [check('work_tables_number_range', sql`${table.number} between 1 and 18`)],
+)
+
+export const bays = pgTable(
+  'bays',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    code: text('code').notNull().unique(),
+    description: text('description'),
+    tableNumber: integer('table_number').references(() => workTables.number, {
+      onDelete: 'set null',
+    }),
+    status: text('status').notNull().default('active'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => ({
+    tableUnique: uniqueIndex('bays_table_number_idx').on(table.tableNumber),
+  }),
+)
 
 export const operationControl = pgTable(
   'operation_control',
@@ -326,6 +346,7 @@ export type NewAppUser = typeof appUsers.$inferInsert
 export type PasswordResetEvent = typeof passwordResetEvents.$inferSelect
 export type Bay = typeof bays.$inferSelect
 export type NewBay = typeof bays.$inferInsert
+export type WorkTable = typeof workTables.$inferSelect
 export type OperationControl = typeof operationControl.$inferSelect
 export type TelegramSettings = typeof telegramSettings.$inferSelect
 export type TelegramDeliveryOutbox = typeof telegramDeliveryOutbox.$inferSelect

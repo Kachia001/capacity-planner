@@ -10,6 +10,7 @@ export default defineEventHandler(async event => {
       id: bays.id,
       code: bays.code,
       description: bays.description,
+      tableNumber: bays.tableNumber,
       total: sql<number>`count(${workItems.id}) filter (
         where ${workItems.voidedAt} is null
       )::int`,
@@ -48,7 +49,7 @@ export default defineEventHandler(async event => {
     .from(bays)
     .leftJoin(workItems, eq(workItems.bayId, bays.id))
     .where(eq(bays.status, 'active'))
-    .groupBy(bays.id, bays.code, bays.description)
+    .groupBy(bays.id, bays.code, bays.description, bays.tableNumber)
     .orderBy(asc(bays.code))
 
   const baySummaries = bayRows.map(row => ({

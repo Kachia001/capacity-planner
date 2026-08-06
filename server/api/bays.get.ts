@@ -10,6 +10,7 @@ export default defineEventHandler(async event => {
       id: bays.id,
       code: bays.code,
       description: bays.description,
+      tableNumber: bays.tableNumber,
     })
     .from(bays)
     .where(eq(bays.status, 'active'))

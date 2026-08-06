@@ -35,6 +35,11 @@ import type {
   VoidWorkItemRequest,
   VoidWorkItemResponse,
 } from '#shared/api/work-items/void-work-item.contract'
+import type {
+  AssignTableBayRequest,
+  WorkTableOverview,
+  WorkTablesResponse,
+} from '#shared/api/tables/table.contract'
 
 export function getRequestErrorMessage(error: unknown, fallback: string) {
   if (typeof error === 'object' && error) {
@@ -64,6 +69,22 @@ export function getRequestErrorMessage(error: unknown, fallback: string) {
 
 export async function fetchBayOptions() {
   return await $fetch<BayOption[]>('/api/bays')
+}
+
+export async function fetchWorkTables() {
+  return await $fetch<WorkTablesResponse>('/api/tables')
+}
+
+export async function fetchWorkTable(tableNumber: number) {
+  return await $fetch<WorkTableOverview>(`/api/tables/${tableNumber}`)
+}
+
+export async function assignBayToTable(tableNumber: number, bayId: string | null) {
+  const body: AssignTableBayRequest = { bayId }
+  return await $fetch<{ tableNumber: number; bayId: string | null }>(
+    `/api/tables/${tableNumber}/bay`,
+    { method: 'PUT', body },
+  )
 }
 
 export async function fetchOperationsDashboard() {

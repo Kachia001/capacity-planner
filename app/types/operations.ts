@@ -34,6 +34,7 @@ export interface BayOption {
   id: string
   code: string
   description: string | null
+  tableNumber: number | null
 }
 
 export interface OperationWorkItem {

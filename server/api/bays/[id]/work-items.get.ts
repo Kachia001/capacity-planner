@@ -58,7 +58,12 @@ export default defineEventHandler(async event => {
   )
   const db = useDb()
   const [bay] = await db
-    .select({ id: bays.id, code: bays.code, description: bays.description })
+    .select({
+      id: bays.id,
+      code: bays.code,
+      description: bays.description,
+      tableNumber: bays.tableNumber,
+    })
     .from(bays)
     .where(and(eq(bays.id, bayId), eq(bays.status, 'active')))
     .limit(1)

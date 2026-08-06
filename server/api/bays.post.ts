@@ -28,6 +28,7 @@ const createBaySchema = z
         .trim()
         .regex(/^[A-Za-z0-9_-]{2,40}$/),
       description: z.string().trim().max(300),
+      tableNumber: z.number().int().min(1).max(18),
     }),
     groups: z.array(groupSchema).min(1),
   })
@@ -81,6 +82,7 @@ export default defineEventHandler(async event => {
         .values({
           code: body.bay.code,
           description: body.bay.description || null,
+          tableNumber: body.bay.tableNumber,
         })
         .returning()
 
@@ -106,7 +108,13 @@ export default defineEventHandler(async event => {
     })
   } catch (error) {
     if (typeof error === 'object' && error && 'code' in error && error.code === '23505') {
-      throw createError({ statusCode: 409, message: '이미 존재하는 BAY 코드입니다.' })
+      const constraint = 'constraint' in error ? String(error.constraint) : ''
+      throw createError({
+        statusCode: 409,
+        message: constraint.includes('table_number')
+          ? '선택한 테이블에는 이미 BAY가 할당되어 있습니다.'
+          : '이미 존재하는 BAY 코드입니다.',
+      })
     }
     throw error
   }
