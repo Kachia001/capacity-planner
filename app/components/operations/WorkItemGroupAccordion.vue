@@ -431,7 +431,7 @@ function requestEditIssueContent(item: OperationWorkItem, issue: OperationWorkIt
                 <Button
                   variant="outline"
                   size="touch"
-                  class="min-w-28 flex-1 border-red-200 bg-white text-red-700 hover:bg-red-50"
+                  class="min-w-28 flex-1 border-red-200 bg-red-300 hover:bg-red-400 hover:text-white text-red-700"
                   :disabled="props.mutationItemId !== null"
                   @click="requestReportIssue(item)"
                 >
