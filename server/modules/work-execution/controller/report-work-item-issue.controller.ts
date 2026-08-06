@@ -8,8 +8,13 @@ import { requireAppUser } from '#server/utils/auth'
 import type { ReportWorkItemIssueService } from '../service/report-work-item-issue.service'
 import { parseWorkItemId, toActor } from './work-item-controller.helpers'
 
+type ProcessIssueNotification = (deliveryId: number) => Promise<unknown>
+
 export class ReportWorkItemIssueController {
-  constructor(private readonly service: ReportWorkItemIssueService) {}
+  constructor(
+    private readonly service: ReportWorkItemIssueService,
+    private readonly processIssueNotification: ProcessIssueNotification,
+  ) {}
 
   handle(event: H3Event): Promise<ReportWorkItemIssueResponse> {
     return handleHttpRequest(async () => {
@@ -25,6 +30,14 @@ export class ReportWorkItemIssueController {
         category: body.category,
         note: body.note,
       })
+
+      if (result.notification.status === 'queued') {
+        try {
+          await this.processIssueNotification(result.notification.deliveryId)
+        } catch (error) {
+          console.error('[telegram] Failed to immediately process queued issue notification', error)
+        }
+      }
 
       return {
         issue: {

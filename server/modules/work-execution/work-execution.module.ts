@@ -1,4 +1,5 @@
 import type { Database } from '#server/infrastructure/database/database.types'
+import { processTelegramOutbox } from '#server/utils/telegram-outbox'
 import { CancelWorkItemStartController } from './controller/cancel-work-item-start.controller'
 import { CompleteWorkItemController } from './controller/complete-work-item.controller'
 import { ReportWorkItemIssueController } from './controller/report-work-item-issue.controller'
@@ -35,6 +36,9 @@ export function createWorkExecutionModule(db: Database) {
       restoreCompletedService,
     ),
     voidWorkItemController: new VoidWorkItemController(voidService),
-    reportWorkItemIssueController: new ReportWorkItemIssueController(reportIssueService),
+    reportWorkItemIssueController: new ReportWorkItemIssueController(
+      reportIssueService,
+      deliveryId => processTelegramOutbox({ ids: [deliveryId], limit: 1 }),
+    ),
   }
 }
