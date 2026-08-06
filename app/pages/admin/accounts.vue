@@ -172,7 +172,8 @@ const accountTableColumns: DataTableColumn<AccountRow>[] = [
   {
     key: 'actions',
     header: '관리',
-    accessor: account => account.id,
+    accessor: () => '',
+    format: () => '',
     align: 'right',
     width: '24%',
     headerClass: 'px-5 py-3.5 text-[11px] font-semibold text-[#697067]',
