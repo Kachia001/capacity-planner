@@ -356,14 +356,14 @@ function requestEditIssueContent(item: OperationWorkItem, issue: OperationWorkIt
             <article
               v-for="item in group.items"
               :id="`work-item-${item.id}`"
+              :data-work-item-id="item.id"
               :key="item.id"
               tabindex="-1"
               class="scroll-mt-24 px-4 py-5 outline-none transition"
-              :class="
-                props.focusedWorkItemId === item.id
-                  ? 'bg-sky-50 ring-2 ring-inset ring-sky-400'
-                  : 'bg-white/70'
-              "
+              :class="[
+                'bg-white/70',
+                props.focusedWorkItemId === item.id ? 'work-item-query-highlight' : '',
+              ]"
             >
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
@@ -593,5 +593,32 @@ function requestEditIssueContent(item: OperationWorkItem, issue: OperationWorkIt
 .work-accordion-leave-to {
   opacity: 0;
   transform: translateY(-0.35rem);
+}
+
+@keyframes work-item-query-flash {
+  0%, 100% {
+    background-color: rgb(255 255 255 / 0.7);
+    box-shadow: none;
+  }
+  10%, 30%, 50%, 70% {
+    background-color: rgb(224 242 254);
+    box-shadow: inset 0 0 0 2px rgb(56 189 248);
+  }
+  20%, 40%, 60%, 80% {
+    background-color: rgb(240 249 255);
+    box-shadow: inset 0 0 0 1px rgb(186 230 253);
+  }
+}
+
+.work-item-query-highlight {
+  animation: work-item-query-flash 3.2s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work-item-query-highlight {
+    animation-duration: 1ms;
+    background-color: rgb(240 249 255);
+    box-shadow: inset 0 0 0 2px rgb(56 189 248);
+  }
 }
 </style>

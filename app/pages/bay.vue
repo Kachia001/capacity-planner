@@ -92,6 +92,7 @@ const filters = reactive<WorkItemSearchFilters>({
 let searchTimer: ReturnType<typeof setTimeout> | undefined
 let noticeTimer: ReturnType<typeof setTimeout> | undefined
 let requestSequence = 0
+let revealSequence = 0
 
 const isSupervisor = computed(
   () => auth.profile?.role === 'admin' || auth.profile?.role === 'manager',
@@ -239,15 +240,16 @@ async function loadWorkItems(append = false) {
 
   try {
     await requireAuthenticated()
+    const shouldLoadAllItems = usesMobileOperations.value || focusedWorkItemId.value !== null
     let response = await fetchBayWorkItems(
       bayId,
       filters,
       append ? nextCursor.value : null,
-      focusedWorkItemId.value,
-      usesMobileOperations.value ? 100 : 30,
+      null,
+      shouldLoadAllItems ? 100 : 30,
     )
 
-    if (usesMobileOperations.value && !append) {
+    if (shouldLoadAllItems && !append) {
       const allItems = [...response.items]
 
       while (response.nextCursor) {
@@ -259,7 +261,7 @@ async function loadWorkItems(append = false) {
           bayId,
           filters,
           response.nextCursor,
-          focusedWorkItemId.value,
+          null,
           100,
         )
         allItems.push(...response.items)
@@ -301,15 +303,52 @@ function showNotice(message: string, tone: 'success' | 'error') {
   }, 6000)
 }
 
-async function revealWorkItem(workItemId: number) {
-  await nextTick()
-  const workItem = document.getElementById(`work-item-${workItemId}`)
+function waitForAnimationFrame() {
+  return new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+}
 
-  if (!workItem) {
-    return
+function waitForMilliseconds(duration: number) {
+  return new Promise<void>(resolve => window.setTimeout(resolve, duration))
+}
+
+async function revealWorkItem(workItemId: number) {
+  const sequence = ++revealSequence
+  let workItem: HTMLElement | null = null
+
+  await router.isReady()
+
+  for (let attempt = 0; attempt < 90 && !workItem; attempt += 1) {
+    if (sequence !== revealSequence) return
+    await nextTick()
+    await waitForAnimationFrame()
+    workItem = document.querySelector<HTMLElement>(`[data-work-item-id="${workItemId}"]`)
   }
 
-  workItem.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  if (!workItem || sequence !== revealSequence) return
+
+  // 아코디언 확장과 폰트/레이아웃 반영이 끝난 뒤 최초 스크롤을 실행합니다.
+  await waitForAnimationFrame()
+  await waitForAnimationFrame()
+  if (sequence !== revealSequence || !workItem.isConnected) return
+
+  const alignToTarget = (behavior: ScrollBehavior) => {
+    workItem?.scrollIntoView({ behavior, block: 'start' })
+  }
+
+  alignToTarget('smooth')
+
+  // 라우터의 스크롤 복원이나 늦은 레이아웃 변경이 위치를 덮으면 동일 목표로 재정렬합니다.
+  for (const delay of [650, 700]) {
+    await waitForMilliseconds(delay)
+    if (sequence !== revealSequence || !workItem.isConnected) return
+
+    const expectedTop = Number.parseFloat(window.getComputedStyle(workItem).scrollMarginTop) || 0
+    const actualTop = workItem.getBoundingClientRect().top
+    if (Math.abs(actualTop - expectedTop) > 16) {
+      alignToTarget('smooth')
+    }
+  }
+
   workItem.focus({ preventScroll: true })
 }
 
@@ -318,6 +357,7 @@ function releaseFocusedWorkItem() {
     return
   }
 
+  revealSequence += 1
   focusedWorkItemId.value = null
   const bay = selectedBay.value
   void router.replace({
@@ -326,11 +366,17 @@ function releaseFocusedWorkItem() {
   })
 }
 
-async function chooseBay(bayId: string, updateRoute = true, workItemId: number | null = null) {
+async function chooseBay(
+  bayId: string,
+  updateRoute = true,
+  workItemId: number | null = null,
+  revealAfterLoad = true,
+) {
   if (!bayId) {
     return
   }
 
+  revealSequence += 1
   selectedBayId.value = bayId
   focusedWorkItemId.value = workItemId
   items.value = []
@@ -354,7 +400,7 @@ async function chooseBay(bayId: string, updateRoute = true, workItemId: number |
   await loadWorkItems()
   await nextTick()
 
-  if (workItemId) {
+  if (workItemId && revealAfterLoad) {
     await revealWorkItem(workItemId)
   } else if (isSupervisor.value) {
     document.getElementById('work-item-explorer')?.scrollIntoView({
@@ -380,13 +426,13 @@ async function clearFocusedWorkItem() {
     return
   }
 
+  revealSequence += 1
   focusedWorkItemId.value = null
   const bay = selectedBay.value
   await router.replace({
     path: '/bay',
     query: bay ? { targetBay: bay.code } : undefined,
   })
-  await loadWorkItems()
 }
 
 function scheduleSearch() {
@@ -803,6 +849,8 @@ function findRouteBay(target: string | null) {
 }
 
 onMounted(async () => {
+  let initialWorkItemId: number | null = null
+
   try {
     await auth.initialize()
 
@@ -825,12 +873,17 @@ onMounted(async () => {
         filters.highAltitude = null
         filters.hasIssue = null
       }
-      await chooseBay(routeBay.id, false, routeTargetWorkItem.value)
+      initialWorkItemId = routeTargetWorkItem.value
+      await chooseBay(routeBay.id, false, initialWorkItemId, false)
     }
   } catch (error) {
     bootError.value = getRequestErrorMessage(error, '운영 화면을 준비하지 못했습니다.')
   } finally {
     booting.value = false
+  }
+
+  if (initialWorkItemId && !bootError.value) {
+    await revealWorkItem(initialWorkItemId)
   }
 })
 
@@ -850,6 +903,7 @@ watch([routeTargetBay, routeTargetWorkItem], async ([targetBay, targetWorkItem])
 })
 
 onBeforeUnmount(() => {
+  revealSequence += 1
   if (searchTimer) clearTimeout(searchTimer)
   if (noticeTimer) clearTimeout(noticeTimer)
 })

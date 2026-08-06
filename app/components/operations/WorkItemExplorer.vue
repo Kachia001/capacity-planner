@@ -342,8 +342,8 @@ function workerLabel(item: OperationWorkItem) {
         class="flex flex-col gap-3 border-b border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950 sm:flex-row sm:items-center sm:justify-between sm:px-6"
       >
         <p>
-          <strong>선택한 작업 #{{ props.focusedWorkItemId }}</strong
-          >만 표시하고 있습니다. 대시보드에서 선택한 이슈 또는 활동의 작업입니다.
+          전체 작업을 표시하고 <strong>작업 #{{ props.focusedWorkItemId }}</strong
+          >의 위치로 이동했습니다.
         </p>
         <Button
           variant="outline"
@@ -351,7 +351,7 @@ function workerLabel(item: OperationWorkItem) {
           class="shrink-0 border-sky-300 bg-white text-sky-800 hover:bg-sky-100"
           @click="requestClearFocus"
         >
-          전체 작업 보기
+          강조 해제
         </Button>
       </div>
 
@@ -441,16 +441,15 @@ function workerLabel(item: OperationWorkItem) {
             <article
               v-for="item in props.items"
               :id="`work-item-${item.id}`"
+              :data-work-item-id="item.id"
               :key="item.id"
               tabindex="-1"
-              class="group flex min-h-[20rem] flex-col overflow-hidden rounded-md border bg-[#fdfefc] transition duration-200"
+              class="group flex min-h-[20rem] scroll-mt-24 flex-col overflow-hidden rounded-md border bg-[#fdfefc] transition duration-200"
               :class="[
                 item.isHighAltitude
                   ? 'border-amber-300 shadow-[0_16px_40px_-32px_rgba(146,64,14,0.55)]'
                   : 'border-zinc-200 hover:border-emerald-300 hover:shadow-[0_16px_40px_-34px_rgba(5,150,105,0.45)]',
-                props.focusedWorkItemId === item.id
-                  ? 'border-sky-500 ring-4 ring-sky-100 shadow-[0_20px_50px_-30px_rgba(2,132,199,0.7)] focus:outline-none'
-                  : '',
+                props.focusedWorkItemId === item.id ? 'work-item-query-highlight' : '',
               ]"
             >
               <div
@@ -472,12 +471,6 @@ function workerLabel(item: OperationWorkItem) {
                   </span>
                 </div>
                 <span class="flex shrink-0 items-center gap-2">
-                  <span
-                    v-if="props.focusedWorkItemId === item.id"
-                    class="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-bold text-sky-800"
-                  >
-                    선택됨
-                  </span>
                   <span class="font-mono text-xs font-bold text-zinc-500">#{{ item.id }}</span>
                 </span>
               </div>
@@ -670,3 +663,35 @@ function workerLabel(item: OperationWorkItem) {
     </div>
   </section>
 </template>
+
+<style scoped>
+@keyframes work-item-query-flash {
+  0%, 100% {
+    border-color: rgb(228 228 231);
+    background-color: rgb(253 254 252);
+    box-shadow: none;
+  }
+  10%, 30%, 50%, 70% {
+    border-color: rgb(56 189 248);
+    background-color: rgb(224 242 254);
+    box-shadow: 0 0 0 4px rgb(186 230 253 / 0.72);
+  }
+  20%, 40%, 60%, 80% {
+    border-color: rgb(186 230 253);
+    background-color: rgb(240 249 255);
+    box-shadow: 0 0 0 1px rgb(186 230 253 / 0.35);
+  }
+}
+
+.work-item-query-highlight {
+  animation: work-item-query-flash 3.2s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work-item-query-highlight {
+    animation-duration: 1ms;
+    border-color: rgb(56 189 248);
+    background-color: rgb(240 249 255);
+  }
+}
+</style>
