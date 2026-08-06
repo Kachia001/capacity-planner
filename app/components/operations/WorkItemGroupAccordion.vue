@@ -3,6 +3,7 @@ import {
   AlertCircle,
   Check,
   ChevronDown,
+  ChevronsDown,
   CircleOff,
   Layers3,
   Loader2,
@@ -130,6 +131,18 @@ function toggleGroup(groupKey: string) {
     : [...expandedGroupKeys.value, groupKey]
 }
 
+const areAllGroupsExpanded = computed(
+  () =>
+    workGroups.value.length > 0 &&
+    workGroups.value.every(group => expandedGroupKeys.value.includes(group.key)),
+)
+
+function toggleAllGroups() {
+  expandedGroupKeys.value = areAllGroupsExpanded.value
+    ? []
+    : workGroups.value.map(group => group.key)
+}
+
 function segmentWidth(value: number, total: number) {
   return total > 0 ? `${(value / total) * 100}%` : '0%'
 }
@@ -200,6 +213,24 @@ function requestEditIssueContent(item: OperationWorkItem, issue: OperationWorkIt
 
 <template>
   <div class="space-y-3">
+    <div class="flex items-center justify-end">
+      <Button
+        type="button"
+        variant="outline"
+        tone="neutral"
+        size="md"
+        class="bg-white"
+        :aria-expanded="areAllGroupsExpanded"
+        @click="toggleAllGroups"
+      >
+        {{ areAllGroupsExpanded ? '모두 접기' : '모두 펼치기' }}
+        <ChevronsDown
+          class="size-4 transition-transform duration-300 ease-in-out"
+          :class="areAllGroupsExpanded ? 'rotate-180' : ''"
+        />
+      </Button>
+    </div>
+
     <article
       v-for="(group, groupIndex) in workGroups"
       :key="group.key"
