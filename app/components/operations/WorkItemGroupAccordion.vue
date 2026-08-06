@@ -531,8 +531,8 @@ function requestEditIssueContent(item: OperationWorkItem, issue: OperationWorkIt
                 <Button
                   v-if="item.status === 'not_started'"
                   size="touch"
-                  tone="success"
-                  class="min-w-32 flex-1"
+                  tone="standBy"
+                  class="min-w-32 flex-1 hover:text-white"
                   :disabled="props.mutationItemId !== null || !props.operationOpen"
                   @click="requestStart(item)"
                 >
@@ -547,7 +547,7 @@ function requestEditIssueContent(item: OperationWorkItem, issue: OperationWorkIt
                 <Button
                   v-else-if="item.status === 'in_progress' && canComplete(item)"
                   size="touch"
-                  tone="neutral"
+                  tone="success"
                   class="min-w-32 flex-1"
                   :disabled="props.mutationItemId !== null || !props.operationOpen"
                   @click="requestComplete(item)"
@@ -566,12 +566,11 @@ function requestEditIssueContent(item: OperationWorkItem, issue: OperationWorkIt
                 >
                   다른 작업자가 이 세부 작업 진행 중
                 </span>
-                <span
-                  v-else-if="item.status === 'completed' && props.role !== 'manager'"
-                  class="inline-flex h-12 w-full items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-800"
-                >
-                  세부 작업 완료됨
-                </span>
+                <template v-else-if="item.status === 'completed' && props.role !== 'manager'">
+                  <Button size="touch" tone="success" class="flex-1" disabled>
+                    <Check class="size-4" /> 세부 작업 완료
+                  </Button>
+                </template>
               </div>
             </article>
           </div>

@@ -119,8 +119,8 @@
   --action-success-border: #6ee7b7;
   --action-success-outline: #047857;
 
-  --action-warning: #b45309;
-  --action-warning-hover: #d97706;
+  --action-warning: #d97706;
+  --action-warning-hover: #b45309;
   --action-warning-foreground: #ffffff;
   --action-warning-soft: #fef3c7;
   --action-warning-soft-hover: #fde68a;

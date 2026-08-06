@@ -32,6 +32,11 @@ export const buttonVariants = cva(
           '[--button-bg:var(--action-warning)] [--button-hover:var(--action-warning-hover)] [--button-foreground:var(--action-warning-foreground)] [--button-soft:var(--action-warning-soft)] [--button-soft-hover:var(--action-warning-soft-hover)] [--button-border:var(--action-warning-border)] [--button-outline:var(--action-warning-outline)]',
         danger:
           '[--button-bg:var(--action-danger)] [--button-hover:var(--action-danger-hover)] [--button-foreground:var(--action-danger-foreground)] [--button-soft:var(--action-danger-soft)] [--button-soft-hover:var(--action-danger-soft-hover)] [--button-border:var(--action-danger-border)] [--button-outline:var(--action-danger-outline)]',
+        pending:
+          '[--button-bg:var(--color-muted)] [--button-hover:var(--color-muted-hover)] [--button-foreground:var(--color-muted-foreground)] [--button-soft:var(--color-muted-soft)] [--button-soft-hover:var(--color-muted-soft-hover)] [--button-border:var(--color-muted-border)] [--button-outline:var(--color-muted-outline)]',
+        done: '[--button-bg:var(--color-muted)] [--button-hover:var(--color-muted-hover)] [--button-foreground:var(--color-muted-foreground)] [--button-soft:var(--color-muted-soft)] [--button-soft-hover:var(--color-muted-soft-hover)] [--button-border:var(--color-muted-border)] [--button-outline:var(--color-muted-outline)]',
+        standBy:
+          '[--button-bg:var(--action-warning)] [--button-hover:var(--action-warning-hover)] [--button-foreground:var(--action-warning-hover-foreground)] [--button-soft:var(--action-warning-hover-soft)] [--button-soft-hover:var(--action-warning-hover-soft-hover)] [--button-border:var(--action-warning-hover-border)] [--button-outline:var(--action-warning-hover-outline)]',
       },
       size: {
         default:
