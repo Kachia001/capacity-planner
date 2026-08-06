@@ -92,6 +92,7 @@ export async function fetchBayWorkItems(
   filters: WorkItemSearchFilters,
   cursor?: string | null,
   workItemId?: number | null,
+  limit = 30,
 ) {
   return await $fetch<WorkItemSearchResponse>(`/api/bays/${bayId}/work-items`, {
     query: {
@@ -101,7 +102,7 @@ export async function fetchBayWorkItems(
       hasIssue: filters.hasIssue ?? undefined,
       workItemId: workItemId ?? undefined,
       cursor: cursor ?? undefined,
-      limit: 30,
+      limit,
     },
   })
 }

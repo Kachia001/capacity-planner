@@ -240,12 +240,34 @@ async function loadWorkItems(append = false) {
 
   try {
     await requireAuthenticated()
-    const response = await fetchBayWorkItems(
+    let response = await fetchBayWorkItems(
       bayId,
       filters,
       append ? nextCursor.value : null,
       focusedWorkItemId.value,
+      usesMobileOperations.value ? 100 : 30,
     )
+
+    if (usesMobileOperations.value && !append) {
+      const allItems = [...response.items]
+
+      while (response.nextCursor) {
+        if (sequence !== requestSequence) {
+          return
+        }
+
+        response = await fetchBayWorkItems(
+          bayId,
+          filters,
+          response.nextCursor,
+          focusedWorkItemId.value,
+          100,
+        )
+        allItems.push(...response.items)
+      }
+
+      response = { ...response, items: allItems, nextCursor: null }
+    }
 
     if (sequence !== requestSequence) {
       return
