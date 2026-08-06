@@ -13,7 +13,12 @@ export default defineEventHandler(async event => {
 
   const isForcedChange = profile.mustChangePassword
 
-  if (!isForcedChange && profile.role !== 'manager' && profile.role !== 'worker') {
+  if (
+    !isForcedChange &&
+    profile.role !== 'admin' &&
+    profile.role !== 'manager' &&
+    profile.role !== 'worker'
+  ) {
     throw createError({ statusCode: 403, message: '비밀번호를 직접 변경할 권한이 없습니다.' })
   }
 
