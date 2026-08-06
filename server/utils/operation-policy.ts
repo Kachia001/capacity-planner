@@ -9,6 +9,19 @@ const SEOUL_OFFSET_MS = 9 * 60 * 60 * 1000
 
 type OperationControlValues = Pick<OperationControl, 'manualClosedUntil' | 'extensionUntil'>
 
+export function calculateExtensionUntil(
+  now: Date,
+  currentExtensionUntil: Date | null | undefined,
+  extensionMinutes: number,
+) {
+  const baseTime =
+    currentExtensionUntil && currentExtensionUntil.getTime() > now.getTime()
+      ? currentExtensionUntil.getTime()
+      : now.getTime()
+
+  return new Date(baseTime + extensionMinutes * 60 * 1000)
+}
+
 function seoulDateParts(now: Date) {
   const shifted = new Date(now.getTime() + SEOUL_OFFSET_MS)
 

@@ -1,6 +1,11 @@
 import { z } from 'zod'
+import { eq } from 'drizzle-orm'
 import { operationControl } from '../../db/schema'
-import { getRegularWindow, resolveOperationStatus } from '../../utils/operation-policy'
+import {
+  calculateExtensionUntil,
+  getRegularWindow,
+  resolveOperationStatus,
+} from '../../utils/operation-policy'
 
 const openOperationSchema = z.object({
   extensionMinutes: z.number().int().min(1).max(1440).optional(),
@@ -39,48 +44,76 @@ export default defineEventHandler(async event => {
     })
   }
 
-  let extensionUntil: Date | null = null
-
-  if (!regularWindow.isWithinRegularHours) {
-    extensionUntil =
-      body.extensionUntil !== undefined
-        ? new Date(body.extensionUntil)
-        : new Date(now.getTime() + body.extensionMinutes! * 60 * 1000)
-
-    if (extensionUntil.getTime() <= now.getTime()) {
-      throw createError({
-        statusCode: 400,
-        message: '종료 시각은 현재보다 이후여야 합니다.',
-      })
-    }
-
-    if (extensionUntil.getTime() > now.getTime() + 24 * 60 * 60 * 1000) {
-      throw createError({
-        statusCode: 400,
-        message: '종료 시각은 현재부터 24시간 이내여야 합니다.',
-      })
-    }
-  }
   const db = useDb()
-  const [control] = await db
-    .insert(operationControl)
-    .values({
-      id: 1,
-      manualClosedUntil: null,
-      extensionUntil,
-      updatedBy: profile.authUserId,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: operationControl.id,
-      set: {
+  const control = await db.transaction(async tx => {
+    const [existingControl] = await tx
+      .select()
+      .from(operationControl)
+      .where(eq(operationControl.id, 1))
+      .limit(1)
+      .for('update')
+
+    let extensionUntil: Date | null = null
+
+    if (!regularWindow.isWithinRegularHours) {
+      const activeExtensionUntil =
+        existingControl?.extensionUntil && existingControl.extensionUntil.getTime() > now.getTime()
+          ? existingControl.extensionUntil
+          : null
+
+      extensionUntil =
+        body.extensionUntil !== undefined
+          ? new Date(body.extensionUntil)
+          : calculateExtensionUntil(now, activeExtensionUntil, body.extensionMinutes!)
+
+      if (extensionUntil.getTime() <= now.getTime()) {
+        throw createError({
+          statusCode: 400,
+          message: '종료 시각은 현재보다 이후여야 합니다.',
+        })
+      }
+
+      if (
+        activeExtensionUntil &&
+        body.extensionUntil !== undefined &&
+        extensionUntil.getTime() <= activeExtensionUntil.getTime()
+      ) {
+        throw createError({
+          statusCode: 400,
+          message: '종료 시각은 현재 연장 종료 시각보다 이후여야 합니다.',
+        })
+      }
+
+      if (extensionUntil.getTime() > now.getTime() + 24 * 60 * 60 * 1000) {
+        throw createError({
+          statusCode: 400,
+          message: '종료 시각은 현재부터 24시간 이내여야 합니다.',
+        })
+      }
+    }
+
+    const [updatedControl] = await tx
+      .insert(operationControl)
+      .values({
+        id: 1,
         manualClosedUntil: null,
         extensionUntil,
         updatedBy: profile.authUserId,
         updatedAt: now,
-      },
-    })
-    .returning()
+      })
+      .onConflictDoUpdate({
+        target: operationControl.id,
+        set: {
+          manualClosedUntil: null,
+          extensionUntil,
+          updatedBy: profile.authUserId,
+          updatedAt: now,
+        },
+      })
+      .returning()
+
+    return updatedControl
+  })
 
   return resolveOperationStatus(control, now)
 })

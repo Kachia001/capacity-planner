@@ -1,11 +1,33 @@
 import { describe, expect, it } from 'vitest'
-import { getRegularWindow, resolveOperationStatus } from './operation-policy'
+import {
+  calculateExtensionUntil,
+  getRegularWindow,
+  resolveOperationStatus,
+} from './operation-policy'
 
 function seoulTime(isoDateAndTime: string) {
   return new Date(`${isoDateAndTime}+09:00`)
 }
 
 describe('operation policy', () => {
+  it('adds extension minutes to an active extension end time', () => {
+    const now = seoulTime('2026-07-23T18:00:00')
+    const currentExtensionUntil = seoulTime('2026-07-23T19:00:00')
+
+    expect(calculateExtensionUntil(now, currentExtensionUntil, 30)).toEqual(
+      seoulTime('2026-07-23T19:30:00'),
+    )
+  })
+
+  it('adds extension minutes from now when no active extension remains', () => {
+    const now = seoulTime('2026-07-23T18:00:00')
+    const expiredExtensionUntil = seoulTime('2026-07-23T17:30:00')
+
+    expect(calculateExtensionUntil(now, expiredExtensionUntil, 30)).toEqual(
+      seoulTime('2026-07-23T18:30:00'),
+    )
+  })
+
   it('opens automatically from 08:20 until just before 17:20 Seoul time', () => {
     expect(resolveOperationStatus(null, seoulTime('2026-07-23T08:19:59')).isOpen).toBe(false)
     expect(resolveOperationStatus(null, seoulTime('2026-07-23T08:20:00')).isOpen).toBe(true)
