@@ -58,4 +58,31 @@ describe('DataTable', () => {
     expect(emptyWrapper.get('[data-test="empty"]').text()).toBe('계정이 없습니다.')
     expect(loadingWrapper.get('[data-test="loading"]').text()).toBe('계정 확인 중')
   })
+
+  it('applies row attributes derived from each row', async () => {
+    let selectedId: number | null = null
+    const wrapper = mount(DataTable<AccountRow>, {
+      props: {
+        columns,
+        data: [{ id: 1, name: '관리자', active: true }],
+        rowKey: 'id',
+        options: {
+          rowAttrs: row => ({
+            tabindex: 0,
+            'aria-label': `${row.name} 상세 보기`,
+            onClick: () => {
+              selectedId = row.id
+            },
+          }),
+        },
+      },
+    })
+
+    const row = wrapper.get('tbody tr')
+    expect(row.attributes('tabindex')).toBe('0')
+    expect(row.attributes('aria-label')).toBe('관리자 상세 보기')
+
+    await row.trigger('click')
+    expect(selectedId).toBe(1)
+  })
 })

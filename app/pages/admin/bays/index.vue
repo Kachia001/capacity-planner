@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {
-  ArrowUpRight,
   Boxes,
   FilePlus2,
   Loader2,
@@ -34,6 +33,7 @@ interface BayFilters {
 
 const auth = useAuthStore()
 const route = useRoute()
+const router = useRouter()
 const initialQuery = typeof route.query.q === 'string' ? route.query.q : ''
 const dashboard = ref<OperationsDashboardResponse | null>(null)
 const loading = ref(true)
@@ -108,6 +108,16 @@ function formatActivity(value: string | null) {
   }).format(new Date(value))
 }
 
+function openBayDetail(bay: DashboardBaySummary) {
+  void router.push({ path: '/bay', query: { targetBay: bay.code } })
+}
+
+function handleBayRowKeydown(event: KeyboardEvent, bay: DashboardBaySummary) {
+  if (event.key !== 'Enter' || event.target !== event.currentTarget) return
+
+  openBayDetail(bay)
+}
+
 const bayTableColumns: DataTableColumn<DashboardBaySummary>[] = [
   {
     key: 'bay',
@@ -148,15 +158,7 @@ const bayTableColumns: DataTableColumn<DashboardBaySummary>[] = [
     key: 'activity',
     header: '최근 활동',
     accessor: 'lastActivityAt',
-    width: '13%',
-    headerClass: 'text-[11px] font-semibold text-[#697067]',
-  },
-  {
-    key: 'detail',
-    header: '상세',
-    accessor: 'id',
-    align: 'right',
-    width: '7%',
+    width: '20%',
     headerClass: 'text-[11px] font-semibold text-[#697067]',
   },
 ]
@@ -166,7 +168,14 @@ const bayTableOptions: DataTableOptions<DashboardBaySummary> = {
   headerClass: 'bg-[#f7f8f5]',
   headerRowClass: 'border-b border-[#e0e4dd]',
   bodyClass: 'divide-y divide-[#eceee9]',
-  rowClass: 'group transition hover:bg-[#fbfcf9]',
+  rowClass:
+    'group cursor-pointer transition hover:bg-[#fbfcf9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#71865e]',
+  rowAttrs: bay => ({
+    tabindex: 0,
+    'aria-label': `${bay.code} 상세 운영 보기`,
+    onClick: () => openBayDetail(bay),
+    onKeydown: (event: KeyboardEvent) => handleBayRowKeydown(event, bay),
+  }),
 }
 
 function applyFilters() {
@@ -434,7 +443,15 @@ onMounted(() => {
 
         <template v-else>
           <div class="divide-y divide-[#eceee9] md:hidden">
-            <article v-for="bay in filteredBays" :key="bay.id" class="p-4">
+            <article
+              v-for="bay in filteredBays"
+              :key="bay.id"
+              tabindex="0"
+              :aria-label="`${bay.code} 상세 운영 보기`"
+              class="cursor-pointer p-4 transition hover:bg-[#fbfcf9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#71865e]"
+              @click="openBayDetail(bay)"
+              @keydown="handleBayRowKeydown($event, bay)"
+            >
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                   <p class="break-all font-mono text-sm font-bold text-[#1d241c]">{{ bay.code }}</p>
@@ -486,33 +503,17 @@ onMounted(() => {
                 </div>
               </dl>
 
-              <div class="mt-4 flex items-center justify-between gap-3">
-                <div class="min-w-0 text-[10px] leading-5 text-[#737a71]">
-                  <p>
-                    이슈
-                    <strong :class="bay.openIssues ? 'text-red-700' : ''">{{
-                      bay.openIssues
-                    }}</strong>
-                    · 작업 인원 <strong>{{ bay.activeWorkers }}</strong>
-                  </p>
-                  <p class="truncate font-mono text-[#8b9289]">
-                    최근 활동 {{ formatActivity(bay.lastActivityAt) }}
-                  </p>
-                </div>
-                <Button
-                  as-child
-                  variant="outline"
-                  tone="neutral"
-                  size="icon-touch"
-                  class="shrink-0 border-[#d8ddd4] bg-white text-[#526348]"
-                >
-                  <NuxtLink
-                    :to="{ path: '/bay', query: { targetBay: bay.code } }"
-                    :aria-label="`${bay.code} 상세 운영 보기`"
-                  >
-                    <ArrowUpRight class="size-4" />
-                  </NuxtLink>
-                </Button>
+              <div class="mt-4 min-w-0 text-[10px] leading-5 text-[#737a71]">
+                <p>
+                  이슈
+                  <strong :class="bay.openIssues ? 'text-red-700' : ''">{{
+                    bay.openIssues
+                  }}</strong>
+                  · 작업 인원 <strong>{{ bay.activeWorkers }}</strong>
+                </p>
+                <p class="truncate font-mono text-[#8b9289]">
+                  최근 활동 {{ formatActivity(bay.lastActivityAt) }}
+                </p>
               </div>
             </article>
           </div>
@@ -589,23 +590,6 @@ onMounted(() => {
                 <p class="font-mono text-[10px] text-[#697067]">
                   {{ formatActivity(row.lastActivityAt) }}
                 </p>
-              </template>
-
-              <template #cell-detail="{ row }">
-                <Button
-                  as-child
-                  variant="ghost"
-                  tone="neutral"
-                  size="icon"
-                  class="text-[#7a8278] group-hover:bg-white group-hover:text-[#263022]"
-                >
-                  <NuxtLink
-                    :to="{ path: '/bay', query: { targetBay: row.code } }"
-                    :aria-label="`${row.code} 상세 운영 보기`"
-                  >
-                    <ArrowUpRight class="size-4" />
-                  </NuxtLink>
-                </Button>
               </template>
             </DataTable>
           </section>

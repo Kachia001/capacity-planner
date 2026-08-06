@@ -35,6 +35,7 @@ export interface DataTableOptions<T> {
   headerRowClass?: DataTableClass
   bodyClass?: DataTableClass
   rowClass?: DataTableClass | ((row: T, rowIndex: number) => DataTableClass)
+  rowAttrs?: DataTableAttributes | ((row: T, rowIndex: number) => DataTableAttributes)
   rowState?: (row: T, rowIndex: number) => string | undefined
 }
 

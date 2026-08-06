@@ -48,6 +48,7 @@ const resolvedOptions = computed(() => ({
   headerRowClass: props.options?.headerRowClass,
   bodyClass: props.options?.bodyClass,
   rowClass: props.options?.rowClass,
+  rowAttrs: props.options?.rowAttrs,
   rowState: props.options?.rowState,
 }))
 
@@ -151,6 +152,14 @@ function getRowClass(row: T, rowIndex: number) {
     optionClass,
   )
 }
+
+function getRowAttrs(row: T, rowIndex: number) {
+  if (typeof resolvedOptions.value.rowAttrs === 'function') {
+    return resolvedOptions.value.rowAttrs(row, rowIndex)
+  }
+
+  return resolvedOptions.value.rowAttrs
+}
 </script>
 
 <template>
@@ -220,6 +229,7 @@ function getRowClass(row: T, rowIndex: number) {
                 :cells="getRowCells(row, rowIndex)"
               >
                 <TableRow
+                  v-bind="getRowAttrs(row, rowIndex)"
                   :data-state="resolvedOptions.rowState?.(row, rowIndex)"
                   :class="getRowClass(row, rowIndex)"
                 >
