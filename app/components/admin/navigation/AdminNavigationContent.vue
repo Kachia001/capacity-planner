@@ -17,7 +17,7 @@ const navigationItems = [
     caption: 'Password security',
     to: '/change-password',
     icon: KeyRound,
-    roles: ['manager'],
+    roles: ['admin', 'manager'],
   },
   {
     label: 'Bay 조회',

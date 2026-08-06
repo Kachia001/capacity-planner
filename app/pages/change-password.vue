@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 
 definePageMeta({
   middleware: ['auth-client', 'role-client'],
-  roles: ['manager', 'worker'],
+  roles: ['admin', 'manager', 'worker'],
 })
 useHead({ title: '비밀번호 변경 · Capacity Planner' })
 
