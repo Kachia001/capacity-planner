@@ -91,7 +91,6 @@ const filters = reactive<WorkItemSearchFilters>({
 
 let searchTimer: ReturnType<typeof setTimeout> | undefined
 let noticeTimer: ReturnType<typeof setTimeout> | undefined
-let refreshTimer: ReturnType<typeof setInterval> | undefined
 let requestSequence = 0
 
 const isSupervisor = computed(
@@ -828,17 +827,6 @@ onMounted(async () => {
       }
       await chooseBay(routeBay.id, false, routeTargetWorkItem.value)
     }
-
-    refreshTimer = setInterval(() => {
-      if (mutationItemId.value === null && !listPending.value) {
-        if (showsManagementOverview.value) {
-          void loadDashboard()
-        } else if (selectedBayId.value) {
-          void loadWorkItems()
-        }
-        void loadOperationControl()
-      }
-    }, 30000)
   } catch (error) {
     bootError.value = getRequestErrorMessage(error, '운영 화면을 준비하지 못했습니다.')
   } finally {
@@ -864,7 +852,6 @@ watch([routeTargetBay, routeTargetWorkItem], async ([targetBay, targetWorkItem])
 onBeforeUnmount(() => {
   if (searchTimer) clearTimeout(searchTimer)
   if (noticeTimer) clearTimeout(noticeTimer)
-  if (refreshTimer) clearInterval(refreshTimer)
 })
 </script>
 
