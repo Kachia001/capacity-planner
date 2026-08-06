@@ -651,7 +651,10 @@ function workerLabel(item: OperationWorkItem) {
           </div>
         </template>
 
-        <div v-if="props.nextCursor" class="mt-6 flex justify-center border-t border-zinc-200 pt-5">
+        <div
+          v-if="props.nextCursor && !isMobileRole"
+          class="mt-6 flex justify-center border-t border-zinc-200 pt-5"
+        >
           <Button
             variant="outline"
             size="md"
