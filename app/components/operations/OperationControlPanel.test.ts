@@ -19,7 +19,7 @@ const closedOutsideRegularHours: OperationStatus = {
   timeZone: 'Asia/Seoul',
 }
 
-function mountPanel() {
+function mountPanel(status: OperationStatus = closedOutsideRegularHours) {
   const wrapper = mount(
     defineComponent({
       setup() {
@@ -27,7 +27,7 @@ function mountPanel() {
           h(TooltipProvider, null, {
             default: () =>
               h(OperationControlPanel, {
-                status: closedOutsideRegularHours,
+                status,
                 canManage: true,
                 pending: false,
                 mutationPending: false,
@@ -103,6 +103,24 @@ describe('OperationControlPanel extension controls', () => {
     expect(mounted.panel.emitted('open')).toEqual([
       [{ extensionUntil: '2026-07-30T11:15:00.000Z' }],
     ])
+    mounted.wrapper.unmount()
+  })
+
+  it('allows adding time while an extension is active', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-30T09:00:00.000Z'))
+    const mounted = mountPanel({
+      ...closedOutsideRegularHours,
+      isOpen: true,
+      mode: 'extension',
+      closesAt: '2026-07-30T10:00:00.000Z',
+    })
+
+    expect(getButtonByText(mounted, '지금 Close').exists()).toBe(true)
+    await getButtonByText(mounted, '30분').trigger('click')
+    await getButtonByText(mounted, '시간 추가').trigger('click')
+
+    expect(mounted.panel.emitted('open')).toEqual([[{ extensionMinutes: 30 }]])
     mounted.wrapper.unmount()
   })
 })

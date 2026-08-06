@@ -65,9 +65,16 @@ const closeTimeLabel = computed(() => {
   }).format(new Date(props.status.closesAt))
 })
 
-const showsExtensionControls = computed(
-  () => !effectivelyOpen.value && props.status && !props.status.isWithinRegularHours,
+const showsExtensionControls = computed(() =>
+  Boolean(props.status && !props.status.isWithinRegularHours),
 )
+
+const activeExtensionEnd = computed(() => {
+  if (props.status?.mode !== 'extension' || !props.status.closesAt) return null
+
+  const closesAt = new Date(props.status.closesAt).getTime()
+  return closesAt > now.value ? closesAt : null
+})
 
 function formatSeoulDateTimeLocal(timestamp: number) {
   const parts = Object.fromEntries(
@@ -124,6 +131,9 @@ const customExtensionError = computed(() => {
   const selected = parseSeoulDateTimeLocal(customExtensionUntil.value)
   if (!selected) return '작업이 끝날 시각을 선택해 주세요.'
   if (selected.getTime() <= now.value) return '현재보다 이후 시각을 선택해 주세요.'
+  if (activeExtensionEnd.value && selected.getTime() <= activeExtensionEnd.value) {
+    return '현재 연장 종료 시각보다 이후로 선택해 주세요.'
+  }
   if (selected.getTime() > now.value + 24 * 60 * 60 * 1000) {
     return '종료 시각은 현재부터 24시간 이내로 선택해 주세요.'
   }
@@ -143,7 +153,8 @@ function selectExtension(option: ExtensionOption) {
   selectedExtension.value = option
 
   if (option === 'custom' && customExtensionError.value) {
-    const defaultUntil = Math.ceil((now.value + 60 * 60 * 1000) / 60_000) * 60_000
+    const extensionBase = Math.max(now.value, activeExtensionEnd.value ?? 0)
+    const defaultUntil = Math.ceil((extensionBase + 60 * 60 * 1000) / 60_000) * 60_000
     const [date, time] = formatSeoulDateTimeLocal(defaultUntil).split('T')
     const [hour, minute] = time!.split(':')
 
@@ -328,18 +339,31 @@ onBeforeUnmount(() => {
             <Square class="size-3.5 fill-current" /> 지금 Close
           </Button>
           <Button
-            v-else
+            v-if="showsExtensionControls"
             variant="solid"
             tone="success"
             size="md"
             :loading="mutationPending"
-            :loading-text="status?.isWithinRegularHours ? '운영 Open' : '연장 Open'"
+            :loading-text="status?.mode === 'extension' ? '시간 추가' : '연장 Open'"
             :disabled="!canRequestOpen"
             :disabled-reason="customExtensionError ?? undefined"
             @click="requestOpen"
           >
             <Play class="size-4 fill-current" />
-            {{ status?.isWithinRegularHours ? '운영 Open' : '연장 Open' }}
+            {{ status?.mode === 'extension' ? '시간 추가' : '연장 Open' }}
+          </Button>
+          <Button
+            v-else-if="!effectivelyOpen"
+            variant="solid"
+            tone="success"
+            size="md"
+            :loading="mutationPending"
+            loading-text="운영 Open"
+            :disabled="!canRequestOpen"
+            @click="requestOpen"
+          >
+            <Play class="size-4 fill-current" />
+            운영 Open
           </Button>
           <Button
             variant="outline"
