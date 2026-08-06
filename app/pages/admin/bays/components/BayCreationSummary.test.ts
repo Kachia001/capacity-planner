@@ -17,6 +17,7 @@ interface SummaryProps {
   submitError: string | null
   submitPending: boolean
   canSubmit: boolean
+  tableNumber: number | null
 }
 
 function mountSummary(overrides: Partial<SummaryProps> = {}) {
@@ -31,6 +32,7 @@ function mountSummary(overrides: Partial<SummaryProps> = {}) {
     submitError: null,
     submitPending: false,
     canSubmit: false,
+    tableNumber: null,
     ...overrides,
   }
 

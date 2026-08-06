@@ -76,4 +76,19 @@ describe('WorkItemIssueList permissions', () => {
     expect(wrapper.text()).toContain('처리 내용')
     expect(wrapper.text()).toContain(resolvedIssue.resolutionNote)
   })
+
+  it('emits the issue when a selectable issue card is clicked', async () => {
+    const wrapper = mount(WorkItemIssueList, {
+      props: {
+        issues: [issue],
+        canManage: false,
+        pending: false,
+        selectable: true,
+      },
+    })
+
+    await wrapper.get('[role="button"]').trigger('click')
+
+    expect(wrapper.emitted('select')).toEqual([[issue]])
+  })
 })

@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import { BellRing, Boxes, ChevronRight, KeyRound, PanelsTopLeft, UsersRound } from '@lucide/vue'
+import { BellRing, ChevronRight, Grid3X3, KeyRound, PanelsTopLeft, UsersRound } from '@lucide/vue'
 
 const route = useRoute()
 const auth = useAuthStore()
 
 const navigationItems = [
+  {
+    label: '테이블 배치',
+    caption: 'Table layout',
+    to: '/admin/tables',
+    icon: Grid3X3,
+    roles: ['admin', 'manager'],
+  },
   {
     label: '비밀번호 변경',
     caption: 'Password security',
@@ -41,6 +48,8 @@ const navigation = computed(() => {
 })
 
 function isNavigationActive(to: string) {
+  if (to === '/admin/tables') return route.path.startsWith('/admin/tables')
+
   if (to === '/admin/bays') {
     return (
       route.path === '/bay' ||

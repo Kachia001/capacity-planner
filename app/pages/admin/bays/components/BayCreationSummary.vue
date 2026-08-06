@@ -17,6 +17,7 @@ const props = defineProps<{
   submitError: string | null
   submitPending: boolean
   canSubmit: boolean
+  tableNumber: number | null
 }>()
 
 const emit = defineEmits<{
@@ -76,6 +77,14 @@ function handleCreate() {
           <ShieldAlert class="size-4 text-amber-600" /> 고소작업
         </span>
         <Badge variant="secondary">{{ props.highAltitudeCount }}</Badge>
+      </p>
+    </div>
+    <div class="border-b p-4">
+      <p class="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+        <span>배치 테이블</span>
+        <strong class="font-mono text-sm text-foreground">
+          {{ props.tableNumber ? String(props.tableNumber).padStart(3, '0') : '미선택' }}
+        </strong>
       </p>
     </div>
     <CardContent class="p-5">

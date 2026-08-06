@@ -3,6 +3,7 @@ import BayCreationPageHeader from '@/pages/admin/bays/components/BayCreationPage
 import BayCreationSuccess from '@/pages/admin/bays/components/BayCreationSuccess.vue'
 import BayCreationSummary from '@/pages/admin/bays/components/BayCreationSummary.vue'
 import BayIdentitySection from '@/pages/admin/bays/components/BayIdentitySection.vue'
+import BayTableAssignmentSection from '@/pages/admin/bays/components/BayTableAssignmentSection.vue'
 import BayStartMethodSection from '@/pages/admin/bays/components/BayStartMethodSection.vue'
 import BayWorkConfigurationSection from '@/pages/admin/bays/components/BayWorkConfigurationSection.vue'
 import {
@@ -10,8 +11,9 @@ import {
   createBlankTemplateGroups,
   fetchBayTemplates,
 } from '@/composables/useBayTemplates'
-import { getRequestErrorMessage } from '@/composables/useOperationsApi'
+import { fetchWorkTables, getRequestErrorMessage } from '@/composables/useOperationsApi'
 import type { ExistingTemplateDraft, TemplateGroupDraft } from '@/types/template'
+import type { WorkTableOverview } from '#shared/api/tables/table.contract'
 
 definePageMeta({
   layout: 'admin',
@@ -25,6 +27,8 @@ const planner = usePlannerStore()
 const directWriteId = 'direct-write'
 const bayCode = ref('')
 const bayDescription = ref('')
+const tableNumber = ref<number | null>(null)
+const tables = ref<WorkTableOverview[]>([])
 const templates = ref<ExistingTemplateDraft[]>([])
 const selectedTemplateId = ref(directWriteId)
 const draftGroups = ref<TemplateGroupDraft[]>(createBlankTemplateGroups())
@@ -87,6 +91,7 @@ const codeAvailable = computed(() => {
 const canSubmit = computed(
   () =>
     codeAvailable.value &&
+    tableNumber.value !== null &&
     hasSelectedStartMethod.value &&
     (editingWorkConfiguration.value || !isDirectWrite.value) &&
     groupCount.value > 0 &&
@@ -132,7 +137,12 @@ async function loadTemplates() {
     await auth.initialize()
     await planner.loadWorkItems()
     if (!auth.user) throw new Error('로그인이 필요합니다.')
-    templates.value = await fetchBayTemplates()
+    const [nextTemplates, tableResponse] = await Promise.all([
+      fetchBayTemplates(),
+      fetchWorkTables(),
+    ])
+    templates.value = nextTemplates
+    tables.value = tableResponse.tables
   } catch (error) {
     loadError.value = getRequestErrorMessage(error, '베이 생성 옵션을 불러오지 못했습니다.')
   } finally {
@@ -149,7 +159,11 @@ async function createBay() {
     await $fetch('/api/bays', {
       method: 'POST',
       body: {
-        bay: { code: bayCode.value.trim(), description: bayDescription.value.trim() },
+        bay: {
+          code: bayCode.value.trim(),
+          description: bayDescription.value.trim(),
+          tableNumber: tableNumber.value,
+        },
         groups: cloneTemplateGroups(draftGroups.value),
       },
     })
@@ -191,6 +205,11 @@ onMounted(loadTemplates)
           v-model:bay-description="bayDescription"
           :code-available="codeAvailable"
         />
+        <BayTableAssignmentSection
+          v-model:table-number="tableNumber"
+          :tables="tables"
+          :loading="loading"
+        />
         <BayStartMethodSection
           v-model:selected-template-id="selectedTemplateId"
           :templates="templates"
@@ -221,6 +240,7 @@ onMounted(loadTemplates)
         :submit-error="submitError"
         :submit-pending="submitPending"
         :can-submit="canSubmit"
+        :table-number="tableNumber"
         @create="createBay"
       />
     </div>

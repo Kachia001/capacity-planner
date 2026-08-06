@@ -7,11 +7,13 @@ const props = defineProps<{
   issues: OperationWorkItemIssue[]
   canManage: boolean
   pending: boolean
+  selectable?: boolean
 }>()
 
 const emit = defineEmits<{
   updateStatus: [issueId: number, status: WorkItemIssueStatus]
   editContent: [issue: OperationWorkItemIssue]
+  select: [issue: OperationWorkItemIssue]
 }>()
 
 const categoryLabels = {
@@ -64,6 +66,10 @@ function updateStatus(issue: OperationWorkItemIssue, event: Event) {
   select.value = issue.status
   emit('updateStatus', issue.id, status)
 }
+
+function selectIssue(issue: OperationWorkItemIssue) {
+  if (props.selectable) emit('select', issue)
+}
 </script>
 
 <template>
@@ -72,6 +78,17 @@ function updateStatus(issue: OperationWorkItemIssue, event: Event) {
       v-for="issue in props.issues"
       :key="issue.id"
       class="rounded-lg border border-zinc-200 bg-white px-3 py-3 text-xs"
+      :class="
+        props.selectable
+          ? 'cursor-pointer transition hover:border-sky-300 hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400'
+          : ''
+      "
+      :role="props.selectable ? 'button' : undefined"
+      :tabindex="props.selectable ? 0 : undefined"
+      :aria-label="props.selectable ? `이슈 #${issue.id} 작업 위치로 이동` : undefined"
+      @click="selectIssue(issue)"
+      @keydown.enter.prevent="selectIssue(issue)"
+      @keydown.space.prevent="selectIssue(issue)"
     >
       <div class="flex flex-wrap items-center gap-2">
         <span
@@ -117,6 +134,7 @@ function updateStatus(issue: OperationWorkItemIssue, event: Event) {
             :disabled="props.pending"
             class="h-9 rounded-md border border-zinc-300 bg-white px-2 text-xs font-semibold text-zinc-800 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:cursor-wait disabled:bg-zinc-100"
             @change="updateStatus(issue, $event)"
+            @click.stop
           >
             <option
               v-for="option in availableStatusOptions(issue.status)"
@@ -134,7 +152,7 @@ function updateStatus(issue: OperationWorkItemIssue, event: Event) {
           size="md"
           :disabled="props.pending"
           :aria-label="`이슈 #${issue.id} 내용 수정`"
-          @click="emit('editContent', issue)"
+          @click.stop="emit('editContent', issue)"
         >
           <Pencil class="size-3.5" />
           내용 수정
