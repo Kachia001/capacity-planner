@@ -3,7 +3,7 @@ import { WorkItemIssueCategorySchema, WorkItemIssueStatusSchema } from './work-i
 
 export const ReportWorkItemIssueRequestSchema = z.object({
   category: WorkItemIssueCategorySchema,
-  note: z.string().trim().min(3).max(1000),
+  note: z.string().trim().max(1000),
 })
 
 export const ReportWorkItemIssueResponseSchema = z.object({
