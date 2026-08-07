@@ -45,13 +45,6 @@ async function signOut() {
       >
         <ClientOnly>
           <div class="flex items-center gap-2">
-            <NuxtLink
-              v-if="auth.user && auth.profile?.role === 'worker'"
-              to="/bay"
-              class="hidden transition hover:text-foreground sm:inline"
-            >
-              작업 실행
-            </NuxtLink>
             <Badge
               v-if="roleLabel"
               variant="outline"
