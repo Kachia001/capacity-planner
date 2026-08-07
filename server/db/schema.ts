@@ -167,6 +167,28 @@ export const operationControl = pgTable(
   table => [check('operation_control_singleton', sql`${table.id} = 1`)],
 )
 
+export const operationSessions = pgTable(
+  'operation_sessions',
+  {
+    id: text('id').primaryKey(),
+    operationDate: date('operation_date').notNull(),
+    openedAt: timestamp('opened_at', { withTimezone: true }).notNull(),
+    closedAt: timestamp('closed_at', { withTimezone: true }),
+    openedBy: uuid('opened_by').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
+    closedBy: uuid('closed_by').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => ({
+    operationDateIndex: index('operation_sessions_operation_date_idx').on(table.operationDate),
+    openSessionIndex: index('operation_sessions_open_idx').on(table.closedAt),
+  }),
+)
+
 export const telegramSettings = pgTable(
   'telegram_settings',
   {
@@ -348,6 +370,7 @@ export type Bay = typeof bays.$inferSelect
 export type NewBay = typeof bays.$inferInsert
 export type WorkTable = typeof workTables.$inferSelect
 export type OperationControl = typeof operationControl.$inferSelect
+export type OperationSession = typeof operationSessions.$inferSelect
 export type TelegramSettings = typeof telegramSettings.$inferSelect
 export type TelegramDeliveryOutbox = typeof telegramDeliveryOutbox.$inferSelect
 export type BayTemplate = typeof bayTemplates.$inferSelect

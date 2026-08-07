@@ -57,6 +57,13 @@
       "when": 1786049863931,
       "tag": "0007_charming_gunslinger",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1786065493271,
+      "tag": "0008_tranquil_guardian",
+      "breakpoints": true
     }
   ]
 }
