@@ -225,6 +225,17 @@ Persistence row, domain aggregate, application result 및 public API response는
 - PK는 항상 `1`입니다.
 - 주요 필드: `manual_closed_until`, `extension_until`, `updated_by`
 
+#### `operation_sessions`
+
+Open부터 Close까지의 운영 구간을 한 행으로 기록합니다.
+
+- `id`는 한국 날짜와 UUID를 결합한 `YYYYMMDD-{UUID}` 형식입니다.
+- 주요 필드: `operation_date`, `opened_at`, `closed_at`, `opened_by`, `closed_by`
+- 같은 날짜에 Close 후 다시 Open하면 별도의 세션 행을 생성합니다.
+- 연장 시간을 추가하거나 변경해도 현재 열린 세션은 유지합니다.
+- 정규 운영과 연장 운영의 자동 종료는 다음 상태 조회 시 실제 종료 예정 시각으로 동기화합니다.
+- 자동 Open/Close의 처리자는 `NULL`, 관리자 조작은 해당 사용자를 기록합니다.
+
 #### `work_items`
 
 BAY에서 실행되는 독립 작업 행입니다.
