@@ -54,22 +54,28 @@ export default defineEventHandler(async event => {
       .for('update')
 
     let extensionUntil: Date | null = null
+    const requestsExtension =
+      body.extensionMinutes !== undefined || body.extensionUntil !== undefined
 
-    if (!regularWindow.isWithinRegularHours) {
+    if (requestsExtension) {
+      const extensionStart = regularWindow.isWithinRegularHours ? regularWindow.closesAt : now
       const activeExtensionUntil =
-        existingControl?.extensionUntil && existingControl.extensionUntil.getTime() > now.getTime()
+        existingControl?.extensionUntil &&
+        existingControl.extensionUntil.getTime() > extensionStart.getTime()
           ? existingControl.extensionUntil
           : null
 
       extensionUntil =
         body.extensionUntil !== undefined
           ? new Date(body.extensionUntil)
-          : calculateExtensionUntil(now, activeExtensionUntil, body.extensionMinutes!)
+          : calculateExtensionUntil(extensionStart, activeExtensionUntil, body.extensionMinutes!)
 
-      if (extensionUntil.getTime() <= now.getTime()) {
+      if (extensionUntil.getTime() <= extensionStart.getTime()) {
         throw createError({
           statusCode: 400,
-          message: '종료 시각은 현재보다 이후여야 합니다.',
+          message: regularWindow.isWithinRegularHours
+            ? '종료 시각은 정규 운영 종료 시각보다 이후여야 합니다.'
+            : '종료 시각은 현재보다 이후여야 합니다.',
         })
       }
 

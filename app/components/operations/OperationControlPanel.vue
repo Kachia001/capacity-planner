@@ -65,15 +65,31 @@ const closeTimeLabel = computed(() => {
   }).format(new Date(props.status.closesAt))
 })
 
-const showsExtensionControls = computed(() =>
-  Boolean(props.status && !props.status.isWithinRegularHours),
-)
+const showsExtensionControls = computed(() => Boolean(props.status))
 
-const activeExtensionEnd = computed(() => {
-  if (props.status?.mode !== 'extension' || !props.status.closesAt) return null
+const extensionBaseEnd = computed(() => {
+  if (!props.status) return null
 
-  const closesAt = new Date(props.status.closesAt).getTime()
-  return closesAt > now.value ? closesAt : null
+  const closesAt = props.status.closesAt ? new Date(props.status.closesAt).getTime() : 0
+  const regularClosesAt = props.status.isWithinRegularHours
+    ? new Date(props.status.regularClosesAt).getTime()
+    : 0
+  const baseEnd = Math.max(now.value, closesAt, regularClosesAt)
+
+  return Number.isFinite(baseEnd) ? baseEnd : now.value
+})
+
+const hasScheduledExtension = computed(() => {
+  if (!props.status?.isWithinRegularHours || !props.status.closesAt) return false
+
+  return (
+    new Date(props.status.closesAt).getTime() > new Date(props.status.regularClosesAt).getTime()
+  )
+})
+
+const extensionActionLabel = computed(() => {
+  if (props.status?.mode === 'extension' || hasScheduledExtension.value) return '시간 추가'
+  return props.status?.isWithinRegularHours ? '연장 예약' : '연장 Open'
 })
 
 function formatSeoulDateTimeLocal(timestamp: number) {
@@ -130,9 +146,10 @@ const customExtensionError = computed(() => {
 
   const selected = parseSeoulDateTimeLocal(customExtensionUntil.value)
   if (!selected) return '작업이 끝날 시각을 선택해 주세요.'
-  if (selected.getTime() <= now.value) return '현재보다 이후 시각을 선택해 주세요.'
-  if (activeExtensionEnd.value && selected.getTime() <= activeExtensionEnd.value) {
-    return '현재 연장 종료 시각보다 이후로 선택해 주세요.'
+  if (extensionBaseEnd.value && selected.getTime() <= extensionBaseEnd.value) {
+    return props.status?.isWithinRegularHours
+      ? '정규 운영 종료 시각보다 이후로 선택해 주세요.'
+      : '현재 연장 종료 시각보다 이후로 선택해 주세요.'
   }
   if (selected.getTime() > now.value + 24 * 60 * 60 * 1000) {
     return '종료 시각은 현재부터 24시간 이내로 선택해 주세요.'
@@ -153,7 +170,7 @@ function selectExtension(option: ExtensionOption) {
   selectedExtension.value = option
 
   if (option === 'custom' && customExtensionError.value) {
-    const extensionBase = Math.max(now.value, activeExtensionEnd.value ?? 0)
+    const extensionBase = extensionBaseEnd.value ?? now.value
     const defaultUntil = Math.ceil((extensionBase + 60 * 60 * 1000) / 60_000) * 60_000
     const [date, time] = formatSeoulDateTimeLocal(defaultUntil).split('T')
     const [hour, minute] = time!.split(':')
@@ -165,10 +182,7 @@ function selectExtension(option: ExtensionOption) {
 }
 
 function requestOpen() {
-  if (!props.status || props.status.isWithinRegularHours) {
-    emit('open')
-    return
-  }
+  if (!props.status) return
 
   if (selectedExtension.value === 'custom') {
     const extensionUntil = parseSeoulDateTimeLocal(customExtensionUntil.value)
@@ -344,26 +358,13 @@ onBeforeUnmount(() => {
             tone="success"
             size="md"
             :loading="mutationPending"
-            :loading-text="status?.mode === 'extension' ? '시간 추가' : '연장 Open'"
+            :loading-text="extensionActionLabel"
             :disabled="!canRequestOpen"
             :disabled-reason="customExtensionError ?? undefined"
             @click="requestOpen"
           >
             <Play class="size-4 fill-current" />
-            {{ status?.mode === 'extension' ? '시간 추가' : '연장 Open' }}
-          </Button>
-          <Button
-            v-else-if="!effectivelyOpen"
-            variant="solid"
-            tone="success"
-            size="md"
-            :loading="mutationPending"
-            loading-text="운영 Open"
-            :disabled="!canRequestOpen"
-            @click="requestOpen"
-          >
-            <Play class="size-4 fill-current" />
-            운영 Open
+            {{ extensionActionLabel }}
           </Button>
           <Button
             variant="outline"

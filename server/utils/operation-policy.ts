@@ -86,8 +86,16 @@ export function resolveOperationStatus(
       ? ('regular' as const)
       : ('extension' as const)
     : ('closed' as const)
+  const scheduledExtensionUntil =
+    extensionUntil !== null && extensionUntil.getTime() > regularWindow.closesAt.getTime()
+      ? extensionUntil
+      : null
   const closesAt =
-    mode === 'regular' ? regularWindow.closesAt : mode === 'extension' ? extensionUntil : null
+    mode === 'regular'
+      ? (scheduledExtensionUntil ?? regularWindow.closesAt)
+      : mode === 'extension'
+        ? extensionUntil
+        : null
 
   return {
     isOpen,

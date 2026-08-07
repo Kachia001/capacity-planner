@@ -123,4 +123,23 @@ describe('OperationControlPanel extension controls', () => {
     expect(mounted.panel.emitted('open')).toEqual([[{ extensionMinutes: 30 }]])
     mounted.wrapper.unmount()
   })
+
+  it('allows scheduling an extension during regular hours', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-30T03:00:00.000Z'))
+    const mounted = mountPanel({
+      ...closedOutsideRegularHours,
+      isOpen: true,
+      mode: 'regular',
+      isWithinRegularHours: true,
+      regularClosesAt: '2026-07-30T08:20:00.000Z',
+      closesAt: '2026-07-30T08:20:00.000Z',
+    })
+
+    await getButtonByText(mounted, '30분').trigger('click')
+    await getButtonByText(mounted, '연장 예약').trigger('click')
+
+    expect(mounted.panel.emitted('open')).toEqual([[{ extensionMinutes: 30 }]])
+    mounted.wrapper.unmount()
+  })
 })

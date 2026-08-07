@@ -69,4 +69,13 @@ describe('operation policy', () => {
       ).isOpen,
     ).toBe(false)
   })
+
+  it('uses a scheduled extension as the close time during regular hours', () => {
+    const now = seoulTime('2026-07-23T12:00:00')
+    const extensionUntil = seoulTime('2026-07-23T18:20:00')
+    const status = resolveOperationStatus({ manualClosedUntil: null, extensionUntil }, now)
+
+    expect(status.mode).toBe('regular')
+    expect(status.closesAt).toEqual(extensionUntil)
+  })
 })
