@@ -1,11 +1,12 @@
 import { z } from 'zod'
-import { eq } from 'drizzle-orm'
-import { operationControl } from '../../db/schema'
+import { desc, eq, isNull } from 'drizzle-orm'
+import { operationControl, operationSessions } from '../../db/schema'
 import {
   calculateExtensionUntil,
   getRegularWindow,
   resolveOperationStatus,
 } from '../../utils/operation-policy'
+import { createOperationSessionId, getSeoulOperationDate } from '../../utils/operation-session'
 
 const openOperationSchema = z.object({
   extensionMinutes: z.number().int().min(1).max(1440).optional(),
@@ -52,6 +53,7 @@ export default defineEventHandler(async event => {
       .where(eq(operationControl.id, 1))
       .limit(1)
       .for('update')
+    const previousStatus = resolveOperationStatus(existingControl, now)
 
     let extensionUntil: Date | null = null
     const requestsExtension =
@@ -117,6 +119,53 @@ export default defineEventHandler(async event => {
         },
       })
       .returning()
+
+    const updatedStatus = resolveOperationStatus(updatedControl, now)
+    if (updatedStatus.isOpen) {
+      let [activeSession] = await tx
+        .select({
+          id: operationSessions.id,
+          operationDate: operationSessions.operationDate,
+          openedAt: operationSessions.openedAt,
+        })
+        .from(operationSessions)
+        .where(isNull(operationSessions.closedAt))
+        .orderBy(desc(operationSessions.openedAt))
+        .limit(1)
+
+      if (
+        activeSession &&
+        (!previousStatus.isOpen ||
+          (activeSession.operationDate !== getSeoulOperationDate(now) &&
+            !(
+              existingControl?.extensionUntil &&
+              existingControl.extensionUntil >= regularWindow.opensAt
+            )))
+      ) {
+        const closedAt =
+          existingControl?.extensionUntil && existingControl.extensionUntil <= now
+            ? existingControl.extensionUntil
+            : now
+        await tx
+          .update(operationSessions)
+          .set({ closedAt, updatedAt: now })
+          .where(eq(operationSessions.id, activeSession.id))
+        activeSession = undefined
+      }
+
+      if (!activeSession) {
+        const openedAt =
+          previousStatus.isOpen && previousStatus.mode === 'regular' ? regularWindow.opensAt : now
+
+        await tx.insert(operationSessions).values({
+          id: createOperationSessionId(openedAt),
+          operationDate: getSeoulOperationDate(openedAt),
+          openedAt,
+          openedBy: previousStatus.isOpen ? null : profile.authUserId,
+          updatedAt: now,
+        })
+      }
+    }
 
     return updatedControl
   })

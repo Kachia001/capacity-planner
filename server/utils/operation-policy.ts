@@ -1,5 +1,10 @@
-import { eq } from 'drizzle-orm'
-import { operationControl, type OperationControl } from '../db/schema'
+import { desc, eq, isNull } from 'drizzle-orm'
+import { operationControl, operationSessions, type OperationControl } from '../db/schema'
+import {
+  createOperationSessionId,
+  getRegularCloseForOperationDate,
+  getSeoulOperationDate,
+} from './operation-session'
 
 export const OPERATION_TIME_ZONE = 'Asia/Seoul'
 export const REGULAR_OPEN_MINUTE = 8 * 60 + 20
@@ -117,13 +122,68 @@ export function resolveOperationStatus(
 
 export async function getOperationStatus(now = new Date()) {
   const db = useDb()
-  const [control] = await db
-    .select()
-    .from(operationControl)
-    .where(eq(operationControl.id, 1))
-    .limit(1)
+  return await db.transaction(async tx => {
+    const [control] = await tx
+      .select()
+      .from(operationControl)
+      .where(eq(operationControl.id, 1))
+      .limit(1)
+      .for('update')
+    const status = resolveOperationStatus(control, now)
+    const operationDate = getSeoulOperationDate(now)
+    const regularWindow = getRegularWindow(now)
+    let [activeSession] = await tx
+      .select()
+      .from(operationSessions)
+      .where(isNull(operationSessions.closedAt))
+      .orderBy(desc(operationSessions.openedAt))
+      .limit(1)
 
-  return resolveOperationStatus(control, now)
+    const extensionBridgesCurrentRegularOpen = Boolean(
+      control?.extensionUntil &&
+      control.extensionUntil.getTime() >= regularWindow.opensAt.getTime() &&
+      activeSession &&
+      control.extensionUntil.getTime() > activeSession.openedAt.getTime(),
+    )
+    if (
+      activeSession &&
+      (!status.isOpen ||
+        (activeSession.operationDate !== operationDate && !extensionBridgesCurrentRegularOpen))
+    ) {
+      const regularClose = getRegularCloseForOperationDate(activeSession.operationDate)
+      const expiredExtension =
+        control?.extensionUntil &&
+        control.extensionUntil.getTime() > activeSession.openedAt.getTime() &&
+        control.extensionUntil.getTime() <= now.getTime()
+          ? control.extensionUntil
+          : null
+      const closedAt = expiredExtension ?? (regularClose <= now ? regularClose : now)
+
+      await tx
+        .update(operationSessions)
+        .set({ closedAt, updatedAt: now })
+        .where(eq(operationSessions.id, activeSession.id))
+      activeSession = undefined
+    }
+
+    if (status.isOpen && !activeSession) {
+      const openedDuringRegularWindow =
+        status.mode === 'regular' ||
+        (control?.updatedAt && control.updatedAt.getTime() < regularWindow.closesAt.getTime())
+      const openedAt = openedDuringRegularWindow
+        ? regularWindow.opensAt
+        : (control?.updatedAt ?? now)
+
+      await tx.insert(operationSessions).values({
+        id: createOperationSessionId(openedAt),
+        operationDate: getSeoulOperationDate(openedAt),
+        openedAt,
+        updatedAt: now,
+      })
+    }
+
+    return status
+  })
 }
 
 export async function requireOperationOpen(now = new Date()) {
