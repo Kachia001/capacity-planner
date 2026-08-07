@@ -18,7 +18,7 @@ const emit = defineEmits<{
 const category = ref<WorkItemIssueCategory>('material_shortage')
 const note = ref('')
 const noteLength = computed(() => note.value.trim().length)
-const canSubmit = computed(() => noteLength.value >= 3 && !props.pending)
+const canSubmit = computed(() => !props.pending)
 
 function close() {
   if (!props.pending) emit('close')
@@ -152,9 +152,8 @@ onBeforeUnmount(() => {
               class="resize-y rounded-lg border border-zinc-300 bg-white px-3 py-3 text-sm font-normal leading-6 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
               placeholder="현장에서 확인한 문제와 필요한 조치를 구체적으로 입력하세요."
             />
-            <span class="flex justify-between text-xs font-normal text-zinc-500">
-              <span>최소 3자</span>
-              <span>{{ noteLength }}/1000자</span>
+            <span class="text-right text-xs font-normal text-zinc-500">
+              {{ noteLength }}/1000자
             </span>
           </label>
 
