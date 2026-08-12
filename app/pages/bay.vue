@@ -480,6 +480,14 @@ function updatePackingProgress(progress: number) {
   }
 }
 
+function syncPackingAvailability(bayId: string, progress: number | null) {
+  const bay = bays.value.find(candidate => candidate.id === bayId)
+  if (!bay) return
+
+  bay.hasPackingList = progress !== null
+  bay.packingProgress = progress
+}
+
 function workItemDetails(item: OperationWorkItem) {
   return [
     { label: 'Bay', value: selectedBay.value?.code ?? '미확인' },
@@ -968,10 +976,7 @@ onBeforeUnmount(() => {
       />
     </div>
 
-    <div
-      v-if="selectedBay && (selectedBay.hasPackingList || isSupervisor)"
-      class="border-b border-[#d9ddd5] bg-[#f5f8f5] px-4 pt-2 sm:px-6"
-    >
+    <div v-if="selectedBay" class="border-b border-[#d9ddd5] bg-[#f5f8f5] px-4 pt-2 sm:px-6">
       <div class="mx-auto max-w-7xl">
         <div
           role="tablist"
@@ -1023,7 +1028,7 @@ onBeforeUnmount(() => {
     </div>
 
     <div
-      v-show="!selectedBay || (!selectedBay.hasPackingList && !isSupervisor) || detailTab === 'bay'"
+      v-show="!selectedBay || detailTab === 'bay'"
       id="work-item-explorer"
       role="tabpanel"
       aria-label="Bay 작업"
@@ -1072,7 +1077,7 @@ onBeforeUnmount(() => {
     </div>
 
     <div
-      v-if="selectedBay && (selectedBay.hasPackingList || isSupervisor)"
+      v-if="selectedBay"
       v-show="detailTab === 'packing'"
       id="packing-detail-panel"
       role="tabpanel"
@@ -1082,6 +1087,7 @@ onBeforeUnmount(() => {
         :bay-id="selectedBayId"
         :bay-code="selectedBay?.code ?? null"
         :role="auth.profile.role"
+        @loaded="syncPackingAvailability"
         @saved="updatePackingProgress"
       />
     </div>

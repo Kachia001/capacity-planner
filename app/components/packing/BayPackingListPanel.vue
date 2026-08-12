@@ -24,7 +24,10 @@ import type { AppRole } from '@/stores/auth'
 import type { PackingSectionDraft, PackingTemplateDraft } from '@/types/packing'
 
 const props = defineProps<{ bayId: string | null; bayCode: string | null; role: AppRole }>()
-const emit = defineEmits<{ saved: [progress: number] }>()
+const emit = defineEmits<{
+  saved: [progress: number]
+  loaded: [bayId: string, progress: number | null]
+}>()
 
 const loading = ref(false)
 const pending = ref(false)
@@ -77,6 +80,7 @@ async function load() {
   try {
     const data = await fetchBayPackingList(props.bayId)
     applyDetail(data)
+    emit('loaded', props.bayId, data?.progress ?? null)
   } catch (error) {
     errorMessage.value = getRequestErrorMessage(error, '패킹리스트를 불러오지 못했습니다.')
   } finally {
@@ -170,10 +174,7 @@ watch(assignmentSourceId, applyAssignmentSource)
 </script>
 
 <template>
-  <section
-    v-if="props.bayId && (loading || exists || errorMessage || editable)"
-    class="bg-[#f5f8f5] px-4 pb-8 sm:px-6"
-  >
+  <section v-if="props.bayId" class="bg-[#f5f8f5] px-4 pb-8 sm:px-6">
     <div class="mx-auto max-w-7xl rounded-xl border border-[#d9ddd5] bg-white shadow-sm">
       <header class="flex flex-wrap items-center justify-between gap-4 border-b px-5 py-4">
         <div class="flex items-center gap-3">
@@ -228,6 +229,18 @@ watch(assignmentSourceId, applyAssignmentSource)
           <ClipboardPlus /> 패킹리스트 할당
         </Button>
       </div>
+      <div
+        v-else-if="!exists && !editable"
+        class="flex min-h-48 flex-col items-center justify-center px-6 py-10 text-center"
+      >
+        <span class="flex size-12 items-center justify-center rounded-xl bg-zinc-100 text-zinc-500">
+          <ClipboardPlus class="size-6" />
+        </span>
+        <h3 class="mt-4 font-semibold">할당된 패킹리스트가 없습니다.</h3>
+        <p class="mt-2 text-sm text-zinc-500">
+          패킹리스트가 할당되면 이 화면에서 조회할 수 있습니다.
+        </p>
+      </div>
       <div v-else-if="!exists && editable && assigning" class="space-y-5 p-5">
         <div
           class="flex flex-wrap items-end justify-between gap-4 rounded-lg border bg-zinc-50 p-4"
@@ -281,7 +294,6 @@ watch(assignmentSourceId, applyAssignmentSource)
           <Button v-if="editable" type="button" :disabled="invalid" :loading="pending" @click="save"
             ><Save /> 저장</Button
           >
-          <p v-else class="text-xs text-zinc-500">Worker는 패킹리스트를 조회만 할 수 있습니다.</p>
         </div>
       </div>
     </div>
