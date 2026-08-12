@@ -107,14 +107,21 @@ Persistence row, domain aggregate, application result 및 public API response는
 
 ### BAY와 템플릿
 
-| Method | Path                       | 설명                            |
-| ------ | -------------------------- | ------------------------------- |
-| GET    | `/api/bay-templates`       | Admin/Manager용 BAY 템플릿 목록 |
-| POST   | `/api/bay-templates`       | Admin/Manager용 BAY 템플릿 생성 |
-| GET    | `/api/bays`                | BAY 목록                        |
-| POST   | `/api/bays`                | Admin/Manager의 BAY 생성        |
-| GET    | `/api/bays/:id/work-items` | BAY의 작업 검색과 필터          |
-| GET    | `/api/dashboard/bays`      | Manager/Admin용 BAY 집계        |
+| Method | Path                              | 설명                             |
+| ------ | --------------------------------- | -------------------------------- |
+| GET    | `/api/bay-templates`              | Admin/Manager용 BAY 템플릿 목록  |
+| POST   | `/api/bay-templates`              | Admin/Manager용 BAY 템플릿 생성  |
+| GET    | `/api/bays`                       | BAY 목록                         |
+| POST   | `/api/bays`                       | Admin/Manager의 BAY 생성         |
+| GET    | `/api/packing-list-templates`     | Admin/Manager용 패킹 템플릿 목록 |
+| POST   | `/api/packing-list-templates`     | Admin/Manager용 패킹 템플릿 생성 |
+| PUT    | `/api/packing-list-templates/:id` | Admin/Manager용 패킹 템플릿 수정 |
+| DELETE | `/api/packing-list-templates/:id` | 패킹 템플릿 보관 처리            |
+| GET    | `/api/bays/:id/packing-list`      | BAY 패킹리스트 조회              |
+| POST   | `/api/bays/:id/packing-list`      | 기존 BAY에 패킹리스트 할당       |
+| PUT    | `/api/bays/:id/packing-list`      | Admin/Manager 패킹리스트 저장    |
+| GET    | `/api/bays/:id/work-items`        | BAY의 작업 검색과 필터           |
+| GET    | `/api/dashboard/bays`             | Manager/Admin용 BAY 집계         |
 
 ### 작업 실행
 
@@ -218,6 +225,23 @@ Persistence row, domain aggregate, application result 및 public API response는
 - 주요 필드: `code`, `description`, `status`
 - `code`는 unique입니다.
 
+#### 패킹리스트 템플릿
+
+- `packing_list_templates`, `packing_list_template_sections`, `packing_list_template_rows`로
+  템플릿의 섹션과 기본 행을 관리합니다.
+- 템플릿의 하위 데이터는 cascade 삭제하며 템플릿 내 순서는 unique로 보장합니다.
+- Admin과 Manager는 전용 패킹 리스트 관리 화면에서 템플릿을 생성, 복제, 수정 및 보관할
+  수 있습니다.
+- 템플릿 수정은 `revision`을 비교해 동시에 수정된 내용을 덮어쓰지 않으며, 삭제는
+  `is_archived`를 변경하는 보관 방식으로 처리합니다.
+
+#### BAY 패킹리스트
+
+- `bay_packing_lists`, `bay_packing_list_sections`, `bay_packing_list_rows`로 실제 운영
+  패킹리스트를 관리합니다.
+- `bay_packing_lists.bay_id`는 unique이므로 BAY당 패킹리스트는 최대 1개입니다.
+- 체크 상태와 행·섹션·전체 메모는 템플릿이 아니라 BAY 패킹리스트에만 저장합니다.
+
 #### `operation_control`
 
 운영 시간의 수동 종료와 연장을 관리하는 singleton입니다.
@@ -300,6 +324,10 @@ Telegram 알림의 전달 상태와 재시도 정보를 저장합니다.
 - 템플릿으로 BAY를 만들 때 템플릿 행을 `work_items`로 복사합니다.
 - 생성된 BAY와 템플릿은 이후 독립적으로 변경합니다.
 - BAY와 작업 복사는 하나의 transaction으로 처리합니다.
+- 패킹 템플릿을 선택하면 섹션과 행을 BAY 소유 데이터로 복사하며 이후 원본과 동기화하지
+  않습니다.
+- BAY 생성 시 패킹리스트를 사용하는 경우 BAY, 작업 행, 패킹 섹션과 행을 하나의
+  transaction으로 저장합니다.
 - 상태 변경은 version 조건을 포함해 lost update를 방지합니다.
 - 상태 변경과 `work_item_status_events` 기록은 같은 transaction에서 수행합니다.
 - 이슈 저장과 Telegram Outbox 생성도 같은 transaction에서 수행합니다.
