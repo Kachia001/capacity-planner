@@ -124,6 +124,58 @@ export const bayTemplateRows = pgTable(
   }),
 )
 
+export const packingListTemplates = pgTable('packing_list_templates', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  description: text('description'),
+  revision: integer('revision').notNull().default(1),
+  isArchived: boolean('is_archived').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const packingListTemplateSections = pgTable(
+  'packing_list_template_sections',
+  {
+    id: serial('id').primaryKey(),
+    templateId: uuid('template_id')
+      .notNull()
+      .references(() => packingListTemplates.id, { onDelete: 'cascade' }),
+    sortOrder: integer('sort_order').notNull(),
+    name: text('name').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => ({
+    templateIndex: index('packing_template_sections_template_id_idx').on(table.templateId),
+    templateOrderUnique: uniqueIndex('packing_template_sections_order_idx').on(
+      table.templateId,
+      table.sortOrder,
+    ),
+  }),
+)
+
+export const packingListTemplateRows = pgTable(
+  'packing_list_template_rows',
+  {
+    id: serial('id').primaryKey(),
+    sectionId: integer('section_id')
+      .notNull()
+      .references(() => packingListTemplateSections.id, { onDelete: 'cascade' }),
+    sortOrder: integer('sort_order').notNull(),
+    label: text('label').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => ({
+    sectionIndex: index('packing_template_rows_section_id_idx').on(table.sectionId),
+    sectionOrderUnique: uniqueIndex('packing_template_rows_order_idx').on(
+      table.sectionId,
+      table.sortOrder,
+    ),
+  }),
+)
+
 export const workTables = pgTable(
   'work_tables',
   {
@@ -150,6 +202,68 @@ export const bays = pgTable(
   },
   table => ({
     tableUnique: uniqueIndex('bays_table_number_idx').on(table.tableNumber),
+  }),
+)
+
+export const bayPackingLists = pgTable(
+  'bay_packing_lists',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    bayId: uuid('bay_id')
+      .notNull()
+      .references(() => bays.id, { onDelete: 'cascade' }),
+    memo: text('memo'),
+    version: integer('version').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => ({
+    bayUnique: uniqueIndex('bay_packing_lists_bay_id_idx').on(table.bayId),
+  }),
+)
+
+export const bayPackingListSections = pgTable(
+  'bay_packing_list_sections',
+  {
+    id: serial('id').primaryKey(),
+    packingListId: uuid('packing_list_id')
+      .notNull()
+      .references(() => bayPackingLists.id, { onDelete: 'cascade' }),
+    sortOrder: integer('sort_order').notNull(),
+    name: text('name').notNull(),
+    memo: text('memo'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => ({
+    packingListIndex: index('bay_packing_sections_list_id_idx').on(table.packingListId),
+    packingListOrderUnique: uniqueIndex('bay_packing_sections_order_idx').on(
+      table.packingListId,
+      table.sortOrder,
+    ),
+  }),
+)
+
+export const bayPackingListRows = pgTable(
+  'bay_packing_list_rows',
+  {
+    id: serial('id').primaryKey(),
+    sectionId: integer('section_id')
+      .notNull()
+      .references(() => bayPackingListSections.id, { onDelete: 'cascade' }),
+    sortOrder: integer('sort_order').notNull(),
+    label: text('label').notNull(),
+    isChecked: boolean('is_checked').notNull().default(false),
+    memo: text('memo'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => ({
+    sectionIndex: index('bay_packing_rows_section_id_idx').on(table.sectionId),
+    sectionOrderUnique: uniqueIndex('bay_packing_rows_order_idx').on(
+      table.sectionId,
+      table.sortOrder,
+    ),
   }),
 )
 
@@ -377,3 +491,9 @@ export type BayTemplate = typeof bayTemplates.$inferSelect
 export type NewBayTemplate = typeof bayTemplates.$inferInsert
 export type BayTemplateRow = typeof bayTemplateRows.$inferSelect
 export type NewBayTemplateRow = typeof bayTemplateRows.$inferInsert
+export type PackingListTemplate = typeof packingListTemplates.$inferSelect
+export type PackingListTemplateSection = typeof packingListTemplateSections.$inferSelect
+export type PackingListTemplateRow = typeof packingListTemplateRows.$inferSelect
+export type BayPackingList = typeof bayPackingLists.$inferSelect
+export type BayPackingListSection = typeof bayPackingListSections.$inferSelect
+export type BayPackingListRow = typeof bayPackingListRows.$inferSelect
