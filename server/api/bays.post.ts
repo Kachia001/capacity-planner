@@ -1,5 +1,11 @@
 import { z } from 'zod'
-import { bays, workItems } from '../db/schema'
+import {
+  bayPackingListRows,
+  bayPackingListSections,
+  bayPackingLists,
+  bays,
+  workItems,
+} from '../db/schema'
 
 const nullableText = z.string().trim().max(1000)
 const itemSchema = z.object({
@@ -31,6 +37,13 @@ const createBaySchema = z
       tableNumber: z.number().int().min(1).max(18),
     }),
     groups: z.array(groupSchema).min(1),
+    packingList: z
+      .object({
+        memo: z.string().trim().max(10000).default(''),
+        sections: packingSectionsSchema,
+      })
+      .nullable()
+      .default(null),
   })
   .superRefine(({ groups }, ctx) => {
     groups.forEach((group, groupIndex) => {
@@ -104,7 +117,43 @@ export default defineEventHandler(async event => {
         })),
       )
 
-      return { id: bay!.id, code: bay!.code, workItemCount: rows.length }
+      if (body.packingList) {
+        const [packingList] = await tx
+          .insert(bayPackingLists)
+          .values({ bayId: bay!.id, memo: body.packingList.memo || null })
+          .returning()
+        if (body.packingList.sections.length) {
+          const sections = await tx
+            .insert(bayPackingListSections)
+            .values(
+              body.packingList.sections.map(section => ({
+                packingListId: packingList!.id,
+                sortOrder: section.sortOrder,
+                name: section.name,
+                memo: section.memo || null,
+              })),
+            )
+            .returning()
+          const sectionIds = new Map(sections.map(section => [section.sortOrder, section.id]))
+          const packingRows = body.packingList.sections.flatMap(section =>
+            section.rows.map(row => ({
+              sectionId: sectionIds.get(section.sortOrder)!,
+              sortOrder: row.sortOrder,
+              label: row.label,
+              isChecked: false,
+              memo: null,
+            })),
+          )
+          if (packingRows.length) await tx.insert(bayPackingListRows).values(packingRows)
+        }
+      }
+
+      return {
+        id: bay!.id,
+        code: bay!.code,
+        workItemCount: rows.length,
+        hasPackingList: Boolean(body.packingList),
+      }
     })
   } catch (error) {
     if (typeof error === 'object' && error && 'code' in error && error.code === '23505') {

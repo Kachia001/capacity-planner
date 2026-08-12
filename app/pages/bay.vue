@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Loader2, ShieldAlert } from '@lucide/vue'
+import { ClipboardList, ListChecks, Loader2, ShieldAlert } from '@lucide/vue'
 import IssueContentEditDialog from '@/components/operations/IssueContentEditDialog.vue'
 import IssueReportDialog from '@/components/operations/IssueReportDialog.vue'
 import IssueResolutionDialog from '@/components/operations/IssueResolutionDialog.vue'
@@ -7,6 +7,7 @@ import ManagementOverview from '@/components/operations/ManagementOverview.vue'
 import OperationControlPanel from '@/components/operations/OperationControlPanel.vue'
 import WorkerOperationsHeader from '@/components/operations/WorkerOperationsHeader.vue'
 import WorkItemExplorer from '@/components/operations/WorkItemExplorer.vue'
+import BayPackingListPanel from '@/components/packing/BayPackingListPanel.vue'
 import {
   cancelWorkItemStart,
   closeOperation,
@@ -53,6 +54,7 @@ const dashboard = ref<OperationsDashboardResponse | null>(null)
 const dashboardPending = ref(false)
 const dashboardError = ref<string | null>(null)
 const selectedBayId = ref<string | null>(null)
+const detailTab = ref<'bay' | 'packing'>('bay')
 const focusedWorkItemId = ref<number | null>(null)
 const items = ref<OperationWorkItem[]>([])
 const total = ref(0)
@@ -257,13 +259,7 @@ async function loadWorkItems(append = false) {
           return
         }
 
-        response = await fetchBayWorkItems(
-          bayId,
-          filters,
-          response.nextCursor,
-          null,
-          100,
-        )
+        response = await fetchBayWorkItems(bayId, filters, response.nextCursor, null, 100)
         allItems.push(...response.items)
       }
 
@@ -377,6 +373,7 @@ async function chooseBay(
   }
 
   revealSequence += 1
+  detailTab.value = 'bay'
   selectedBayId.value = bayId
   focusedWorkItemId.value = workItemId
   items.value = []
@@ -472,6 +469,15 @@ function loadMoreWorkItems() {
 
 function retryWorkItems() {
   void loadWorkItems()
+}
+
+function updatePackingProgress(progress: number) {
+  const bay = bays.value.find(candidate => candidate.id === selectedBayId.value)
+  if (bay) {
+    bay.hasPackingList = true
+    bay.packingProgress = progress
+    detailTab.value = 'packing'
+  }
 }
 
 function workItemDetails(item: OperationWorkItem) {
@@ -962,7 +968,67 @@ onBeforeUnmount(() => {
       />
     </div>
 
-    <div id="work-item-explorer" class="scroll-mt-4 bg-[#f5f8f5]">
+    <div
+      v-if="selectedBay && (selectedBay.hasPackingList || isSupervisor)"
+      class="border-b border-[#d9ddd5] bg-[#f5f8f5] px-4 pt-2 sm:px-6"
+    >
+      <div class="mx-auto max-w-7xl">
+        <div
+          role="tablist"
+          :aria-label="`${selectedBay.code} 상세 화면 전환`"
+          class="inline-flex rounded-t-xl border border-b-0 border-[#d9ddd5] bg-[#e9ede8] p-1 pb-0"
+        >
+          <button
+            type="button"
+            role="tab"
+            :aria-selected="detailTab === 'bay'"
+            aria-controls="work-item-explorer"
+            class="inline-flex h-11 items-center gap-2 rounded-t-lg border border-transparent px-5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+            :class="
+              detailTab === 'bay'
+                ? 'border-[#d9ddd5] border-b-white bg-white text-zinc-950 shadow-sm'
+                : 'text-zinc-500 hover:bg-white/60 hover:text-zinc-900'
+            "
+            @click="detailTab = 'bay'"
+          >
+            <ListChecks class="size-4" /> Bay 작업
+          </button>
+          <button
+            type="button"
+            role="tab"
+            :aria-selected="detailTab === 'packing'"
+            aria-controls="packing-detail-panel"
+            class="inline-flex h-11 items-center gap-2 rounded-t-lg border border-transparent px-5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+            :class="
+              detailTab === 'packing'
+                ? 'border-[#d9ddd5] border-b-white bg-white text-zinc-950 shadow-sm'
+                : 'text-zinc-500 hover:bg-white/60 hover:text-zinc-900'
+            "
+            @click="detailTab = 'packing'"
+          >
+            <ClipboardList class="size-4" /> 패킹리스트
+            <span
+              class="rounded-full px-2 py-0.5 text-[10px]"
+              :class="
+                selectedBay.hasPackingList
+                  ? 'bg-emerald-100 font-mono text-emerald-800'
+                  : 'bg-zinc-200 font-semibold text-zinc-600'
+              "
+            >
+              {{ selectedBay.hasPackingList ? `${selectedBay.packingProgress ?? 0}%` : '미할당' }}
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-show="!selectedBay || (!selectedBay.hasPackingList && !isSupervisor) || detailTab === 'bay'"
+      id="work-item-explorer"
+      role="tabpanel"
+      aria-label="Bay 작업"
+      class="scroll-mt-4 bg-[#f5f8f5]"
+    >
       <WorkItemExplorer
         :role="auth.profile.role"
         :current-user-id="auth.profile.id"
@@ -1002,6 +1068,21 @@ onBeforeUnmount(() => {
         @clear-focus="clearFocusedWorkItem"
         @load-more="loadMoreWorkItems"
         @retry="retryWorkItems"
+      />
+    </div>
+
+    <div
+      v-if="selectedBay && (selectedBay.hasPackingList || isSupervisor)"
+      v-show="detailTab === 'packing'"
+      id="packing-detail-panel"
+      role="tabpanel"
+      aria-label="패킹리스트"
+    >
+      <BayPackingListPanel
+        :bay-id="selectedBayId"
+        :bay-code="selectedBay?.code ?? null"
+        :role="auth.profile.role"
+        @saved="updatePackingProgress"
       />
     </div>
 

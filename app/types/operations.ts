@@ -35,6 +35,8 @@ export interface BayOption {
   code: string
   description: string | null
   tableNumber: number | null
+  hasPackingList: boolean
+  packingProgress: number | null
 }
 
 export interface OperationWorkItem {

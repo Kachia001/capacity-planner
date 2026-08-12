@@ -6,13 +6,20 @@ import BayIdentitySection from '@/pages/admin/bays/components/BayIdentitySection
 import BayTableAssignmentSection from '@/pages/admin/bays/components/BayTableAssignmentSection.vue'
 import BayStartMethodSection from '@/pages/admin/bays/components/BayStartMethodSection.vue'
 import BayWorkConfigurationSection from '@/pages/admin/bays/components/BayWorkConfigurationSection.vue'
+import BayPackingConfigurationSection from '@/pages/admin/bays/components/BayPackingConfigurationSection.vue'
 import {
   cloneTemplateGroups,
   createBlankTemplateGroups,
   fetchBayTemplates,
 } from '@/composables/useBayTemplates'
+import {
+  clonePackingSections,
+  createBlankPackingSections,
+  fetchPackingTemplates,
+} from '@/composables/usePackingLists'
 import { fetchWorkTables, getRequestErrorMessage } from '@/composables/useOperationsApi'
 import type { ExistingTemplateDraft, TemplateGroupDraft } from '@/types/template'
+import type { PackingSectionDraft, PackingTemplateDraft } from '@/types/packing'
 import type { WorkTableOverview } from '#shared/api/tables/table.contract'
 
 definePageMeta({
@@ -30,6 +37,9 @@ const bayDescription = ref('')
 const tableNumber = ref<number | null>(null)
 const tables = ref<WorkTableOverview[]>([])
 const templates = ref<ExistingTemplateDraft[]>([])
+const packingTemplates = ref<PackingTemplateDraft[]>([])
+const packingEnabled = ref(false)
+const packingSections = ref<PackingSectionDraft[]>(createBlankPackingSections())
 const selectedTemplateId = ref(directWriteId)
 const draftGroups = ref<TemplateGroupDraft[]>(createBlankTemplateGroups())
 const editingWorkConfiguration = ref(true)
@@ -79,6 +89,17 @@ const emptyItemCount = computed(() =>
     0,
   ),
 )
+const invalidPackingCount = computed(() =>
+  packingEnabled.value
+    ? packingSections.value.reduce(
+        (count, section) =>
+          count +
+          (section.name.trim() ? 0 : 1) +
+          section.rows.filter(row => !row.label.trim()).length,
+        0,
+      )
+    : 0,
+)
 const codeAvailable = computed(() => {
   const code = bayCode.value.trim()
   return (
@@ -97,6 +118,7 @@ const canSubmit = computed(
     groupCount.value > 0 &&
     invalidGroupCount.value === 0 &&
     emptyItemCount.value === 0 &&
+    invalidPackingCount.value === 0 &&
     !submitPending.value,
 )
 
@@ -137,11 +159,13 @@ async function loadTemplates() {
     await auth.initialize()
     await planner.loadWorkItems()
     if (!auth.user) throw new Error('로그인이 필요합니다.')
-    const [nextTemplates, tableResponse] = await Promise.all([
+    const [nextTemplates, nextPackingTemplates, tableResponse] = await Promise.all([
       fetchBayTemplates(),
+      fetchPackingTemplates(),
       fetchWorkTables(),
     ])
     templates.value = nextTemplates
+    packingTemplates.value = nextPackingTemplates
     tables.value = tableResponse.tables
   } catch (error) {
     loadError.value = getRequestErrorMessage(error, '베이 생성 옵션을 불러오지 못했습니다.')
@@ -165,6 +189,12 @@ async function createBay() {
           tableNumber: tableNumber.value,
         },
         groups: cloneTemplateGroups(draftGroups.value),
+        packingList: packingEnabled.value
+          ? {
+              memo: '',
+              sections: clonePackingSections(packingSections.value),
+            }
+          : null,
       },
     })
     await planner.loadWorkItems()
@@ -226,6 +256,12 @@ onMounted(loadTemplates)
           :is-direct-write="isDirectWrite"
           :invalid-group-count="invalidGroupCount"
           :empty-item-count="emptyItemCount"
+        />
+        <BayPackingConfigurationSection
+          v-model:enabled="packingEnabled"
+          v-model:sections="packingSections"
+          :templates="packingTemplates"
+          :loading="loading"
         />
       </div>
 
