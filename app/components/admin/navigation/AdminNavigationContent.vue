@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { BellRing, ChevronRight, Grid3X3, KeyRound, PanelsTopLeft, UsersRound } from '@lucide/vue'
+import {
+  BellRing,
+  ChevronRight,
+  ClipboardList,
+  Grid3X3,
+  KeyRound,
+  PanelsTopLeft,
+  UsersRound,
+} from '@lucide/vue'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -24,6 +32,13 @@ const navigationItems = [
     caption: 'Bay registry',
     to: '/admin/bays',
     icon: PanelsTopLeft,
+    roles: ['admin', 'manager'],
+  },
+  {
+    label: '패킹 리스트 관리',
+    caption: 'Packing templates',
+    to: '/admin/packing-templates',
+    icon: ClipboardList,
     roles: ['admin', 'manager'],
   },
   {

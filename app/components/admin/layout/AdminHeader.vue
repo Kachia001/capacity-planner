@@ -24,6 +24,10 @@ const pageContext = computed(() => {
     return { eyebrow: 'BAY MANAGEMENT', title: '베이 생성 옵션' }
   }
 
+  if (route.path.startsWith('/admin/packing-templates')) {
+    return { eyebrow: 'PACKING MANAGEMENT', title: '패킹 리스트 관리' }
+  }
+
   if (route.path === '/admin/bays/new') {
     return { eyebrow: 'BAY MANAGEMENT', title: 'Bay 생성' }
   }
