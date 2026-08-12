@@ -137,14 +137,21 @@ const bayTableColumns: DataTableColumn<DashboardBaySummary>[] = [
     key: 'progress',
     header: '작업 진행률',
     accessor: 'completionRate',
-    width: '25%',
+    width: '18%',
+    headerClass: 'text-[11px] font-semibold text-[#697067]',
+  },
+  {
+    key: 'packing',
+    header: '패킹 진행률',
+    accessor: 'packingProgress',
+    width: '13%',
     headerClass: 'text-[11px] font-semibold text-[#697067]',
   },
   {
     key: 'work',
     header: '작업 현황',
     accessor: 'total',
-    width: '16%',
+    width: '14%',
     headerClass: 'text-[11px] font-semibold text-[#697067]',
   },
   {
@@ -158,7 +165,7 @@ const bayTableColumns: DataTableColumn<DashboardBaySummary>[] = [
     key: 'activity',
     header: '최근 활동',
     accessor: 'lastActivityAt',
-    width: '20%',
+    width: '15%',
     headerClass: 'text-[11px] font-semibold text-[#697067]',
   },
 ]
@@ -355,6 +362,17 @@ onMounted(() => {
             variant="outline"
             tone="neutral"
             size="md"
+            class="border-[#cdd2c9] bg-white text-center text-xs text-[#414840]"
+          >
+            <NuxtLink to="/admin/packing-templates">
+              <FilePlus2 class="size-4" /> 패킹 리스트 관리
+            </NuxtLink>
+          </Button>
+          <Button
+            as-child
+            variant="outline"
+            tone="neutral"
+            size="md"
             class="border-[#cdd2c9] bg-white text-center text-xs text-[#414840] hover:border-[#949d91] hover:bg-[#fafbf8]"
           >
             <NuxtLink to="/admin/bay-templates/new">
@@ -484,6 +502,16 @@ onMounted(() => {
                 </p>
               </div>
 
+              <div
+                v-if="bay.hasPackingList"
+                class="mt-3 rounded-md bg-emerald-50 px-3 py-2 text-xs"
+              >
+                <div class="flex justify-between">
+                  <span class="font-semibold">패킹 진행률</span
+                  ><strong>{{ bay.packingProgress ?? 0 }}%</strong>
+                </div>
+              </div>
+
               <dl class="mt-4 grid grid-cols-3 overflow-hidden rounded-lg border border-[#e0e4dd]">
                 <div class="border-r border-[#e0e4dd] px-3 py-2.5">
                   <dt class="text-[9px] text-[#8b9289]">대기</dt>
@@ -573,6 +601,21 @@ onMounted(() => {
                     완료 <strong class="ml-1">{{ row.completed }}</strong>
                   </span>
                 </div>
+              </template>
+
+              <template #cell-packing="{ row }">
+                <template v-if="row.hasPackingList">
+                  <div class="flex items-center gap-2">
+                    <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-emerald-100">
+                      <div
+                        class="h-full rounded-full bg-emerald-500"
+                        :style="{ width: `${row.packingProgress ?? 0}%` }"
+                      />
+                    </div>
+                    <strong class="font-mono text-[11px]">{{ row.packingProgress ?? 0 }}%</strong>
+                  </div>
+                </template>
+                <span v-else class="text-xs text-zinc-400">—</span>
               </template>
 
               <template #cell-people="{ row }">

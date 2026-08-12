@@ -1,5 +1,14 @@
 import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm'
-import { appUsers, bays, workItemIssues, workItems, workItemStatusEvents } from '../../db/schema'
+import {
+  appUsers,
+  bayPackingListRows,
+  bayPackingListSections,
+  bayPackingLists,
+  bays,
+  workItemIssues,
+  workItems,
+  workItemStatusEvents,
+} from '../../db/schema'
 
 export default defineEventHandler(async event => {
   await requireAppUser(event, ['admin', 'manager'])
@@ -52,10 +61,30 @@ export default defineEventHandler(async event => {
     .groupBy(bays.id, bays.code, bays.description, bays.tableNumber)
     .orderBy(asc(bays.code))
 
-  const baySummaries = bayRows.map(row => ({
-    ...row,
-    completionRate: row.total > 0 ? Math.round((row.completed / row.total) * 100) : 0,
-  }))
+  const packingRows = await db
+    .select({
+      bayId: bayPackingLists.bayId,
+      totalRows: sql<number>`count(${bayPackingListRows.id})::int`,
+      checkedRows: sql<number>`count(${bayPackingListRows.id}) filter (
+        where ${bayPackingListRows.isChecked} = true
+      )::int`,
+    })
+    .from(bayPackingLists)
+    .leftJoin(bayPackingListSections, eq(bayPackingListSections.packingListId, bayPackingLists.id))
+    .leftJoin(bayPackingListRows, eq(bayPackingListRows.sectionId, bayPackingListSections.id))
+    .groupBy(bayPackingLists.bayId)
+  const packingByBay = new Map(packingRows.map(row => [row.bayId, row]))
+  const baySummaries = bayRows.map(row => {
+    const packing = packingByBay.get(row.id)
+    return {
+      ...row,
+      completionRate: row.total > 0 ? Math.round((row.completed / row.total) * 100) : 0,
+      hasPackingList: Boolean(packing),
+      packingProgress: packing
+        ? calculatePackingProgress(packing.checkedRows, packing.totalRows)
+        : null,
+    }
+  })
   const totals = baySummaries.reduce(
     (summary, bay) => {
       summary.totalItems += bay.total

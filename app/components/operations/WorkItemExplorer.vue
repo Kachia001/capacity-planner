@@ -226,6 +226,12 @@ function workerLabel(item: OperationWorkItem) {
               <p class="mt-0.5 font-mono text-sm font-bold text-emerald-950">
                 {{ selectedBay.code }}
               </p>
+              <p
+                v-if="selectedBay.hasPackingList"
+                class="mt-1 text-[10px] font-semibold text-emerald-800"
+              >
+                패킹 진행률 {{ selectedBay.packingProgress ?? 0 }}%
+              </p>
             </div>
           </div>
         </div>
@@ -244,7 +250,7 @@ function workerLabel(item: OperationWorkItem) {
             >
               <option value="" disabled>Bay를 선택하세요</option>
               <option v-for="bay in props.bays" :key="bay.id" :value="bay.id">
-                {{ bay.code }}
+                {{ bay.code }}{{ bay.hasPackingList ? ` · 패킹 ${bay.packingProgress ?? 0}%` : '' }}
               </option>
             </select>
             <ChevronDown
@@ -666,17 +672,24 @@ function workerLabel(item: OperationWorkItem) {
 
 <style scoped>
 @keyframes work-item-query-flash {
-  0%, 100% {
+  0%,
+  100% {
     border-color: rgb(228 228 231);
     background-color: rgb(253 254 252);
     box-shadow: none;
   }
-  10%, 30%, 50%, 70% {
+  10%,
+  30%,
+  50%,
+  70% {
     border-color: rgb(56 189 248);
     background-color: rgb(224 242 254);
     box-shadow: 0 0 0 4px rgb(186 230 253 / 0.72);
   }
-  20%, 40%, 60%, 80% {
+  20%,
+  40%,
+  60%,
+  80% {
     border-color: rgb(186 230 253);
     background-color: rgb(240 249 255);
     box-shadow: 0 0 0 1px rgb(186 230 253 / 0.35);
