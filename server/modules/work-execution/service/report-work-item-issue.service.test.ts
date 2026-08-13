@@ -17,6 +17,7 @@ import type { WorkItemRepository } from '../repository/work-item.repository'
 import type { Clock } from './ports/clock'
 import type { OperationGate } from './ports/operation-gate'
 import { ReportWorkItemIssueService } from './report-work-item-issue.service'
+import type { ApplicationLogInput } from '#server/utils/application-log'
 
 const actor: Actor = {
   userId: '00000000-0000-4000-8000-000000000001',
@@ -102,6 +103,14 @@ class NoopEventRepository implements WorkItemEventRepository {
   async append() {}
 }
 
+class InMemoryApplicationLogRepository {
+  readonly logs: ApplicationLogInput[] = []
+
+  async write(input: ApplicationLogInput) {
+    this.logs.push(input)
+  }
+}
+
 class FixedClock implements Clock {
   now() {
     return fixedNow
@@ -114,7 +123,9 @@ describe('ReportWorkItemIssueService', () => {
   it('creates multiple unconfirmed issues for one work item and queues each notification', async () => {
     const issues = new InMemoryIssueRepository()
     const notifications = new InMemoryNotificationRepository()
+    const applicationLogs = new InMemoryApplicationLogRepository()
     const repositories = {
+      applicationLogs,
       workItems: new InMemoryWorkItemRepository(createWorkItem()),
       issues,
       events: new NoopEventRepository(),
@@ -143,5 +154,17 @@ describe('ReportWorkItemIssueService', () => {
     expect(first.issue.category).toBe('material_shortage')
     expect(second.issue.category).toBe('quality_issue')
     expect(notifications.requests.map(request => request.issueId)).toEqual([1, 2])
+    expect(applicationLogs.logs).toEqual([
+      expect.objectContaining({
+        event: 'work-item.issue_reported',
+        actorUserId: actor.userId,
+        metadata: { workItemId: 1, issueId: 1, category: 'material_shortage' },
+      }),
+      expect.objectContaining({
+        event: 'work-item.issue_reported',
+        actorUserId: actor.userId,
+        metadata: { workItemId: 1, issueId: 2, category: 'quality_issue' },
+      }),
+    ])
   })
 })

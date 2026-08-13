@@ -15,6 +15,7 @@ import type { WorkItemRepository } from '../repository/work-item.repository'
 import type { Clock } from './ports/clock'
 import type { OperationGate } from './ports/operation-gate'
 import { StartWorkItemService } from './start-work-item.service'
+import type { ApplicationLogInput } from '#server/utils/application-log'
 
 const actor: Actor = {
   userId: '00000000-0000-4000-8000-000000000001',
@@ -103,6 +104,14 @@ class InMemoryUnitOfWork implements WorkExecutionUnitOfWork {
   }
 }
 
+class InMemoryApplicationLogRepository {
+  readonly logs: ApplicationLogInput[] = []
+
+  async write(input: ApplicationLogInput) {
+    this.logs.push(input)
+  }
+}
+
 class FixedClock implements Clock {
   now() {
     return fixedNow
@@ -123,7 +132,9 @@ describe('StartWorkItemService', () => {
   it('coordinates operation policy, aggregate persistence, and audit persistence', async () => {
     const workItems = new InMemoryWorkItemRepository(createWorkItem())
     const events = new InMemoryEventRepository()
+    const applicationLogs = new InMemoryApplicationLogRepository()
     const unitOfWork = new InMemoryUnitOfWork({
+      applicationLogs,
       workItems,
       issues: new NoopWorkItemIssueRepository(),
       events,
@@ -139,6 +150,16 @@ describe('StartWorkItemService', () => {
     expect(unitOfWork.executed).toBe(true)
     expect(workItems.saved).toBe(true)
     expect(events.events).toHaveLength(1)
+    expect(applicationLogs.logs).toEqual([
+      expect.objectContaining({
+        level: 'info',
+        category: 'work-item',
+        event: 'work-item.started',
+        actorUserId: actor.userId,
+        metadata: { workItemId: 1 },
+        createdAt: fixedNow,
+      }),
+    ])
     expect(result).toMatchObject({
       id: 1,
       status: 'in_progress',

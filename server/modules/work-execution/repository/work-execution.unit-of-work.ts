@@ -2,8 +2,10 @@ import type { IssueNotificationOutboxRepository } from './issue-notification-out
 import type { WorkItemEventRepository } from './work-item-event.repository'
 import type { WorkItemIssueRepository } from './work-item-issue.repository'
 import type { WorkItemRepository } from './work-item.repository'
+import type { ApplicationLogRepository } from './application-log.repository'
 
 export type WorkExecutionRepositories = {
+  applicationLogs: ApplicationLogRepository
   workItems: WorkItemRepository
   issues: WorkItemIssueRepository
   events: WorkItemEventRepository

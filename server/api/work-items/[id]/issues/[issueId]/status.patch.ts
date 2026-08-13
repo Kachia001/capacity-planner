@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { UpdateWorkItemIssueStatusRequestSchema } from '#shared/api/work-items/update-work-item-issue-status.contract'
 import { workItemIssues, type WorkItemIssue } from '#server/db/schema'
 import { canTransitionWorkItemIssueStatus } from '#server/modules/work-execution/domain/work-item-issue-status'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 const idSchema = z.coerce.number().int().positive()
 
@@ -67,23 +68,42 @@ export default defineEventHandler(async event => {
   }
 
   const now = new Date()
-  const [issue] = await db
-    .update(workItemIssues)
-    .set({
-      status: body.status,
-      resolutionNote: body.status === 'resolved' ? body.resolutionNote?.trim() || null : null,
-      statusUpdatedBy: profile.authUserId,
-      updatedAt: now,
-      closedAt: body.status === 'resolved' ? now : null,
-    })
-    .where(
-      and(
-        eq(workItemIssues.id, issueId),
-        eq(workItemIssues.workItemId, workItemId),
-        eq(workItemIssues.status, currentIssue.status),
-      ),
-    )
-    .returning(issueSelection)
+  const issue = await db.transaction(async tx => {
+    const [updated] = await tx
+      .update(workItemIssues)
+      .set({
+        status: body.status,
+        resolutionNote: body.status === 'resolved' ? body.resolutionNote?.trim() || null : null,
+        statusUpdatedBy: profile.authUserId,
+        updatedAt: now,
+        closedAt: body.status === 'resolved' ? now : null,
+      })
+      .where(
+        and(
+          eq(workItemIssues.id, issueId),
+          eq(workItemIssues.workItemId, workItemId),
+          eq(workItemIssues.status, currentIssue.status),
+        ),
+      )
+      .returning(issueSelection)
+    if (updated) {
+      await writeApplicationLog(tx, {
+        level: 'info',
+        category: 'work-item',
+        event: 'work-item.issue_status_changed',
+        message: '관리자가 작업 이슈 상태를 변경했습니다.',
+        actorUserId: profile.authUserId,
+        metadata: {
+          workItemId,
+          issueId,
+          previousStatus: currentIssue.status,
+          changedStatus: body.status,
+        },
+        createdAt: now,
+      })
+    }
+    return updated
+  })
 
   if (!issue) {
     throw createError({

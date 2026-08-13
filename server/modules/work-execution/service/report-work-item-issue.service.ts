@@ -73,6 +73,20 @@ export class ReportWorkItemIssueService {
         throw new NotificationOutboxFailedError()
       }
 
+      await repositories.applicationLogs.write({
+        level: 'warn',
+        category: 'work-item',
+        event: 'work-item.issue_reported',
+        message: '사용자가 작업 이슈를 등록했습니다.',
+        actorUserId: command.actor.userId,
+        metadata: {
+          workItemId: command.workItemId,
+          issueId: issue.id,
+          category: command.category,
+        },
+        createdAt: now,
+      })
+
       const notification: ReportWorkItemIssueResult['notification'] =
         delivery.status === 'pending'
           ? { status: 'queued', deliveryId: delivery.id }

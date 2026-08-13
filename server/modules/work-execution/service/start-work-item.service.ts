@@ -27,6 +27,15 @@ export class StartWorkItemService {
       workItem.start(command.actor, now, toSeoulDate(now))
       await repositories.workItems.save(workItem)
       await repositories.events.append(workItem.pullStatusEvents())
+      await repositories.applicationLogs.write({
+        level: 'info',
+        category: 'work-item',
+        event: 'work-item.started',
+        message: '사용자가 작업을 시작했습니다.',
+        actorUserId: command.actor.userId,
+        metadata: { workItemId: command.workItemId },
+        createdAt: now,
+      })
 
       return toWorkItemStateResult(workItem)
     })
