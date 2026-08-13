@@ -50,6 +50,10 @@ const pageContext = computed(() => {
     return { eyebrow: 'NOTIFICATION SETTINGS', title: 'Telegram 알림' }
   }
 
+  if (route.path.startsWith('/admin/logs')) {
+    return { eyebrow: 'SYSTEM AUDIT', title: '서버 로그' }
+  }
+
   return { eyebrow: 'BAY MANAGEMENT', title: 'Bay 조회' }
 })
 

@@ -6,6 +6,7 @@ import {
   Grid3X3,
   KeyRound,
   PanelsTopLeft,
+  ScrollText,
   UsersRound,
   CalendarClock,
 } from '@lucide/vue'
@@ -68,6 +69,13 @@ const navigationItems = [
     caption: 'Issue notifications',
     to: '/admin/notifications',
     icon: BellRing,
+    roles: ['admin'],
+  },
+  {
+    label: '서버 로그',
+    caption: 'System audit',
+    to: '/admin/logs',
+    icon: ScrollText,
     roles: ['admin'],
   },
 ]
