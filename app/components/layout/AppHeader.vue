@@ -2,6 +2,7 @@
 import { Boxes, LogOut } from '@lucide/vue'
 import AppMobileNavigation from '@/components/navigation/AppMobileNavigation.vue'
 import { Button } from '@/components/ui/button'
+import AttendanceControl from '@/components/attendance/AttendanceControl.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -39,6 +40,10 @@ const pageContext = computed(() => {
 
   if (route.path.startsWith('/admin/accounts')) {
     return { eyebrow: 'ACCESS CONTROL', title: '계정관리' }
+  }
+
+  if (route.path.startsWith('/admin/attendance')) {
+    return { eyebrow: 'ATTENDANCE', title: '출퇴근 관리' }
   }
 
   if (route.path.startsWith('/admin/notifications')) {
@@ -104,6 +109,7 @@ onMounted(() => {
     </NuxtLink>
 
     <section class="ml-auto flex min-w-0 items-center justify-end gap-3">
+      <AttendanceControl v-if="auth.profile?.role === 'worker'" />
       <div class="hidden min-w-0 text-right sm:block lg:text-left">
         <p class="font-mono text-[9px] font-semibold tracking-[0.2em] text-[#6d756c]">
           {{ pageContext.eyebrow }}

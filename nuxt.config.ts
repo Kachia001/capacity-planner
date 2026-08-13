@@ -25,6 +25,9 @@ export default defineNuxtConfig({
     authSessionSecret: '',
     telegramEncryptionKey: '',
     telegramApiBaseUrl: 'https://api.telegram.org',
+    public: {
+      businessTimeZone: 'Asia/Seoul',
+    },
   },
   typescript: {
     strict: true,

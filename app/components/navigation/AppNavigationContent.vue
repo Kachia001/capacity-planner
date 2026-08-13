@@ -7,12 +7,20 @@ import {
   KeyRound,
   PanelsTopLeft,
   UsersRound,
+  CalendarClock,
 } from '@lucide/vue'
 
 const route = useRoute()
 const auth = useAuthStore()
 
 const navigationItems = [
+  {
+    label: '출퇴근 관리',
+    caption: 'Attendance',
+    to: '/admin/attendance',
+    icon: CalendarClock,
+    roles: ['admin', 'manager'],
+  },
   {
     label: '테이블 배치',
     caption: 'Table layout',
