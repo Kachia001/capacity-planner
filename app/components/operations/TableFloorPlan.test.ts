@@ -29,4 +29,15 @@ describe('TableFloorPlan', () => {
 
     expect(wrapper.emitted('select')).toEqual([[1]])
   })
+
+  it('describes empty tables as unassigned for read-only users', () => {
+    const tables = Array.from({ length: 18 }, (_, index) => ({
+      number: index + 1,
+      bay: null,
+    }))
+    const wrapper = mount(TableFloorPlan, { props: { tables, canManage: false } })
+
+    expect(wrapper.text()).toContain('미배치')
+    expect(wrapper.text()).not.toContain('할당하기')
+  })
 })

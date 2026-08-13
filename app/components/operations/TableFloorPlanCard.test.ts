@@ -46,4 +46,18 @@ describe('TableFloorPlanCard', () => {
     expect(wrapper.text()).toContain('018')
     expect(wrapper.text()).toContain('할당하기')
   })
+
+  it('does not show an assignment action to read-only users', () => {
+    const wrapper = mount(TableFloorPlanCard, {
+      props: {
+        numberLabel: '018',
+        statusLabel: '미배치',
+        table: { number: 18, bay: null },
+        canManage: false,
+      },
+    })
+
+    expect(wrapper.text()).toContain('미배치')
+    expect(wrapper.text()).not.toContain('할당하기')
+  })
 })

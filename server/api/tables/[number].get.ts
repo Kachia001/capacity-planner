@@ -4,7 +4,7 @@ import { getWorkTableOverview } from '../../utils/work-tables'
 const tableNumberSchema = z.coerce.number().int().min(1).max(18)
 
 export default defineEventHandler(async event => {
-  await requireAppUser(event, ['admin', 'manager'])
+  await requireAppUser(event, ['admin', 'manager', 'worker'])
   const tableNumber = tableNumberSchema.parse(getRouterParam(event, 'number'))
   const table = (await getWorkTableOverview(useDb())).find(item => item.number === tableNumber)
 
@@ -14,4 +14,3 @@ export default defineEventHandler(async event => {
 
   return table
 })
-

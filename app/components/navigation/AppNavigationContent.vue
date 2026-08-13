@@ -18,7 +18,7 @@ const navigationItems = [
     caption: 'Table layout',
     to: '/admin/tables',
     icon: Grid3X3,
-    roles: ['admin', 'manager'],
+    roles: ['admin', 'manager', 'worker'],
   },
   {
     label: 'Bay 작업',

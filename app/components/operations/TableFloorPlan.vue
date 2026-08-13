@@ -4,10 +4,14 @@ import { computed } from 'vue'
 import TableFloorPlanCard from '@/components/operations/TableFloorPlanCard.vue'
 import type { WorkTableOverview } from '#shared/api/tables/table.contract'
 
-const props = defineProps<{
-  tables: WorkTableOverview[]
-  pending?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    tables: WorkTableOverview[]
+    pending?: boolean
+    canManage?: boolean
+  }>(),
+  { canManage: true },
+)
 
 const emit = defineEmits<{
   select: [tableNumber: number]
@@ -37,7 +41,9 @@ function statusLabel(table: WorkTableOverview) {
 </script>
 
 <template>
-  <section class="overflow-hidden rounded-xl border border-[#343d43] bg-[#1d252b] shadow-[0_20px_50px_rgba(15,22,26,0.18)]">
+  <section
+    class="overflow-hidden rounded-xl border border-[#343d43] bg-[#1d252b] shadow-[0_20px_50px_rgba(15,22,26,0.18)]"
+  >
     <div class="flex items-center justify-between border-b border-white/10 px-5 py-3 text-white">
       <div>
         <p class="font-mono text-[9px] uppercase tracking-[0.2em] text-[#aab5bb]">Floor layout</p>
@@ -60,6 +66,7 @@ function statusLabel(table: WorkTableOverview) {
               :table="tableAt(number)"
               :number-label="tableNumberLabel(number)"
               :status-label="statusLabel(tableAt(number))"
+              :can-manage="props.canManage"
               @select="emit('select', number)"
             />
           </div>
@@ -70,6 +77,7 @@ function statusLabel(table: WorkTableOverview) {
               :table="tableAt(number)"
               :number-label="tableNumberLabel(number)"
               :status-label="statusLabel(tableAt(number))"
+              :can-manage="props.canManage"
               @select="emit('select', number)"
             />
           </div>
@@ -88,6 +96,7 @@ function statusLabel(table: WorkTableOverview) {
               :table="tableAt(number)"
               :number-label="tableNumberLabel(number)"
               :status-label="statusLabel(tableAt(number))"
+              :can-manage="props.canManage"
               @select="emit('select', number)"
             />
           </div>
@@ -98,6 +107,7 @@ function statusLabel(table: WorkTableOverview) {
               :table="tableAt(number)"
               :number-label="tableNumberLabel(number)"
               :status-label="statusLabel(tableAt(number))"
+              :can-manage="props.canManage"
               @select="emit('select', number)"
             />
           </div>
@@ -121,11 +131,13 @@ function statusLabel(table: WorkTableOverview) {
           <span class="block truncate text-xs font-semibold">{{ table.bay.code }}</span>
           <span class="mt-2 flex items-center justify-between text-[10px] text-[#aeb8bd]">
             <span>{{ table.bay.completionRate }}%</span>
-            <span :class="table.bay.openIssues ? 'text-red-300' : ''">이슈 {{ table.bay.openIssues }}</span>
+            <span :class="table.bay.openIssues ? 'text-red-300' : ''"
+              >이슈 {{ table.bay.openIssues }}</span
+            >
           </span>
         </span>
         <span v-else class="mt-6 flex items-center gap-1.5 text-[10px] text-[#849097]">
-          <Link2 class="size-3" /> BAY 할당하기
+          <Link2 class="size-3" /> {{ props.canManage ? 'BAY 할당하기' : '미배치' }}
         </span>
       </button>
     </div>

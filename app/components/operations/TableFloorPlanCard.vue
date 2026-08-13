@@ -2,11 +2,15 @@
 import { AlertTriangle } from '@lucide/vue'
 import type { WorkTableOverview } from '#shared/api/tables/table.contract'
 
-const props = defineProps<{
-  table: WorkTableOverview
-  numberLabel: string
-  statusLabel: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    table: WorkTableOverview
+    numberLabel: string
+    statusLabel: string
+    canManage?: boolean
+  }>(),
+  { canManage: true },
+)
 
 defineEmits<{ select: [] }>()
 </script>
@@ -19,11 +23,10 @@ defineEmits<{ select: [] }>()
     @click="$emit('select')"
   >
     <span class="flex w-full items-start justify-between gap-1">
-      <strong class="font-mono text-lg font-medium tracking-[-0.04em]">{{ props.numberLabel }}</strong>
-      <AlertTriangle
-        v-if="props.table.bay?.openIssues"
-        class="size-3.5 shrink-0 text-red-300"
-      />
+      <strong class="font-mono text-lg font-medium tracking-[-0.04em]">{{
+        props.numberLabel
+      }}</strong>
+      <AlertTriangle v-if="props.table.bay?.openIssues" class="size-3.5 shrink-0 text-red-300" />
     </span>
 
     <template v-if="props.table.bay">
@@ -42,6 +45,10 @@ defineEmits<{ select: [] }>()
         />
       </span>
     </template>
-    <span v-else class="mt-auto text-[9px] font-medium leading-4 text-[#aab5bb]">BAY<br />할당하기</span>
+    <span v-else class="mt-auto text-[9px] font-medium leading-4 text-[#aab5bb]">
+      {{ props.canManage === false ? '미배치' : 'BAY' }}<br v-if="props.canManage !== false" />{{
+        props.canManage === false ? '' : '할당하기'
+      }}
+    </span>
   </button>
 </template>

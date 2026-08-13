@@ -1,7 +1,7 @@
 import { getWorkTableOverview } from '../utils/work-tables'
 
 export default defineEventHandler(async event => {
-  await requireAppUser(event, ['admin', 'manager'])
+  await requireAppUser(event, ['admin', 'manager', 'worker'])
   const tables = await getWorkTableOverview(useDb())
 
   return {
@@ -14,4 +14,3 @@ export default defineEventHandler(async event => {
     },
   }
 })
-
