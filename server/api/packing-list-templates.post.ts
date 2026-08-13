@@ -4,6 +4,7 @@ import {
   packingListTemplateSections,
   packingListTemplates,
 } from '../db/schema'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 const createPackingTemplateSchema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -12,7 +13,7 @@ const createPackingTemplateSchema = z.object({
 })
 
 export default defineEventHandler(async event => {
-  await requireAppUser(event, ['admin', 'manager'])
+  const { profile } = await requireAppUser(event, ['admin', 'manager'])
   const body = createPackingTemplateSchema.parse(await readBody(event))
   const db = useDb()
 
@@ -42,6 +43,18 @@ export default defineEventHandler(async event => {
       })),
     )
     if (rowValues.length) await tx.insert(packingListTemplateRows).values(rowValues)
+    await writeApplicationLog(tx, {
+      level: 'info',
+      category: 'template',
+      event: 'packing-template.created',
+      message: '관리자가 패킹리스트 템플릿을 생성했습니다.',
+      actorUserId: profile.authUserId,
+      metadata: {
+        templateId: template!.id,
+        sectionCount: savedSections.length,
+        rowCount: rowValues.length,
+      },
+    })
 
     return { id: template!.id, name: template!.name }
   })

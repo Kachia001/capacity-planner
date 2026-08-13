@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { bayTemplateRows, bayTemplates } from '../db/schema'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 const nullableText = z.string().trim().max(1000)
 const itemSchema = z.object({
@@ -65,7 +66,7 @@ const createTemplateSchema = z
   })
 
 export default defineEventHandler(async event => {
-  await requireAppUser(event, ['admin', 'manager'])
+  const { profile } = await requireAppUser(event, ['admin', 'manager'])
   const body = createTemplateSchema.parse(await readBody(event))
   const db = useDb()
 
@@ -97,6 +98,15 @@ export default defineEventHandler(async event => {
         })),
       )
       .returning()
+
+    await writeApplicationLog(tx, {
+      level: 'info',
+      category: 'template',
+      event: 'bay-template.created',
+      message: '관리자가 BAY 템플릿을 생성했습니다.',
+      actorUserId: profile.authUserId,
+      metadata: { templateId: template!.id, rowCount: savedRows.length },
+    })
 
     return {
       id: template!.id,

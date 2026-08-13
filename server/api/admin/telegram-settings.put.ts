@@ -7,6 +7,7 @@ import {
   maskTelegramToken,
 } from '#server/utils/telegram-crypto'
 import { validateTelegramBotToken, validateTelegramChatId } from '#server/utils/telegram-client'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 const telegramSettingsSchema = z.object({
   botToken: z
@@ -86,34 +87,48 @@ export default defineEventHandler(async event => {
 
   const botTokenLastFour = body.botToken ? body.botToken.slice(-4) : current!.botTokenLastFour
 
-  const [saved] = await db
-    .insert(telegramSettings)
-    .values({
-      id: 1,
-      botTokenEncrypted,
-      botTokenLastFour,
-      chatId: body.chatId,
-      isEnabled: body.isEnabled,
-      updatedBy: profile.authUserId,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: telegramSettings.id,
-      set: {
+  const saved = await db.transaction(async tx => {
+    const [updated] = await tx
+      .insert(telegramSettings)
+      .values({
+        id: 1,
         botTokenEncrypted,
         botTokenLastFour,
         chatId: body.chatId,
         isEnabled: body.isEnabled,
         updatedBy: profile.authUserId,
         updatedAt: now,
-      },
-    })
-    .returning({
-      chatId: telegramSettings.chatId,
-      isEnabled: telegramSettings.isEnabled,
-      botTokenLastFour: telegramSettings.botTokenLastFour,
-      updatedAt: telegramSettings.updatedAt,
-    })
+      })
+      .onConflictDoUpdate({
+        target: telegramSettings.id,
+        set: {
+          botTokenEncrypted,
+          botTokenLastFour,
+          chatId: body.chatId,
+          isEnabled: body.isEnabled,
+          updatedBy: profile.authUserId,
+          updatedAt: now,
+        },
+      })
+      .returning({
+        chatId: telegramSettings.chatId,
+        isEnabled: telegramSettings.isEnabled,
+        botTokenLastFour: telegramSettings.botTokenLastFour,
+        updatedAt: telegramSettings.updatedAt,
+      })
+    if (updated) {
+      await writeApplicationLog(tx, {
+        level: 'info',
+        category: 'telegram',
+        event: 'telegram.settings_updated',
+        message: '관리자가 Telegram 알림 설정을 저장했습니다.',
+        actorUserId: profile.authUserId,
+        metadata: { isEnabled: body.isEnabled, tokenChanged: Boolean(body.botToken) },
+        createdAt: now,
+      })
+    }
+    return updated
+  })
 
   if (!saved) {
     throw createError({

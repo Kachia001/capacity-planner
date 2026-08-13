@@ -1,5 +1,6 @@
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import { appUsers, passwordResetEvents } from '../../../db/schema'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 export default defineEventHandler(async event => {
   const { profile } = await requireAppUser(event, ['admin', 'manager'])
@@ -58,6 +59,15 @@ export default defineEventHandler(async event => {
       userId: target.authUserId,
       resetBy: profile.authUserId,
       resetAt,
+    })
+    await writeApplicationLog(tx, {
+      level: 'warn',
+      category: 'account',
+      event: 'account.password_reset',
+      message: '관리자가 사용자 계정의 비밀번호를 초기화했습니다.',
+      actorUserId: profile.authUserId,
+      metadata: { targetUserId: target.authUserId },
+      createdAt: resetAt,
     })
   })
 

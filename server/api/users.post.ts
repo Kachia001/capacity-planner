@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { appUsers, type AppUser } from '../db/schema'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 const createUserSchema = z.object({
   email: z.string().email(),
@@ -42,16 +43,30 @@ export default defineEventHandler(async event => {
   }
 
   const passwordHash = await hashPassword(body.password)
-  const [created] = await db
-    .insert(appUsers)
-    .values({
-      email,
-      passwordHash,
-      displayName: body.displayName || null,
-      role: body.role as AppUser['role'],
-      createdBy: authUser.id,
-    })
-    .returning()
+  const created = await db.transaction(async tx => {
+    const [createdUser] = await tx
+      .insert(appUsers)
+      .values({
+        email,
+        passwordHash,
+        displayName: body.displayName || null,
+        role: body.role as AppUser['role'],
+        createdBy: authUser.id,
+      })
+      .returning()
+
+    if (createdUser) {
+      await writeApplicationLog(tx, {
+        level: 'info',
+        category: 'account',
+        event: 'account.created',
+        message: '관리자가 사용자 계정을 생성했습니다.',
+        actorUserId: profile.authUserId,
+        metadata: { targetUserId: createdUser.authUserId, targetRole: createdUser.role },
+      })
+    }
+    return createdUser
+  })
 
   if (!created) {
     throw createError({

@@ -6,13 +6,14 @@ import {
   bayPackingLists,
   bays,
 } from '../../../db/schema'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 const assignPackingListSchema = z.object({
   sections: packingSectionsSchema,
 })
 
 export default defineEventHandler(async event => {
-  await requireAppUser(event, ['admin', 'manager'])
+  const { profile } = await requireAppUser(event, ['admin', 'manager'])
   const bayId = getRouterParam(event, 'id')
   if (!bayId) throw createError({ statusCode: 400, message: 'Bay ID가 필요합니다.' })
   const body = assignPackingListSchema.parse(await readBody(event))
@@ -59,6 +60,14 @@ export default defineEventHandler(async event => {
         })),
       )
       if (rows.length) await tx.insert(bayPackingListRows).values(rows)
+      await writeApplicationLog(tx, {
+        level: 'info',
+        category: 'packing-list',
+        event: 'packing-list.assigned',
+        message: '관리자가 BAY에 패킹리스트를 할당했습니다.',
+        actorUserId: profile.authUserId,
+        metadata: { bayId, packingListId: packingList!.id, rowCount: rows.length },
+      })
 
       return { bay, packingList: packingList! }
     })

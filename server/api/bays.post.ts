@@ -6,6 +6,7 @@ import {
   bays,
   workItems,
 } from '../db/schema'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 const nullableText = z.string().trim().max(1000)
 const itemSchema = z.object({
@@ -84,7 +85,7 @@ const createBaySchema = z
   })
 
 export default defineEventHandler(async event => {
-  await requireAppUser(event, ['admin', 'manager'])
+  const { profile } = await requireAppUser(event, ['admin', 'manager'])
   const body = createBaySchema.parse(await readBody(event))
   const db = useDb()
 
@@ -147,6 +148,20 @@ export default defineEventHandler(async event => {
           if (packingRows.length) await tx.insert(bayPackingListRows).values(packingRows)
         }
       }
+
+      await writeApplicationLog(tx, {
+        level: 'info',
+        category: 'bay',
+        event: 'bay.created',
+        message: '관리자가 BAY를 생성했습니다.',
+        actorUserId: profile.authUserId,
+        metadata: {
+          bayId: bay!.id,
+          tableNumber: body.bay.tableNumber,
+          workItemCount: rows.length,
+          hasPackingList: Boolean(body.packingList),
+        },
+      })
 
       return {
         id: bay!.id,

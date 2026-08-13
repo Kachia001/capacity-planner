@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import { attendanceSessions, appUsers } from '#server/db/schema'
 import { managerAttendanceActionSchema, parseAttendanceInput } from '#server/utils/attendance-input'
 import { ensureNoAttendanceOverlap, isUniqueViolation } from '#server/utils/attendance'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 export default defineEventHandler(async event => {
   const { profile } = await requireAppUser(event, ['admin', 'manager'])
@@ -18,6 +19,15 @@ export default defineEventHandler(async event => {
         .insert(attendanceSessions)
         .values({ userId, startedAt: now, updatedAt: now, updatedByUserId: profile.authUserId })
         .returning()
+      await writeApplicationLog(tx, {
+        level: 'info',
+        category: 'attendance',
+        event: 'attendance.manager_clock_in',
+        message: '관리자가 사용자의 출근을 대신 처리했습니다.',
+        actorUserId: profile.authUserId,
+        metadata: { targetUserId: userId, attendanceSessionId: created!.id },
+        createdAt: now,
+      })
       return created!
     })
     setResponseStatus(event, 201)

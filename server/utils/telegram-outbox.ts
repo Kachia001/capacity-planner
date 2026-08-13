@@ -2,6 +2,7 @@ import { and, asc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { telegramDeliveryOutbox } from '../db/schema'
 import { sendTelegramIssueNotification, type TelegramIssueMessage } from './telegram'
+import { getErrorStack, writeApplicationLogBestEffort } from './application-log'
 
 const MAX_ATTEMPTS = 5
 const PROCESSING_LEASE_MS = 5 * 60 * 1000
@@ -131,6 +132,18 @@ export async function processTelegramOutbox(options?: { limit?: number; ids?: nu
             updatedAt: now,
           })
           .where(eq(telegramDeliveryOutbox.id, delivery.id))
+        await writeApplicationLogBestEffort({
+          level: 'info',
+          category: 'telegram',
+          event: 'telegram.delivery_sent',
+          message: '서버가 작업 이슈 Telegram 알림을 전송했습니다.',
+          metadata: {
+            deliveryId: delivery.id,
+            workItemId: delivery.workItemId,
+            attemptCount: delivery.attemptCount,
+          },
+          createdAt: now,
+        })
         result.sent += 1
         continue
       }
@@ -149,6 +162,18 @@ export async function processTelegramOutbox(options?: { limit?: number; ids?: nu
             updatedAt: now,
           })
           .where(eq(telegramDeliveryOutbox.id, delivery.id))
+        await writeApplicationLogBestEffort({
+          level: 'warn',
+          category: 'telegram',
+          event: 'telegram.delivery_skipped',
+          message: '서버가 Telegram 설정 상태로 인해 작업 이슈 알림 전송을 건너뛰었습니다.',
+          metadata: {
+            deliveryId: delivery.id,
+            workItemId: delivery.workItemId,
+            reason: telegram.reason,
+          },
+          createdAt: now,
+        })
         result.skipped += 1
         continue
       }
@@ -168,10 +193,25 @@ export async function processTelegramOutbox(options?: { limit?: number; ids?: nu
           updatedAt: now,
         })
         .where(eq(telegramDeliveryOutbox.id, delivery.id))
+      await writeApplicationLogBestEffort({
+        level: shouldRetry ? 'warn' : 'error',
+        category: 'telegram',
+        event: shouldRetry ? 'telegram.delivery_retry_scheduled' : 'telegram.delivery_failed',
+        message: shouldRetry
+          ? 'Telegram 알림 전송에 실패하여 재시도를 예약했습니다.'
+          : 'Telegram 알림 전송이 최종 실패했습니다.',
+        metadata: {
+          deliveryId: delivery.id,
+          workItemId: delivery.workItemId,
+          attemptCount: delivery.attemptCount,
+          errorCode: telegram.code,
+        },
+        createdAt: now,
+      })
 
       if (shouldRetry) result.retried += 1
       else result.failed += 1
-    } catch {
+    } catch (error) {
       const shouldRetry = delivery.attemptCount < MAX_ATTEMPTS
 
       await useDb()
@@ -187,6 +227,22 @@ export async function processTelegramOutbox(options?: { limit?: number; ids?: nu
           updatedAt: now,
         })
         .where(eq(telegramDeliveryOutbox.id, delivery.id))
+      await writeApplicationLogBestEffort({
+        level: shouldRetry ? 'warn' : 'error',
+        category: 'telegram',
+        event: shouldRetry ? 'telegram.delivery_retry_scheduled' : 'telegram.delivery_failed',
+        message: shouldRetry
+          ? 'Telegram 알림 처리 중 오류가 발생하여 재시도를 예약했습니다.'
+          : 'Telegram 알림 payload 처리 오류로 전송이 최종 실패했습니다.',
+        metadata: {
+          deliveryId: delivery.id,
+          workItemId: delivery.workItemId,
+          attemptCount: delivery.attemptCount,
+          errorCode: 'invalid_payload',
+        },
+        errorStack: getErrorStack(error),
+        createdAt: now,
+      })
 
       if (shouldRetry) result.retried += 1
       else result.failed += 1

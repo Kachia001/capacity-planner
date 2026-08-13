@@ -1,12 +1,13 @@
 import { and, eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { bays, workTables } from '../../../db/schema'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 const tableNumberSchema = z.coerce.number().int().min(1).max(18)
 const bodySchema = z.object({ bayId: z.string().uuid().nullable() })
 
 export default defineEventHandler(async event => {
-  await requireAppUser(event, ['admin', 'manager'])
+  const { profile } = await requireAppUser(event, ['admin', 'manager'])
   const tableNumber = tableNumberSchema.parse(getRouterParam(event, 'number'))
   const { bayId } = bodySchema.parse(await readBody(event))
   const db = useDb()
@@ -28,6 +29,14 @@ export default defineEventHandler(async event => {
           .update(bays)
           .set({ tableNumber: null, updatedAt: new Date() })
           .where(eq(bays.tableNumber, tableNumber))
+        await writeApplicationLog(tx, {
+          level: 'info',
+          category: 'table',
+          event: 'table.bay_unassigned',
+          message: '관리자가 테이블의 BAY 할당을 해제했습니다.',
+          actorUserId: profile.authUserId,
+          metadata: { tableNumber },
+        })
         return { tableNumber, bayId: null }
       }
 
@@ -46,10 +55,16 @@ export default defineEventHandler(async event => {
         .set({ tableNumber: null, updatedAt: new Date() })
         .where(eq(bays.tableNumber, tableNumber))
 
-      await tx
-        .update(bays)
-        .set({ tableNumber, updatedAt: new Date() })
-        .where(eq(bays.id, bayId))
+      await tx.update(bays).set({ tableNumber, updatedAt: new Date() }).where(eq(bays.id, bayId))
+
+      await writeApplicationLog(tx, {
+        level: 'info',
+        category: 'table',
+        event: 'table.bay_assigned',
+        message: '관리자가 테이블에 BAY를 할당했습니다.',
+        actorUserId: profile.authUserId,
+        metadata: { tableNumber, bayId },
+      })
 
       return { tableNumber, bayId }
     })

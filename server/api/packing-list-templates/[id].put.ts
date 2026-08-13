@@ -5,6 +5,7 @@ import {
   packingListTemplateSections,
   packingListTemplates,
 } from '../../db/schema'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 const updatePackingTemplateSchema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -14,7 +15,7 @@ const updatePackingTemplateSchema = z.object({
 })
 
 export default defineEventHandler(async event => {
-  await requireAppUser(event, ['admin', 'manager'])
+  const { profile } = await requireAppUser(event, ['admin', 'manager'])
   const templateId = getRouterParam(event, 'id')
   if (!templateId) throw createError({ statusCode: 400, message: '템플릿 ID가 필요합니다.' })
   const body = updatePackingTemplateSchema.parse(await readBody(event))
@@ -67,6 +68,19 @@ export default defineEventHandler(async event => {
       })),
     )
     if (rows.length) await tx.insert(packingListTemplateRows).values(rows)
+    await writeApplicationLog(tx, {
+      level: 'info',
+      category: 'template',
+      event: 'packing-template.updated',
+      message: '관리자가 패킹리스트 템플릿을 수정했습니다.',
+      actorUserId: profile.authUserId,
+      metadata: {
+        templateId,
+        revision: template.revision,
+        sectionCount: savedSections.length,
+        rowCount: rows.length,
+      },
+    })
 
     return { id: template.id, name: template.name, revision: template.revision }
   })

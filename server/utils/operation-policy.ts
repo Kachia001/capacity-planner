@@ -5,6 +5,7 @@ import {
   getRegularCloseForOperationDate,
   getSeoulOperationDate,
 } from './operation-session'
+import { writeApplicationLog } from './application-log'
 
 export const OPERATION_TIME_ZONE = 'Asia/Seoul'
 export const REGULAR_OPEN_MINUTE = 8 * 60 + 20
@@ -163,6 +164,14 @@ export async function getOperationStatus(now = new Date()) {
         .update(operationSessions)
         .set({ closedAt, updatedAt: now })
         .where(eq(operationSessions.id, activeSession.id))
+      await writeApplicationLog(tx, {
+        level: 'info',
+        category: 'operation',
+        event: 'operation.automatically_closed',
+        message: '서버가 운영 종료 시각에 맞춰 작업 운영을 자동 종료했습니다.',
+        metadata: { operationSessionId: activeSession.id, closedAt },
+        createdAt: now,
+      })
       activeSession = undefined
     }
 
@@ -174,11 +183,20 @@ export async function getOperationStatus(now = new Date()) {
         ? regularWindow.opensAt
         : (control?.updatedAt ?? now)
 
+      const operationSessionId = createOperationSessionId(openedAt)
       await tx.insert(operationSessions).values({
-        id: createOperationSessionId(openedAt),
+        id: operationSessionId,
         operationDate: getSeoulOperationDate(openedAt),
         openedAt,
         updatedAt: now,
+      })
+      await writeApplicationLog(tx, {
+        level: 'info',
+        category: 'operation',
+        event: 'operation.automatically_opened',
+        message: '서버가 정규 운영 시각에 맞춰 작업 운영을 자동 시작했습니다.',
+        metadata: { operationSessionId, openedAt, mode: status.mode },
+        createdAt: now,
       })
     }
 

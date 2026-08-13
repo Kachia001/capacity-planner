@@ -1,6 +1,7 @@
 import { eq, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { appUsers } from '../../../db/schema'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 const statusSchema = z.object({
   isActive: z.boolean(),
@@ -36,15 +37,32 @@ export default defineEventHandler(async event => {
     }
   }
 
-  const [updated] = await db
-    .update(appUsers)
-    .set({
-      isActive: body.isActive,
-      authVersion: body.isActive ? target.authVersion : sql`${appUsers.authVersion} + 1`,
-      updatedAt: new Date(),
+  const updated = await db.transaction(async tx => {
+    const [changed] = await tx
+      .update(appUsers)
+      .set({
+        isActive: body.isActive,
+        authVersion: body.isActive ? target.authVersion : sql`${appUsers.authVersion} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(appUsers.authUserId, target.authUserId))
+      .returning({ id: appUsers.authUserId, isActive: appUsers.isActive })
+    await writeApplicationLog(tx, {
+      level: body.isActive ? 'info' : 'warn',
+      category: 'account',
+      event: body.isActive ? 'account.enabled' : 'account.disabled',
+      message: body.isActive
+        ? '관리자가 사용자 계정을 활성화했습니다.'
+        : '관리자가 사용자 계정을 비활성화했습니다.',
+      actorUserId: profile.authUserId,
+      metadata: {
+        targetUserId: target.authUserId,
+        previousStatus: target.isActive ? 'active' : 'inactive',
+        changedStatus: body.isActive ? 'active' : 'inactive',
+      },
     })
-    .where(eq(appUsers.authUserId, target.authUserId))
-    .returning({ id: appUsers.authUserId, isActive: appUsers.isActive })
+    return changed
+  })
 
   return updated
 })

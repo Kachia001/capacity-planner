@@ -6,6 +6,7 @@ import {
   ensureNoAttendanceOverlap,
   isUniqueViolation,
 } from '#server/utils/attendance'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 export default defineEventHandler(async event => {
   const { profile } = await requireAppUser(event, ['admin', 'manager'])
@@ -24,7 +25,8 @@ export default defineEventHandler(async event => {
         .from(attendanceSessions)
         .where(eq(attendanceSessions.id, id))
         .limit(1)
-      if (!current) throw createError({ statusCode: 404, message: '출퇴근 세션을 찾을 수 없습니다.' })
+      if (!current)
+        throw createError({ statusCode: 404, message: '출퇴근 세션을 찾을 수 없습니다.' })
 
       const startedAt = changes.startedAt ?? current.startedAt
       const endedAt = changes.endedAt !== undefined ? changes.endedAt : current.endedAt
@@ -41,6 +43,15 @@ export default defineEventHandler(async event => {
         .set({ startedAt, endedAt, updatedAt: now, updatedByUserId: profile.authUserId })
         .where(eq(attendanceSessions.id, id))
         .returning()
+      await writeApplicationLog(tx, {
+        level: 'warn',
+        category: 'attendance',
+        event: 'attendance.session_corrected',
+        message: '관리자가 출퇴근 기록을 수정했습니다.',
+        actorUserId: profile.authUserId,
+        metadata: { attendanceSessionId: id, targetUserId: current.userId },
+        createdAt: now,
+      })
       return updated!
     })
   } catch (error) {

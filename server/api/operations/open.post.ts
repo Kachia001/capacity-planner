@@ -7,6 +7,7 @@ import {
   resolveOperationStatus,
 } from '../../utils/operation-policy'
 import { createOperationSessionId, getSeoulOperationDate } from '../../utils/operation-session'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 const openOperationSchema = z.object({
   extensionMinutes: z.number().int().min(1).max(1440).optional(),
@@ -166,6 +167,16 @@ export default defineEventHandler(async event => {
         })
       }
     }
+
+    await writeApplicationLog(tx, {
+      level: 'info',
+      category: 'operation',
+      event: 'operation.opened',
+      message: '관리자가 작업 운영을 열거나 운영 시간을 연장했습니다.',
+      actorUserId: profile.authUserId,
+      metadata: { extensionUntil: updatedControl?.extensionUntil ?? null },
+      createdAt: now,
+    })
 
     return updatedControl
   })

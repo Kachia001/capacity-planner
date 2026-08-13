@@ -1,4 +1,5 @@
 import { sendConfiguredTelegramMessage } from '#server/utils/telegram'
+import { writeApplicationLogBestEffort } from '#server/utils/application-log'
 
 export default defineEventHandler(async event => {
   const { profile } = await requireAppUser(event, ['admin'])
@@ -19,8 +20,30 @@ export default defineEventHandler(async event => {
   )
 
   if (result.status === 'sent') {
+    await writeApplicationLogBestEffort({
+      level: 'info',
+      category: 'telegram',
+      event: 'telegram.test_sent',
+      message: '관리자가 Telegram 연동 테스트 메시지를 전송했습니다.',
+      actorUserId: profile.authUserId,
+      metadata: { telegramMessageId: result.messageId },
+    })
     return result
   }
+
+  await writeApplicationLogBestEffort({
+    level: result.status === 'failed' ? 'error' : 'warn',
+    category: 'telegram',
+    event: result.status === 'failed' ? 'telegram.test_failed' : 'telegram.test_skipped',
+    message:
+      result.status === 'failed'
+        ? '관리자가 요청한 Telegram 연동 테스트 메시지 전송에 실패했습니다.'
+        : 'Telegram 설정 상태로 인해 연동 테스트 메시지 전송을 건너뛰었습니다.',
+    actorUserId: profile.authUserId,
+    metadata: {
+      reason: result.status === 'failed' ? result.code : result.reason,
+    },
+  })
 
   throw createError({
     statusCode: result.status === 'skipped' ? 409 : 502,

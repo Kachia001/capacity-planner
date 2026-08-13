@@ -6,6 +6,7 @@ import {
   bayPackingLists,
   bays,
 } from '../../../db/schema'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 const updatePackingListSchema = z.object({
   memo: z.string().trim().max(10000),
@@ -14,7 +15,7 @@ const updatePackingListSchema = z.object({
 })
 
 export default defineEventHandler(async event => {
-  await requireAppUser(event, ['admin', 'manager'])
+  const { profile } = await requireAppUser(event, ['admin', 'manager'])
   const bayId = getRouterParam(event, 'id')
   if (!bayId) throw createError({ statusCode: 400, message: 'Bay ID가 필요합니다.' })
   const body = updatePackingListSchema.parse(await readBody(event))
@@ -66,6 +67,15 @@ export default defineEventHandler(async event => {
       )
       if (rows.length) await tx.insert(bayPackingListRows).values(rows)
     }
+
+    await writeApplicationLog(tx, {
+      level: 'info',
+      category: 'packing-list',
+      event: 'packing-list.updated',
+      message: '관리자가 BAY 패킹리스트를 수정했습니다.',
+      actorUserId: profile.authUserId,
+      metadata: { bayId, packingListId: packingList.id, revision: body.version + 1 },
+    })
 
     return packingList
   })

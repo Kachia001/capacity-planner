@@ -1,6 +1,7 @@
 import { and, desc, eq, isNull, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { appUsers, passwordResetEvents } from '../../db/schema'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1).max(256).optional(),
@@ -94,6 +95,18 @@ export default defineEventHandler(async event => {
           .where(eq(passwordResetEvents.id, openReset.id))
       }
     }
+
+    await writeApplicationLog(tx, {
+      level: 'info',
+      category: 'auth',
+      event: 'password.changed',
+      message: isForcedChange
+        ? '사용자가 임시 비밀번호를 새 비밀번호로 변경했습니다.'
+        : '사용자가 비밀번호를 변경했습니다.',
+      actorUserId: profile.authUserId,
+      metadata: { forcedChange: isForcedChange },
+      createdAt: changedAt,
+    })
 
     return nextProfile
   })

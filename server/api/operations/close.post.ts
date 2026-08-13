@@ -6,6 +6,7 @@ import {
   getRegularCloseForOperationDate,
   getSeoulOperationDate,
 } from '../../utils/operation-session'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 export default defineEventHandler(async event => {
   const { profile } = await requireAppUser(event, ['admin', 'manager'])
@@ -87,6 +88,16 @@ export default defineEventHandler(async event => {
         updatedAt: now,
       })
     }
+
+    await writeApplicationLog(tx, {
+      level: 'info',
+      category: 'operation',
+      event: 'operation.closed',
+      message: '관리자가 작업 운영을 종료했습니다.',
+      actorUserId: profile.authUserId,
+      metadata: { wasOpen: previousStatus.isOpen },
+      createdAt: now,
+    })
 
     return updatedControl
   })

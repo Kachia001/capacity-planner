@@ -1,5 +1,6 @@
 import { attendanceSessions } from '#server/db/schema'
 import { ensureNoAttendanceOverlap, isUniqueViolation } from '#server/utils/attendance'
+import { writeApplicationLog } from '#server/utils/application-log'
 
 export default defineEventHandler(async event => {
   const { profile } = await requireAppUser(event, ['admin', 'manager', 'worker'])
@@ -22,6 +23,15 @@ export default defineEventHandler(async event => {
           updatedByUserId: profile.authUserId,
         })
         .returning()
+      await writeApplicationLog(tx, {
+        level: 'info',
+        category: 'attendance',
+        event: 'attendance.clock_in',
+        message: '사용자가 출근 처리했습니다.',
+        actorUserId: profile.authUserId,
+        metadata: { attendanceSessionId: created!.id },
+        createdAt: now,
+      })
       return created!
     })
     setResponseStatus(event, 201)
@@ -37,4 +47,3 @@ export default defineEventHandler(async event => {
     throw error
   }
 })
-
