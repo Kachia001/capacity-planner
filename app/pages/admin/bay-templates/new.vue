@@ -18,7 +18,7 @@ import {
 import type { ExistingTemplateDraft, TemplateGroupDraft, TemplateSource } from '@/types/template'
 
 definePageMeta({
-  layout: 'admin',
+  layout: 'app',
   middleware: ['auth-client', 'role-client'],
   roles: ['admin', 'manager'],
 })

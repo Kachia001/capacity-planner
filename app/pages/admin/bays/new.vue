@@ -23,7 +23,7 @@ import type { PackingSectionDraft, PackingTemplateDraft } from '@/types/packing'
 import type { WorkTableOverview } from '#shared/api/tables/table.contract'
 
 definePageMeta({
-  layout: 'admin',
+  layout: 'app',
   middleware: ['auth-client', 'role-client'],
   roles: ['admin', 'manager'],
 })

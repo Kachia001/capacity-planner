@@ -16,7 +16,7 @@ import { fetchOperationsDashboard, getRequestErrorMessage } from '@/composables/
 import type { DashboardBaySummary, OperationsDashboardResponse } from '@/types/operations'
 
 definePageMeta({
-  layout: 'admin',
+  layout: 'app',
   middleware: ['auth-client', 'role-client'],
   roles: ['admin', 'manager'],
 })

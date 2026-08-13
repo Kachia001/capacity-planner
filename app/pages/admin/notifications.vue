@@ -25,7 +25,7 @@ import type {
 import { getRequestErrorMessage } from '@/composables/useOperationsApi'
 
 definePageMeta({
-  layout: 'admin',
+  layout: 'app',
   middleware: ['auth-client', 'role-client'],
   roles: ['admin'],
 })

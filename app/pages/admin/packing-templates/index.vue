@@ -16,7 +16,7 @@ import { getRequestErrorMessage } from '@/composables/useOperationsApi'
 import type { PackingTemplateDraft } from '@/types/packing'
 
 definePageMeta({
-  layout: 'admin',
+  layout: 'app',
   middleware: ['auth-client', 'role-client'],
   roles: ['admin', 'manager'],
 })
