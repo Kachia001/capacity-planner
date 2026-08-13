@@ -61,6 +61,8 @@ export async function requireSessionUser(event: H3Event) {
     })
   }
 
+  event.context.applicationActorUserId = profile.authUserId
+
   return profile
 }
 

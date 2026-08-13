@@ -18,6 +18,12 @@ import {
 import { sql } from 'drizzle-orm'
 
 export const appRole = pgEnum('app_role', ['admin', 'manager', 'worker'])
+export const applicationLogLevel = pgEnum('application_log_level', [
+  'debug',
+  'info',
+  'warn',
+  'error',
+])
 export const workStatus = pgEnum('work_status', ['not_started', 'in_progress', 'completed'])
 export const workItemEventAction = pgEnum('work_item_event_action', [
   'start',
@@ -68,6 +74,26 @@ export const appUsers = pgTable('app_users', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+export const applicationLogs = pgTable(
+  'application_logs',
+  {
+    id: bigserial('id', { mode: 'bigint' }).primaryKey(),
+    level: applicationLogLevel('level').notNull(),
+    category: text('category').notNull(),
+    event: text('event'),
+    message: text('message').notNull(),
+    actorUserId: uuid('actor_user_id').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>(),
+    errorStack: text('error_stack'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => ({
+    createdAtIndex: index('application_logs_created_at_idx').on(table.createdAt),
+  }),
+)
 
 export const passwordResetEvents = pgTable(
   'password_reset_events',
@@ -507,6 +533,8 @@ export type WorkItemStatusEvent = typeof workItemStatusEvents.$inferSelect
 export type NewWorkItemStatusEvent = typeof workItemStatusEvents.$inferInsert
 export type AppUser = typeof appUsers.$inferSelect
 export type NewAppUser = typeof appUsers.$inferInsert
+export type ApplicationLog = typeof applicationLogs.$inferSelect
+export type NewApplicationLog = typeof applicationLogs.$inferInsert
 export type PasswordResetEvent = typeof passwordResetEvents.$inferSelect
 export type Bay = typeof bays.$inferSelect
 export type NewBay = typeof bays.$inferInsert
