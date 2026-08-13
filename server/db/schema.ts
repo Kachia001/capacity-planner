@@ -1,5 +1,6 @@
 import {
   type AnyPgColumn,
+  bigserial,
   boolean,
   check,
   date,
@@ -303,6 +304,33 @@ export const operationSessions = pgTable(
   }),
 )
 
+export const attendanceSessions = pgTable(
+  'attendance_sessions',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => appUsers.authUserId, { onDelete: 'restrict' }),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedByUserId: uuid('updated_by_user_id')
+      .notNull()
+      .references(() => appUsers.authUserId, { onDelete: 'restrict' }),
+  },
+  table => [
+    check(
+      'attendance_sessions_time_order_ck',
+      sql`${table.endedAt} is null or ${table.endedAt} >= ${table.startedAt}`,
+    ),
+    uniqueIndex('attendance_sessions_user_open_uk')
+      .on(table.userId)
+      .where(sql`${table.endedAt} is null`),
+    index('attendance_sessions_user_started_at_idx').on(table.userId, table.startedAt.desc()),
+  ],
+)
+
 export const telegramSettings = pgTable(
   'telegram_settings',
   {
@@ -485,6 +513,7 @@ export type NewBay = typeof bays.$inferInsert
 export type WorkTable = typeof workTables.$inferSelect
 export type OperationControl = typeof operationControl.$inferSelect
 export type OperationSession = typeof operationSessions.$inferSelect
+export type AttendanceSession = typeof attendanceSessions.$inferSelect
 export type TelegramSettings = typeof telegramSettings.$inferSelect
 export type TelegramDeliveryOutbox = typeof telegramDeliveryOutbox.$inferSelect
 export type BayTemplate = typeof bayTemplates.$inferSelect

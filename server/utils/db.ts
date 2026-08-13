@@ -17,6 +17,9 @@ export function useDb() {
   client ??= postgres(databaseUrl, {
     max: 5,
     prepare: false,
+    connection: {
+      TimeZone: 'UTC',
+    },
   })
 
   return drizzle(client, { schema })

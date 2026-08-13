@@ -71,6 +71,27 @@
       "when": 1786529147062,
       "tag": "0009_numerous_mad_thinker",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786638446411,
+      "tag": "0010_magenta_energizer",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786638746459,
+      "tag": "0011_set_database_timezone_utc",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1786638797270,
+      "tag": "0012_set_application_role_timezone_utc",
+      "breakpoints": true
     }
   ]
 }
