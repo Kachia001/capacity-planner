@@ -111,9 +111,11 @@ class FixedClock implements Clock {
 
 class OpenOperationGate implements OperationGate {
   checkedAt: Date | null = null
+  checkedUserId: string | null = null
 
-  async ensureOpen(now: Date) {
+  async ensureOpen(now: Date, userId: string) {
     this.checkedAt = now
+    this.checkedUserId = userId
   }
 }
 
@@ -133,6 +135,7 @@ describe('StartWorkItemService', () => {
     const result = await service.execute({ workItemId: 1, actor })
 
     expect(operationGate.checkedAt).toEqual(fixedNow)
+    expect(operationGate.checkedUserId).toBe(actor.userId)
     expect(unitOfWork.executed).toBe(true)
     expect(workItems.saved).toBe(true)
     expect(events.events).toHaveLength(1)

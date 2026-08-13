@@ -1,3 +1,3 @@
 export interface OperationGate {
-  ensureOpen(now: Date): Promise<void>
+  ensureOpen(now: Date, userId: string): Promise<void>
 }

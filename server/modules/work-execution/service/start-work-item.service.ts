@@ -15,7 +15,7 @@ export class StartWorkItemService {
 
   async execute(command: WorkItemCommand) {
     const now = this.clock.now()
-    await this.operationGate.ensureOpen(now)
+    await this.operationGate.ensureOpen(now, command.actor.userId)
 
     return this.unitOfWork.execute(async repositories => {
       const workItem = await repositories.workItems.findById(command.workItemId)

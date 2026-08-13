@@ -7,6 +7,7 @@ import {
   NotificationOutboxFailedError,
 } from './errors/work-execution.errors'
 import type { Clock } from './ports/clock'
+import type { OperationGate } from './ports/operation-gate'
 
 const ISSUE_RATE_LIMIT_WINDOW_MS = 60_000
 const ISSUE_RATE_LIMIT_COUNT = 5
@@ -14,11 +15,13 @@ const ISSUE_RATE_LIMIT_COUNT = 5
 export class ReportWorkItemIssueService {
   constructor(
     private readonly unitOfWork: WorkExecutionUnitOfWork,
+    private readonly operationGate: OperationGate,
     private readonly clock: Clock,
   ) {}
 
   async execute(command: ReportWorkItemIssueCommand): Promise<ReportWorkItemIssueResult> {
     const now = this.clock.now()
+    await this.operationGate.ensureOpen(now, command.actor.userId)
 
     return this.unitOfWork.execute(async repositories => {
       const recentCount = await repositories.issueNotifications.countRequestedSince(

@@ -18,7 +18,7 @@ import { VoidWorkItemService } from './service/void-work-item.service'
 
 export function createWorkExecutionModule(db: Database) {
   const clock = new SystemClock()
-  const operationGate = new CurrentOperationGate()
+  const operationGate = new CurrentOperationGate(db)
   const unitOfWork = new DrizzleWorkExecutionUnitOfWork(db)
 
   const startService = new StartWorkItemService(unitOfWork, operationGate, clock)
@@ -26,7 +26,7 @@ export function createWorkExecutionModule(db: Database) {
   const cancelStartService = new CancelWorkItemStartService(unitOfWork, clock)
   const restoreCompletedService = new RestoreCompletedWorkItemService(unitOfWork, clock)
   const voidService = new VoidWorkItemService(unitOfWork, clock)
-  const reportIssueService = new ReportWorkItemIssueService(unitOfWork, clock)
+  const reportIssueService = new ReportWorkItemIssueService(unitOfWork, operationGate, clock)
 
   return {
     startWorkItemController: new StartWorkItemController(startService),

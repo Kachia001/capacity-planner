@@ -15,6 +15,7 @@ import type { WorkExecutionUnitOfWork } from '../repository/work-execution.unit-
 import type { WorkItemIssueRepository } from '../repository/work-item-issue.repository'
 import type { WorkItemRepository } from '../repository/work-item.repository'
 import type { Clock } from './ports/clock'
+import type { OperationGate } from './ports/operation-gate'
 import { ReportWorkItemIssueService } from './report-work-item-issue.service'
 
 const actor: Actor = {
@@ -107,6 +108,8 @@ class FixedClock implements Clock {
   }
 }
 
+const openOperationGate: OperationGate = { ensureOpen: async () => {} }
+
 describe('ReportWorkItemIssueService', () => {
   it('creates multiple unconfirmed issues for one work item and queues each notification', async () => {
     const issues = new InMemoryIssueRepository()
@@ -120,7 +123,7 @@ describe('ReportWorkItemIssueService', () => {
     const unitOfWork: WorkExecutionUnitOfWork = {
       execute: async operation => await operation(repositories),
     }
-    const service = new ReportWorkItemIssueService(unitOfWork, new FixedClock())
+    const service = new ReportWorkItemIssueService(unitOfWork, openOperationGate, new FixedClock())
 
     const first = await service.execute({
       workItemId: 1,

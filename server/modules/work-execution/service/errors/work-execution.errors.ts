@@ -16,6 +16,14 @@ export class OperationClosedError extends CodedError {
   }
 }
 
+export class AttendanceRequiredError extends CodedError {
+  readonly code = 'ATTENDANCE_REQUIRED'
+
+  constructor() {
+    super('출근 처리된 활성 세션이 있어야 작업할 수 있습니다.')
+  }
+}
+
 export class IssueRateLimitExceededError extends CodedError {
   readonly code = 'ISSUE_RATE_LIMIT_EXCEEDED'
 
