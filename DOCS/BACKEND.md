@@ -162,6 +162,16 @@ Persistence row, domain aggregate, application result 및 public API response는
 | POST   | `/api/admin/telegram-deliveries/:id/retry` | 실패 건 재시도     |
 | POST   | `/api/admin/telegram-deliveries/process`   | 대기 건 수동 처리  |
 
+### 서버 로그
+
+| Method | Path                                | 설명                                    |
+| ------ | ----------------------------------- | --------------------------------------- |
+| GET    | `/api/admin/application-logs`       | 필터와 커서를 사용하는 서버 로그 조회   |
+| POST   | `/api/admin/application-logs/purge` | 특정 시각 이전 또는 전체 서버 로그 삭제 |
+
+서버 로그 API는 Admin만 사용할 수 있습니다. 전체 삭제는 `DELETE_ALL_LOGS` 확인 문자열을
+요구하며, 삭제 완료 후 삭제 행위 자체를 새 로그로 남깁니다.
+
 모든 route는 controller 또는 공통 HTTP handler로 입력 검증, 인증, 오류 매핑을 일관되게
 처리해야 합니다.
 
@@ -318,6 +328,23 @@ Telegram 알림의 전달 상태와 재시도 정보를 저장합니다.
 - 기존 알림의 이슈 버전은 nullable `issue_version`에 보존합니다.
 - 상태, 재시도 횟수, 다음 시도 시각, lock, 오류 및 Telegram message ID를 기록합니다.
 - `(status, next_attempt_at)` index로 발송 대상을 조회합니다.
+
+#### `application_logs`
+
+서버에서 발생한 사용자 행위와 시스템 오류를 저장합니다. 분석 화면의 업무 집계 데이터와는
+별개의 운영 로그입니다.
+
+- 로그 수준: `debug`, `info`, `warn`, `error`
+- 주요 필드: `category`, `event`, 한국어 `message`, `actor_user_id`, `metadata`, `error_stack`
+- 사용자와 무관한 시스템 로그의 `actor_user_id`는 `NULL`입니다.
+- 사용자 삭제 시 FK는 `SET NULL`로 처리하여 로그를 유지합니다.
+- `metadata`와 오류 스택은 공통 필터로 비밀번호, 토큰, 쿠키 등 민감정보를 제거합니다.
+- 성공한 상태 변경과 행위 로그는 같은 transaction에서 commit합니다.
+- 전역 요청 오류 로그는 원래 오류를 덮지 않도록 best-effort로 저장합니다.
+- 전역 오류 훅은 예상된 4xx를 중복 저장하지 않고 처리되지 않은 5xx만 기록합니다.
+- Telegram 외부 전송 결과 로그는 전달 상태 확정 후 best-effort로 저장하여 중복 전송을 방지합니다.
+- API 응답의 `BIGSERIAL` 로그 ID와 커서는 정밀도 손실을 막기 위해 문자열로 직렬화합니다.
+- 초기 index는 `created_at` 단일 index만 사용합니다.
 
 ## 데이터 정합성
 
