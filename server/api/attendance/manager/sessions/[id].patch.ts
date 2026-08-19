@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { attendanceSessions } from '#server/db/schema'
+import { appUsers, attendanceSessions } from '#server/db/schema'
 import { attendanceCorrectionSchema, parseAttendanceInput } from '#server/utils/attendance-input'
 import {
   assertValidAttendanceTimes,
@@ -21,12 +21,20 @@ export default defineEventHandler(async event => {
   try {
     return await db.transaction(async tx => {
       const [current] = await tx
-        .select()
+        .select({
+          id: attendanceSessions.id,
+          userId: attendanceSessions.userId,
+          startedAt: attendanceSessions.startedAt,
+          endedAt: attendanceSessions.endedAt,
+          targetRole: appUsers.role,
+        })
         .from(attendanceSessions)
+        .innerJoin(appUsers, eq(appUsers.authUserId, attendanceSessions.userId))
         .where(eq(attendanceSessions.id, id))
         .limit(1)
       if (!current)
         throw createError({ statusCode: 404, message: '출퇴근 세션을 찾을 수 없습니다.' })
+      requireAttendanceTargetAccess(profile.role, current.targetRole)
 
       const startedAt = changes.startedAt ?? current.startedAt
       const endedAt = changes.endedAt !== undefined ? changes.endedAt : current.endedAt

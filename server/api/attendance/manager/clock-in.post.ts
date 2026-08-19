@@ -11,6 +11,7 @@ export default defineEventHandler(async event => {
   const now = new Date()
   const target = await db.query.appUsers.findFirst({ where: eq(appUsers.authUserId, userId) })
   if (!target) throw createError({ statusCode: 404, message: '대상 사용자를 찾을 수 없습니다.' })
+  requireAttendanceTargetAccess(profile.role, target.role)
 
   try {
     const session = await db.transaction(async tx => {

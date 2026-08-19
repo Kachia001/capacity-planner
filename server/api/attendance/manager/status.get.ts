@@ -1,9 +1,9 @@
-import { and, asc, eq, gte, inArray, isNull, lt } from 'drizzle-orm'
+import { and, asc, eq, gte, inArray, isNull, lt, ne } from 'drizzle-orm'
 import { appUsers, attendanceSessions } from '#server/db/schema'
 import { attendanceRangeSchema, parseAttendanceInput } from '#server/utils/attendance-input'
 
 export default defineEventHandler(async event => {
-  await requireAppUser(event, ['admin', 'manager'])
+  const { profile } = await requireAppUser(event, ['admin', 'manager'])
   const range = parseAttendanceInput(attendanceRangeSchema, getQuery(event))
   const db = useDb()
   const started = await db
@@ -22,6 +22,7 @@ export default defineEventHandler(async event => {
       and(
         gte(attendanceSessions.startedAt, range.start),
         lt(attendanceSessions.startedAt, range.end),
+        profile.role === 'manager' ? ne(appUsers.role, 'admin') : undefined,
       ),
     )
     .orderBy(asc(attendanceSessions.startedAt))

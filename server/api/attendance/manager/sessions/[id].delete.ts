@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { attendanceSessions } from '#server/db/schema'
+import { appUsers, attendanceSessions } from '#server/db/schema'
 import { writeApplicationLog } from '#server/utils/application-log'
 
 export default defineEventHandler(async event => {
@@ -9,6 +9,15 @@ export default defineEventHandler(async event => {
     throw createError({ statusCode: 400, message: '올바른 세션 ID가 필요합니다.' })
   }
   const deleted = await useDb().transaction(async tx => {
+    const [target] = await tx
+      .select({ userId: attendanceSessions.userId, role: appUsers.role })
+      .from(attendanceSessions)
+      .innerJoin(appUsers, eq(appUsers.authUserId, attendanceSessions.userId))
+      .where(eq(attendanceSessions.id, id))
+      .limit(1)
+    if (!target) throw createError({ statusCode: 404, message: '출퇴근 세션을 찾을 수 없습니다.' })
+    requireAttendanceTargetAccess(profile.role, target.role)
+
     const [removed] = await tx
       .delete(attendanceSessions)
       .where(eq(attendanceSessions.id, id))

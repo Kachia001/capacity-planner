@@ -1,5 +1,5 @@
 import { and, eq, isNull, lte } from 'drizzle-orm'
-import { attendanceSessions } from '#server/db/schema'
+import { appUsers, attendanceSessions } from '#server/db/schema'
 import { managerAttendanceActionSchema, parseAttendanceInput } from '#server/utils/attendance-input'
 import { writeApplicationLog } from '#server/utils/application-log'
 
@@ -8,6 +8,10 @@ export default defineEventHandler(async event => {
   const { userId } = parseAttendanceInput(managerAttendanceActionSchema, await readBody(event))
   const db = useDb()
   const now = new Date()
+  const target = await db.query.appUsers.findFirst({ where: eq(appUsers.authUserId, userId) })
+  if (!target) throw createError({ statusCode: 404, message: '대상 사용자를 찾을 수 없습니다.' })
+  requireAttendanceTargetAccess(profile.role, target.role)
+
   const session = await db.transaction(async tx => {
     const [ended] = await tx
       .update(attendanceSessions)
