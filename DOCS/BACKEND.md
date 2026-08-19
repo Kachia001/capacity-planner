@@ -181,7 +181,7 @@ Persistence row, domain aggregate, application result 및 public API response는
 - 로그인 성공 시 12시간 유효한 서명 세션을 HttpOnly, SameSite 쿠키로 발급합니다.
 - API는 세션의 사용자 UUID와 `auth_version`을 DB에서 다시 확인합니다.
 - 비밀번호 변경 또는 계정 비활성화 시 `auth_version`을 증가시켜 기존 세션을 무효화합니다.
-- 로그인 5회 실패 시 15분 동안 계정을 잠급니다.
+- manager/worker 계정은 로그인 5회 실패 시 15분 동안 잠급니다. admin 계정은 로그인 잠금 대상에서 제외합니다.
 - UI의 역할 제어와 관계없이 API에서 역할을 다시 검증합니다.
 - 권한 부족은 인증 실패와 구분되는 안정적인 HTTP 상태 및 error code로 반환합니다.
 
