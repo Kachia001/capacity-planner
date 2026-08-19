@@ -2,7 +2,6 @@ import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { appUsers } from '../../db/schema'
 import { writeApplicationLog } from '#server/utils/application-log'
-import { getNextLoginFailureState, isLoginLocked } from '../../utils/login-lock'
 
 const loginSchema = z.object({
   loginId: z.string().trim().min(1).max(320),
@@ -48,33 +47,15 @@ export default defineEventHandler(async event => {
     })
   }
 
-  if (isLoginLocked(user.role, user.lockedUntil, now)) {
-    await writeApplicationLog(db, {
-      level: 'warn',
-      category: 'auth',
-      event: 'login.failed',
-      message: '잠긴 계정으로 로그인을 시도했습니다.',
-      actorUserId: user.authUserId,
-      metadata: { reason: 'account_locked', lockedUntil: user.lockedUntil },
-      createdAt: now,
-    })
-    throw createError({
-      statusCode: 429,
-      message: '로그인 시도가 잠겼습니다. 잠시 후 다시 시도해주세요.',
-    })
-  }
-
   const passwordMatches = await verifyPassword(user.passwordHash, body.password)
 
   if (!passwordMatches) {
-    const failureState = getNextLoginFailureState(user.role, user.failedLoginCount, now)
-
     await db.transaction(async tx => {
       await tx
         .update(appUsers)
         .set({
-          failedLoginCount: failureState.failedLoginCount,
-          lockedUntil: failureState.lockedUntil,
+          failedLoginCount: 0,
+          lockedUntil: null,
           updatedAt: now,
         })
         .where(eq(appUsers.authUserId, user.authUserId))
@@ -82,16 +63,9 @@ export default defineEventHandler(async event => {
         level: 'warn',
         category: 'auth',
         event: 'login.failed',
-        message: failureState.accountLocked
-          ? '비밀번호 오류가 반복되어 계정 로그인을 잠갔습니다.'
-          : '올바르지 않은 비밀번호로 로그인을 시도했습니다.',
+        message: '올바르지 않은 비밀번호로 로그인을 시도했습니다.',
         actorUserId: user.authUserId,
-        metadata: {
-          reason: 'password_mismatch',
-          failedLoginCount: failureState.failedAttemptNumber,
-          accountLocked: failureState.accountLocked,
-          loginLockExempt: failureState.lockExempt,
-        },
+        metadata: { reason: 'password_mismatch' },
         createdAt: now,
       })
     })
