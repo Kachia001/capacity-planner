@@ -181,7 +181,7 @@ Persistence row, domain aggregate, application result 및 public API response는
 - 로그인 성공 시 12시간 유효한 서명 세션을 HttpOnly, SameSite 쿠키로 발급합니다.
 - API는 세션의 사용자 UUID와 `auth_version`을 DB에서 다시 확인합니다.
 - 비밀번호 변경 또는 계정 비활성화 시 `auth_version`을 증가시켜 기존 세션을 무효화합니다.
-- manager/worker 계정은 로그인 5회 실패 시 15분 동안 잠급니다. admin 계정은 로그인 잠금 대상에서 제외합니다.
+- 애플리케이션은 역할별 계정 잠금을 적용하지 않으며, 로그인 요청 제한은 CloudFront에서 처리합니다.
 - UI의 역할 제어와 관계없이 API에서 역할을 다시 검증합니다.
 - 권한 부족은 인증 실패와 구분되는 안정적인 HTTP 상태 및 error code로 반환합니다.
 
@@ -210,7 +210,7 @@ Persistence row, domain aggregate, application result 및 public API response는
 - PK: `auth_user_id`
 - 주요 필드: `email`, `password_hash`, `display_name`, `role`, `is_active`
 - 세션 무효화: `auth_version`
-- 로그인 보호: `failed_login_count`, `locked_until`, `last_login_at`
+- 로그인 기록: `last_login_at` (`failed_login_count`, `locked_until`은 기존 데이터 호환을 위해 유지하며 로그인 시 초기화합니다.)
 - `created_by`는 `app_users.auth_user_id` 자기 참조 FK입니다.
 
 #### `bay_templates`
