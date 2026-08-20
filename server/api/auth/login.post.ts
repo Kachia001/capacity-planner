@@ -16,14 +16,14 @@ export default defineEventHandler(async event => {
   const now = new Date()
 
   if (!user) {
-    await writeApplicationLog(db, {
-      level: 'warn',
-      category: 'auth',
-      event: 'login.failed',
-      message: '등록되지 않은 계정으로 로그인을 시도했습니다.',
-      metadata: { accountMatched: false },
-      createdAt: now,
-    })
+    // await writeApplicationLog(db, {
+    //   level: 'warn',
+    //   category: 'auth',
+    //   event: 'login.failed',
+    //   message: '등록되지 않은 계정으로 로그인을 시도했습니다.',
+    //   metadata: { accountMatched: false },
+    //   createdAt: now,
+    // })
     throw createError({
       statusCode: 401,
       message: '아이디 또는 비밀번호가 올바르지 않습니다.',
@@ -31,15 +31,15 @@ export default defineEventHandler(async event => {
   }
 
   if (!user.isActive) {
-    await writeApplicationLog(db, {
-      level: 'warn',
-      category: 'auth',
-      event: 'login.failed',
-      message: '비활성화된 계정으로 로그인을 시도했습니다.',
-      actorUserId: user.authUserId,
-      metadata: { reason: 'account_disabled' },
-      createdAt: now,
-    })
+    // await writeApplicationLog(db, {
+    //   level: 'warn',
+    //   category: 'auth',
+    //   event: 'login.failed',
+    //   message: '비활성화된 계정으로 로그인을 시도했습니다.',
+    //   actorUserId: user.authUserId,
+    //   metadata: { reason: 'account_disabled' },
+    //   createdAt: now,
+    // })
     throw createError({
       statusCode: 401,
       message: '이용이 정지된 계정입니다.',
@@ -50,25 +50,25 @@ export default defineEventHandler(async event => {
   const passwordMatches = await verifyPassword(user.passwordHash, body.password)
 
   if (!passwordMatches) {
-    await db.transaction(async tx => {
-      await tx
-        .update(appUsers)
-        .set({
-          failedLoginCount: 0,
-          lockedUntil: null,
-          updatedAt: now,
-        })
-        .where(eq(appUsers.authUserId, user.authUserId))
-      await writeApplicationLog(tx, {
-        level: 'warn',
-        category: 'auth',
-        event: 'login.failed',
-        message: '올바르지 않은 비밀번호로 로그인을 시도했습니다.',
-        actorUserId: user.authUserId,
-        metadata: { reason: 'password_mismatch' },
-        createdAt: now,
-      })
-    })
+    // await db.transaction(async tx => {
+    //   await tx
+    //     .update(appUsers)
+    //     .set({
+    //       failedLoginCount: 0,
+    //       lockedUntil: null,
+    //       updatedAt: now,
+    //     })
+    //     .where(eq(appUsers.authUserId, user.authUserId))
+    //   await writeApplicationLog(tx, {
+    //     level: 'warn',
+    //     category: 'auth',
+    //     event: 'login.failed',
+    //     message: '올바르지 않은 비밀번호로 로그인을 시도했습니다.',
+    //     actorUserId: user.authUserId,
+    //     metadata: { reason: 'password_mismatch' },
+    //     createdAt: now,
+    //   })
+    // })
 
     throw createError({
       statusCode: 401,
