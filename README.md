@@ -15,6 +15,7 @@ Admin, Manager, Worker 역할에 따라 BAY와 템플릿 관리, 작업 시작�
 - 역할 기반 사용자 및 권한 관리
 - 운영 시간 제어
 - Telegram 이슈 알림과 재시도 Outbox
+- 최고 관리자용 사이트 로고 업로드, 최적화 및 변경
 
 ## 기술 스택
 
@@ -66,6 +67,18 @@ pnpm dev
 비밀번호를 터미널에서 안전하게 입력받습니다.
 다른 ID와 이름을 사용하려면 `pnpm auth:create-admin admin01 "관리자"`처럼 실행합니다.
 환경 변수와 DB 설정은 [백엔드 문서](./DOCS/BACKEND.md)를 참고합니다.
+
+### 로고 파일 저장 경로
+
+업로드된 로고는 기본적으로 애플리케이션 실행 디렉터리의 `data/logos`에 저장됩니다.
+일반 서버에서는 재배포 후에도 유지되고 애플리케이션 프로세스가 쓸 수 있는 경로를
+`NUXT_LOGO_STORAGE_DIR`에 지정하세요. 디렉터리는 최초 업로드 시 자동 생성됩니다.
+
+```dotenv
+NUXT_LOGO_STORAGE_DIR=D:\capacity-planner-data\logos
+```
+
+데이터베이스와 함께 이 디렉터리도 정기 백업해야 합니다.
 
 ## 주요 명령
 

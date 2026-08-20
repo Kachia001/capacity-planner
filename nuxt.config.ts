@@ -23,6 +23,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     databaseUrl: '',
     authSessionSecret: '',
+    logoStorageDir: './data/logos',
     telegramEncryptionKey: '',
     telegramApiBaseUrl: 'https://api.telegram.org',
     public: {

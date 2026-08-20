@@ -99,6 +99,13 @@
       "when": 1786648566255,
       "tag": "0013_ordinary_frank_castle",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1787240551150,
+      "tag": "0014_parched_nighthawk",
+      "breakpoints": true
     }
   ]
 }

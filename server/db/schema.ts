@@ -75,6 +75,36 @@ export const appUsers = pgTable('app_users', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+export const siteLogos = pgTable('site_logos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  storageKey: text('storage_key').notNull().unique(),
+  originalName: text('original_name').notNull(),
+  mimeType: text('mime_type').notNull(),
+  sizeBytes: integer('size_bytes').notNull(),
+  width: integer('width').notNull(),
+  height: integer('height').notNull(),
+  uploadedBy: uuid('uploaded_by').references(() => appUsers.authUserId, {
+    onDelete: 'set null',
+  }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const siteBranding = pgTable(
+  'site_branding',
+  {
+    id: integer('id').primaryKey().default(1),
+    activeLogoId: uuid('active_logo_id').references(() => siteLogos.id, {
+      onDelete: 'restrict',
+    }),
+    version: integer('version').notNull().default(0),
+    updatedBy: uuid('updated_by').references(() => appUsers.authUserId, {
+      onDelete: 'set null',
+    }),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => [check('site_branding_singleton', sql`${table.id} = 1`)],
+)
+
 export const applicationLogs = pgTable(
   'application_logs',
   {
@@ -533,6 +563,9 @@ export type WorkItemStatusEvent = typeof workItemStatusEvents.$inferSelect
 export type NewWorkItemStatusEvent = typeof workItemStatusEvents.$inferInsert
 export type AppUser = typeof appUsers.$inferSelect
 export type NewAppUser = typeof appUsers.$inferInsert
+export type SiteLogo = typeof siteLogos.$inferSelect
+export type NewSiteLogo = typeof siteLogos.$inferInsert
+export type SiteBranding = typeof siteBranding.$inferSelect
 export type ApplicationLog = typeof applicationLogs.$inferSelect
 export type NewApplicationLog = typeof applicationLogs.$inferInsert
 export type PasswordResetEvent = typeof passwordResetEvents.$inferSelect
