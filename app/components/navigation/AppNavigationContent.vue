@@ -4,6 +4,7 @@ import {
   ChevronRight,
   ClipboardList,
   Grid3X3,
+  Image as ImageIcon,
   KeyRound,
   PanelsTopLeft,
   ScrollText,
@@ -76,6 +77,13 @@ const navigationItems = [
     caption: 'System audit',
     to: '/admin/logs',
     icon: ScrollText,
+    roles: ['admin'],
+  },
+  {
+    label: '사이트 로고',
+    caption: 'Site branding',
+    to: '/admin/branding',
+    icon: ImageIcon,
     roles: ['admin'],
   },
 ]

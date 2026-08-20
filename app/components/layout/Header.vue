@@ -31,13 +31,16 @@ async function signOut() {
     <div
       class="mx-auto flex min-h-14 w-full max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:min-h-0 sm:px-6 sm:py-4 lg:px-8"
     >
-      <NuxtLink :to="homePath" class="flex min-w-0 flex-col">
-        <span class="truncate text-base font-semibold tracking-tight sm:text-lg"
-          >Capacity Planner</span
-        >
-        <span class="hidden truncate text-xs font-medium text-muted-foreground sm:block"
-          >Bay workload dashboard</span
-        >
+      <NuxtLink :to="homePath" class="flex min-w-0 items-center gap-3">
+        <BrandLogo class="size-10" />
+        <span class="min-w-0">
+          <strong class="block truncate text-base font-semibold tracking-tight sm:text-lg"
+            >Capacity Planner</strong
+          >
+          <span class="hidden truncate text-xs font-medium text-muted-foreground sm:block"
+            >Bay workload dashboard</span
+          >
+        </span>
       </NuxtLink>
 
       <nav

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { Boxes, LogOut } from '@lucide/vue'
+import { LogOut } from '@lucide/vue'
 import AppMobileNavigation from '@/components/navigation/AppMobileNavigation.vue'
 import { Button } from '@/components/ui/button'
 import AttendanceControl from '@/components/attendance/AttendanceControl.vue'
+import BrandLogo from '@/components/layout/BrandLogo.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -54,6 +55,10 @@ const pageContext = computed(() => {
     return { eyebrow: 'SYSTEM AUDIT', title: '서버 로그' }
   }
 
+  if (route.path.startsWith('/admin/branding')) {
+    return { eyebrow: 'SITE BRANDING', title: '사이트 로고 관리' }
+  }
+
   return { eyebrow: 'BAY MANAGEMENT', title: 'Bay 조회' }
 })
 
@@ -86,30 +91,12 @@ onMounted(() => {
   >
     <NuxtLink
       :to="homePath"
-      class="relative flex min-w-0 shrink items-center gap-2.5 sm:shrink-0 sm:gap-3"
+      class="relative flex min-w-0 shrink justify-center items-center gap-2.5 sm:shrink-0 sm:gap-3"
     >
-      <span
-        data-layout="mobile"
-        class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#c5f277] text-[#111512] shadow-[0_0_32px_rgba(197,242,119,0.16)] sm:hidden"
-      >
-        <Boxes class="size-5" stroke-width="2.2" />
-      </span>
-      <span
-        data-layout="desktop"
-        class="hidden size-10 shrink-0 items-center justify-center rounded-lg bg-[#c5f277] text-[#111512] shadow-[0_0_32px_rgba(197,242,119,0.16)] sm:flex"
-      >
-        <Boxes class="size-5" stroke-width="2.2" />
-      </span>
-      <span class="min-w-0">
-        <strong class="block truncate text-[13px] font-semibold tracking-[-0.02em] sm:text-[15px]">
-          Capacity Planner
-        </strong>
-        <span
-          class="mt-1 hidden font-mono text-[9px] uppercase tracking-[0.22em] text-zinc-500 sm:block"
-        >
-          Operations console
-        </span>
-      </span>
+      <BrandLogo class="size-9 sm:size-16" />
+      <strong class="block truncate text-[13px] font-semibold tracking-[-0.02em] sm:text-[15px]">
+        Capacity Planner
+      </strong>
     </NuxtLink>
 
     <section class="ml-auto flex min-w-0 items-center justify-end gap-3">
