@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowUpRight, Link2 } from '@lucide/vue'
+import { ArrowUpRight, Link2, User } from '@lucide/vue'
 import { computed } from 'vue'
 import TableFloorPlanCard from '@/components/operations/TableFloorPlanCard.vue'
 import type { WorkTableOverview } from '#shared/api/tables/table.contract'
@@ -57,7 +57,9 @@ function statusLabel(table: WorkTableOverview) {
     </div>
 
     <div v-else data-layout="desktop" class="hidden overflow-x-auto p-4 lg:block sm:p-6">
-      <div class="mx-auto min-w-[880px] max-w-[1120px] border border-[#c5cdd1] p-9">
+      <div
+        class="mx-auto min-w-[1120px] max-w-[1120px] border border-[#c5cdd1] p-9 relative container"
+      >
         <div class="grid grid-cols-[2fr_1fr] gap-14">
           <div class="grid grid-cols-6 gap-7">
             <TableFloorPlanCard
@@ -112,6 +114,7 @@ function statusLabel(table: WorkTableOverview) {
             />
           </div>
         </div>
+        <User class="text-white absolute right-[32cqh] bottom-0" />
       </div>
     </div>
 
